@@ -1,0 +1,9 @@
+.vs
+.vscode
+.idea
+.xmake
+
+build
+cmake-*
+CMakeLists.txt
+vsxmake2022
