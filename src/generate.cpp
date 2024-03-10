@@ -84,14 +84,6 @@ std::string generate_buffer(const std::string& exe_file_path, std::vector<Entry>
     return buffer.str();
 }
 
-std::string normalizePath(const std::string& messyPath)
-{
-    std::filesystem::path path(messyPath);
-    std::filesystem::path canonicalPath = std::filesystem::weakly_canonical(path);
-    std::string npath = canonicalPath.make_preferred().string();
-    return npath;
-}
-
 bool generate_temp_file(const std::string& gen_file_path, const std::string& exe_file_path, const std::string& patterns_directory_path)
 {
     std::vector<Entry> entries;
