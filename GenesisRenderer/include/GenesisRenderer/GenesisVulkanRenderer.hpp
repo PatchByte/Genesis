@@ -1,18 +1,18 @@
 #ifndef _GENESISVULKANIMPLEMENTATION_H
 #define _GENESISVULKANIMPLEMENTATION_H
 
+#include "GenesisRenderer.hpp"
 #include <iostream>
 #include <vector>
-#include "GenesisRenderer.hpp"
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
-#include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
+#include <imgui.h>
 
 namespace genesis::renderer
 {
@@ -23,15 +23,27 @@ namespace genesis::renderer
         GenesisVulkanImplementation(unsigned Width, unsigned Height, std::string Title);
         ~GenesisVulkanImplementation();
 
-        inline unsigned GetWidth() { return m_Width; }
-        inline unsigned GetHeight() { return m_Height; }
+        inline unsigned GetWidth()
+        {
+            return m_Width;
+        }
+
+        inline unsigned GetHeight()
+        {
+            return m_Height;
+        }
 
         bool Initialize();
         bool Shutdown();
         bool BeginFrame();
         bool EndFrame();
         bool ShallRender();
-        inline bool IsRunning() { return m_Running; }
+
+        inline bool IsRunning()
+        {
+            return m_Running;
+        }
+
     protected:
         VkPhysicalDevice SetupVulkan_SelectPhysicalDevice();
         void SetupVulkan(std::vector<const char*> instance_extensions);
@@ -40,6 +52,7 @@ namespace genesis::renderer
         void CleanupVulkanWindow();
         void FrameRender(ImGui_ImplVulkanH_Window* wd, ImDrawData* draw_data);
         void FramePresent(ImGui_ImplVulkanH_Window* wd);
+
     protected:
         unsigned m_Width;
         unsigned m_Height;
@@ -50,17 +63,17 @@ namespace genesis::renderer
 
         VkAllocationCallbacks* m_VkAllocator;
         VkInstance m_VkInstance;
-        VkPhysicalDevice         m_VkPhysicalDevice;
-        VkDevice                 m_VkDevice;
-        uint32_t                 m_VkQueueFamily;
-        VkQueue                  m_VkQueue;
+        VkPhysicalDevice m_VkPhysicalDevice;
+        VkDevice m_VkDevice;
+        uint32_t m_VkQueueFamily;
+        VkQueue m_VkQueue;
         VkDebugReportCallbackEXT m_VkDebugReport;
-        VkPipelineCache          m_VkPipelineCache;
-        VkDescriptorPool         m_VkDescriptorPool;
+        VkPipelineCache m_VkPipelineCache;
+        VkDescriptorPool m_VkDescriptorPool;
 
         ImGui_ImplVulkanH_Window m_WindowData;
     };
 
-}
+} // namespace genesis::renderer
 
 #endif // !_GENESISVULKANIMPLEMENTATION_H

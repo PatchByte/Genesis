@@ -2,6 +2,7 @@
 #define _GENESISRENDERER_HPP
 
 #include <string>
+
 namespace genesis::renderer
 {
 
@@ -9,11 +10,31 @@ namespace genesis::renderer
     {
     public:
         virtual ~GenesisRendererBase() = default;
-        virtual bool Initialize() { return false; }
-        virtual bool Shutdown() { return false; }
-        virtual bool BeginFrame() { return false; }
-        virtual bool EndFrame() { return false; }
-        virtual bool ShallRender() { return false; }
+
+        virtual bool Initialize()
+        {
+            return false;
+        }
+
+        virtual bool Shutdown()
+        {
+            return false;
+        }
+
+        virtual bool BeginFrame()
+        {
+            return false;
+        }
+
+        virtual bool EndFrame()
+        {
+            return false;
+        }
+
+        virtual bool ShallRender()
+        {
+            return false;
+        }
     };
 
     class GenesisRendererProvider
@@ -23,6 +44,6 @@ namespace genesis::renderer
         static GenesisRendererBase* CreateRenderer(unsigned Width, unsigned Height, std::string Title);
     };
 
-}
+} // namespace genesis::renderer
 
 #endif // !_GENESISRENDERER_HPP
