@@ -1,5 +1,5 @@
-#ifndef _OCKERVULKANIMPLEMENTATION_H
-#define _OCKERVULKANIMPLEMENTATION_H
+#ifndef _GENESISVULKANIMPLEMENTATION_H
+#define _GENESISVULKANIMPLEMENTATION_H
 
 #include <iostream>
 #include <vector>
@@ -63,4 +63,4 @@ namespace genesis::renderer
 
 }
 
-#endif // !_OCKERVULKANIMPLEMENTATION_H
+#endif // !_GENESISVULKANIMPLEMENTATION_H
