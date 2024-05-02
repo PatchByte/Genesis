@@ -7,3 +7,7 @@ build
 cmake-*
 CMakeLists.txt
 vsxmake2022
+
+.cache
+.vscode
+bin

@@ -1,3 +1,9 @@
-[submodule "deps/shared"]
-	path = deps/shared
-	url = git@github.com:yet-another-multiplayer/shared.git
+[submodule "Vendors/Ash"]
+	path = Vendors/Ash
+	url = https://github.com/PatchByte/Ash.git
+[submodule "Vendors/zydis"]
+	path = Vendors/zydis
+	url = https://github.com/zyantific/zydis.git
+[submodule "Vendors/mem"]
+	path = Vendors/mem
+	url = https://github.com/0x1F9F1/mem.git
