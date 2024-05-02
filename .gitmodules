@@ -7,3 +7,9 @@
 [submodule "Vendors/mem"]
 	path = Vendors/mem
 	url = https://github.com/0x1F9F1/mem.git
+[submodule "Vendors/glfw"]
+	path = Vendors/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "Vendors/imgui"]
+	path = Vendors/imgui
+	url = https://github.com/ocornut/imgui.git
