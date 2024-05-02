@@ -8,7 +8,7 @@
 namespace genesis::operations
 {
 
-    static ash::AshSize smGenesisFindPatternOperationHeader = 0x474e535346494e44;
+    static constexpr ash::AshSize smGenesisFindPatternOperationHeader = 0x474e535346494e44;
 
     GenesisFindPatternOperation::GenesisFindPatternOperation():
         m_Pattern()

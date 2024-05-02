@@ -12,6 +12,8 @@ namespace genesis::editor
         ~GenesisEditor();
 
         void Run();
+
+        void ApplyStyle();
     private:
         renderer::GenesisRendererBase* m_Renderer;
     };

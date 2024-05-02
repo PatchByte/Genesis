@@ -111,9 +111,45 @@ namespace genesis::operations
 
         bool Import(ash::AshStream* Stream);
         bool Export(ash::AshStream* Stream);
-
     protected:
         std::string m_Pattern;
+    };
+
+    class GenesisMathOperation : public GenesisBaseOperation
+    {
+    public:
+        enum class Type : unsigned char
+        {
+            INVALID = 0,
+            ADDITION = 1,
+            SUBTRACTION = 2
+        };
+
+        GenesisMathOperation();
+        
+        std::string GetOperationName()
+        {
+            return "MathOperation";
+        }
+
+        GenesisOperationInformation GetOperationInformation();
+        ash::AshResult ProcessOperation(GenesisOperationState* State);
+
+        virtual void SetType(Type Type)
+        {
+            m_Type = Type;
+        }
+
+        virtual void SetValue(unsigned long long Value)
+        {
+            m_Value = Value;
+        }
+
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+    protected:
+        Type m_Type;
+        unsigned long long m_Value;
     };
 
     class GenesisOperationUtils

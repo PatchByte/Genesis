@@ -1,5 +1,6 @@
 #include "GenesisEditor/GenesisEditor.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
+#include "imgui.h"
 #include <thread>
 
 namespace genesis::editor
@@ -7,7 +8,7 @@ namespace genesis::editor
 
     GenesisEditor::GenesisEditor()
     {
-        m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(800, 450, "Genesis Editor");
+        m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Editor");
     }
 
     GenesisEditor::~GenesisEditor()
@@ -21,10 +22,23 @@ namespace genesis::editor
     void GenesisEditor::Run()
     {
         m_Renderer->Initialize();
+
+        this->ApplyStyle();
         
         while (m_Renderer->ShallRender()) 
         {
             m_Renderer->BeginFrame();
+
+
+            if(ImGui::Begin("GenesisEditorFrame", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse))
+            {
+                ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
+                ImGui::SetWindowPos(ImVec2(0, 0));
+
+                ImGui::Button("yes");
+            }
+            ImGui::End();
+
             m_Renderer->EndFrame();
 
             std::this_thread::yield();

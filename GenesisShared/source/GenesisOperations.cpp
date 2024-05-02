@@ -11,7 +11,8 @@ namespace genesis::operations
     GenesisBaseOperation* GenesisOperationUtils::sfCreateOperationByName(std::string OperationName)
     {
         static std::map<std::string, sdOperationCreateDelegate*> smDelegates = {
-            IMPLEMENT_CREATION_DELEGATE("FindPatternOperation", GenesisFindPatternOperation)
+            IMPLEMENT_CREATION_DELEGATE("FindPatternOperation", GenesisFindPatternOperation),
+            IMPLEMENT_CREATION_DELEGATE("MathOperation", GenesisMathOperation)
         };
 
         if(smDelegates.contains(OperationName))
