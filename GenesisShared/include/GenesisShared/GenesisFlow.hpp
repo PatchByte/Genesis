@@ -1,9 +1,11 @@
 #ifndef _GENESISFLOW_HPP
 #define _GENESISFLOW_HPP
 
+#include "Ash/AshResult.h"
 #include "Ash/AshStream.h"
 #include "Ash/AshStreamableObject.h"
 #include "AshObjects/AshPointerVector.h"
+#include "GenesisShared/GenesisLoadedFile.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
 #include <cstddef>
 #include <functional>
@@ -28,6 +30,8 @@ namespace genesis
         void ForeachObject(sdForeachIteratorDelegate Delegate);
         GenesisFlowIndex AddOperationToFlow(operations::GenesisBaseOperation* Operation);
         bool RemoveOperationFromFlow(GenesisFlowIndex Index);
+
+        ash::AshCustomResult<unsigned long long> ProcessFlow(common::GenesisLoadedFile* LoadedFile);
 
         bool Import(ash::AshStream* Stream);
         bool Export(ash::AshStream* Stream);

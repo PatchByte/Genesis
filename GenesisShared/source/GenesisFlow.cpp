@@ -1,4 +1,5 @@
 #include "GenesisShared/GenesisFlow.hpp"
+#include "Ash/AshResult.h"
 #include "AshObjects/AshString.h"
 #include "GenesisShared/GenesisOperations.hpp"
 
@@ -53,6 +54,21 @@ namespace genesis
         delete operation;
 
         return true;
+    }
+
+    ash::AshCustomResult<unsigned long long> GenesisFlow::ProcessFlow(common::GenesisLoadedFile* LoadedFile)
+    {
+        operations::GenesisOperationState state = operations::GenesisOperationState(LoadedFile);
+
+        for(operations::GenesisBaseOperation* currentOperation : m_Operations)
+        {
+            if(auto res = currentOperation->ProcessOperation(&state); res.HasError())
+            {
+                return ash::AshCustomResult<unsigned long long>(false, "State failed. " + res.GetMessage());
+            }
+        }
+
+        return state.GetRawValue();
     }
 
     bool GenesisFlow::Import(ash::AshStream* Stream)
