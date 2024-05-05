@@ -9,35 +9,35 @@
 #include "GenesisShared/GenesisOperations.hpp"
 #include <cstddef>
 #include <functional>
+#include <map>
 #include <string>
 #include <vector>
 
 namespace genesis
 {
-    using GenesisFlowIndex = size_t;
-
     class GenesisFlow : public ash::AshStreamableObject
     {
     public:
-        using stOperationsVector = ash::objects::AshPointerVector<operations::GenesisBaseOperation>;
-        using sdForeachIteratorDelegate = std::function<bool(GenesisFlowIndex Index, operations::GenesisBaseOperation* Operation)>;
-        
+        using sdFlowOperationsMap = std::map<operations::GenesisOperationId, operations::GenesisBaseOperation*>;
+        using sdFlowLinks = std::vector<std::pair<int, int>>;
+
         GenesisFlow();
         ~GenesisFlow();
 
         std::string GetFlowName() { return m_Name; }
-        
-        void ForeachObject(sdForeachIteratorDelegate Delegate);
-        GenesisFlowIndex AddOperationToFlow(operations::GenesisBaseOperation* Operation);
-        bool RemoveOperationFromFlow(GenesisFlowIndex Index);
-
         ash::AshCustomResult<unsigned long long> ProcessFlow(common::GenesisLoadedFile* LoadedFile);
+
+        operations::GenesisOperationId AddOperationToFlow(operations::GenesisBaseOperation* Operation);
+        bool RemoveOperationFromFlow(operations::GenesisOperationId OperationId);
 
         bool Import(ash::AshStream* Stream);
         bool Export(ash::AshStream* Stream);
     protected:
         std::string m_Name;
-        stOperationsVector m_Operations;
+        operations::GenesisOperationId m_Counter;
+
+        sdFlowOperationsMap m_Operations;
+        sdFlowLinks m_Links;
     };
 
 }

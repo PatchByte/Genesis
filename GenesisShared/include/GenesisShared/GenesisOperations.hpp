@@ -3,6 +3,7 @@
 
 #include "Ash/AshResult.h"
 #include "Ash/AshStreamableObject.h"
+#include "GenesisShared/GenesisPinTracker.hpp"
 #include "GenesisShared/GenesisLoadedFile.hpp"
 #include <string>
 #include <string_view>
@@ -70,12 +71,26 @@ namespace genesis::operations
     class GenesisOperationInformation
     {
     public:
-        // TODO implement methods
-        // tho this is not needed because this structure is easily discardable
+        inline GenesisOperationInformation()
+        {
+            m_DiscardsPreviousValue = false;
+            m_IsMathOperation = false;
+            m_HasInputPin = false;
+            m_HasOutputPin = false;
+            m_InputPinId = 0;
+            m_OutputPinId = 0;
+        }
 
         bool m_DiscardsPreviousValue : 1;
         bool m_IsMathOperation : 1;
+        bool m_HasInputPin : 1;
+        bool m_HasOutputPin : 1;
+
+        int m_InputPinId;
+        int m_OutputPinId;
     };
+
+    using GenesisOperationId = int;
 
     class GenesisBaseOperation : public ash::AshStreamableObject
     {
@@ -92,15 +107,32 @@ namespace genesis::operations
             return GenesisOperationType::INVALID;
         }
 
+        virtual GenesisOperationId GetOperationId() 
+        {
+            return m_OperationId;
+        }
+
+        virtual void SetOperationId(GenesisOperationId OperationId)
+        {
+            m_OperationId = OperationId;
+        }
+
         virtual GenesisOperationInformation GetOperationInformation()
         {
-            return GenesisOperationInformation();
+            GenesisOperationInformation operationInformation = {};
+
+            operationInformation.m_InputPinId = utils::GenesisPinValue(m_OperationId, 1).Get();
+            operationInformation.m_OutputPinId = utils::GenesisPinValue(m_OperationId, 2).Get();
+
+            return std::move(operationInformation);
         }
 
         virtual ash::AshResult ProcessOperation(GenesisOperationState* State)
         {
             return ash::AshResult(false, "Operation not implement");
         }
+    protected:
+        GenesisOperationId m_OperationId;
     };
 
     class GenesisFindPatternOperation : public GenesisBaseOperation

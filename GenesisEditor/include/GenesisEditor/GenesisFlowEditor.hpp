@@ -7,20 +7,15 @@
 namespace genesis::editor
 {
 
-    class GenesisFlowEditor
+    class GenesisFlowEditor : public GenesisFlow
     {
     public:
-        GenesisFlowEditor(GenesisFlow* Flow);
+        GenesisFlowEditor();
         ~GenesisFlowEditor();
 
         void Initialize();
         void Render();
-        void RenderNodeOperation(GenesisFlowIndex Index, operations::GenesisBaseOperation* Operation);
-
-        inline GenesisFlow* GetFlow() { return m_Flow; }
-    private:
-        GenesisFlow* m_Flow;
-        std::vector<std::pair<int, int>> m_Links;
+        void RenderNodeOperation(operations::GenesisBaseOperation* Operation);
     };
 
 }

@@ -8,21 +8,15 @@
 namespace genesis::editor
 {
 
-    GenesisFlowEditor::GenesisFlowEditor(GenesisFlow* Flow):
-        m_Flow(Flow),
-        m_Links()
+    GenesisFlowEditor::GenesisFlowEditor()
     {
-        m_Flow->AddOperationToFlow(new operations::GenesisFindPatternOperation("E8 ? ? ? ? 90"));
-        m_Flow->AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 6));
+        AddOperationToFlow(new operations::GenesisFindPatternOperation("E8 ? ? ? ? 90"));
+        AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 6));
+        AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 2));
     }
 
     GenesisFlowEditor::~GenesisFlowEditor()
     {
-        if(m_Flow)
-        {
-            delete m_Flow;
-            m_Flow = nullptr;
-        }
     }
 
     void GenesisFlowEditor::Render()
@@ -30,13 +24,7 @@ namespace genesis::editor
 
         ImNodes::BeginNodeEditor();
 
-        m_Flow->ForeachObject([this] (GenesisFlowIndex Index, operations::GenesisBaseOperation* Operation) -> bool {
-            ImNodes::BeginNode(Index);
-            RenderNodeOperation(Index, Operation);
-            ImNodes::EndNode();
-            
-            return true;
-        });
+        
 
         for (int i = 0; i < m_Links.size(); ++i)
         {
@@ -57,7 +45,7 @@ namespace genesis::editor
         }
     }
 
-    void GenesisFlowEditor::RenderNodeOperation(GenesisFlowIndex Index, operations::GenesisBaseOperation* Operation)
+    void GenesisFlowEditor::RenderNodeOperation(operations::GenesisBaseOperation* Operation)
     {
         ImNodes::BeginNodeTitleBar();
         ImGui::Text("%s", Operation->GetOperationName().data());

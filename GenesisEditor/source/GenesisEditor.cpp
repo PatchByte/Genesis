@@ -9,7 +9,7 @@ namespace genesis::editor
 {
 
     GenesisEditor::GenesisEditor():
-        m_TestFlowEditor(new GenesisFlow())
+        m_TestFlowEditor()
     {
         m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Editor");
     }

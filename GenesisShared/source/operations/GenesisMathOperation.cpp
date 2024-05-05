@@ -18,9 +18,11 @@ namespace genesis::operations
 
     GenesisOperationInformation GenesisMathOperation::GetOperationInformation()
     {
-        GenesisOperationInformation operationInformation;
+        GenesisOperationInformation operationInformation = GenesisBaseOperation::GetOperationInformation();
 
         operationInformation.m_IsMathOperation = true;
+        operationInformation.m_HasInputPin = true;
+        operationInformation.m_HasOutputPin = true;
 
         return operationInformation;
     }
