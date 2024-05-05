@@ -10,6 +10,13 @@
 namespace genesis::operations
 {
 
+    enum class GenesisOperationType
+    {
+        INVALID = 0,
+        FIND_PATTERN = 1,
+        MATH = 2
+    };
+
     class GenesisOperationState
     {
     public:
@@ -80,6 +87,11 @@ namespace genesis::operations
             return "GenesisBaseOperation";
         }
 
+        virtual GenesisOperationType GetOperationType()
+        {
+            return GenesisOperationType::INVALID;
+        }
+
         virtual GenesisOperationInformation GetOperationInformation()
         {
             return GenesisOperationInformation();
@@ -95,14 +107,25 @@ namespace genesis::operations
     {
     public:
         GenesisFindPatternOperation();
+        GenesisFindPatternOperation(std::string Pattern);
 
         std::string GetOperationName()
         {
             return "FindPatternOperation";
         }
 
+        GenesisOperationType GetOperationType()
+        {
+            return GenesisOperationType::FIND_PATTERN;
+        }
+
         GenesisOperationInformation GetOperationInformation();
         ash::AshResult ProcessOperation(GenesisOperationState* State);
+
+        virtual std::string GetPattern()
+        {
+            return m_Pattern;
+        }
 
         virtual void SetPattern(std::string Pattern)
         {
@@ -111,6 +134,7 @@ namespace genesis::operations
 
         bool Import(ash::AshStream* Stream);
         bool Export(ash::AshStream* Stream);
+
     protected:
         std::string m_Pattern;
     };
@@ -118,7 +142,7 @@ namespace genesis::operations
     class GenesisMathOperation : public GenesisBaseOperation
     {
     public:
-        enum class Type : unsigned char
+        enum class Type : int
         {
             INVALID = 0,
             ADDITION = 1,
@@ -126,18 +150,34 @@ namespace genesis::operations
         };
 
         GenesisMathOperation();
-        
+        GenesisMathOperation(Type MathType, unsigned long long MathValue);
+
         std::string GetOperationName()
         {
             return "MathOperation";
         }
 
+        GenesisOperationType GetOperationType()
+        {
+            return GenesisOperationType::MATH;
+        }
+
         GenesisOperationInformation GetOperationInformation();
         ash::AshResult ProcessOperation(GenesisOperationState* State);
+
+        Type GetType()
+        {
+            return m_Type;
+        }
 
         virtual void SetType(Type Type)
         {
             m_Type = Type;
+        }
+
+        unsigned long long GetValue()
+        {
+            return m_Value;
         }
 
         virtual void SetValue(unsigned long long Value)
@@ -147,6 +187,7 @@ namespace genesis::operations
 
         bool Import(ash::AshStream* Stream);
         bool Export(ash::AshStream* Stream);
+
     protected:
         Type m_Type;
         unsigned long long m_Value;
@@ -155,7 +196,7 @@ namespace genesis::operations
     class GenesisOperationUtils
     {
     public:
-        static GenesisBaseOperation* sfCreateOperationByName(std::string OperationName);
+        static GenesisBaseOperation* sfCreateOperationByType(GenesisOperationType OperationType);
     };
 
 } // namespace genesis::operations

@@ -11,6 +11,11 @@ namespace genesis::operations
         m_Value()
     {}
 
+    GenesisMathOperation::GenesisMathOperation(Type MathType, unsigned long long MathValue):
+        m_Type(MathType),
+        m_Value(MathValue)
+    {}
+
     GenesisOperationInformation GenesisMathOperation::GetOperationInformation()
     {
         GenesisOperationInformation operationInformation;

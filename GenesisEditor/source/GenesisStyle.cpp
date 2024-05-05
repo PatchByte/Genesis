@@ -6,9 +6,9 @@ namespace genesis::editor
 
     void GenesisEditor::ApplyStyle()
     {
-         ImGuiStyle& style = ImGui::GetStyle();
-        ImVec4* colors = style.Colors;
+        ImGui::StyleColorsDark();
 
+        auto& colors = ImGui::GetStyle().Colors;
         colors[ImGuiCol_WindowBg] = ImVec4{0.1f, 0.1f, 0.13f, 1.0f};
         colors[ImGuiCol_MenuBarBg] = ImVec4{0.16f, 0.16f, 0.21f, 1.0f};
 
@@ -71,30 +71,17 @@ namespace genesis::editor
         colors[ImGuiCol_ResizeGripHovered] = ImVec4{0.74f, 0.58f, 0.98f, 0.29f};
         colors[ImGuiCol_ResizeGripActive] = ImVec4{0.84f, 0.58f, 1.0f, 0.29f};
 
+        // Docking
+        colors[ImGuiCol_DockingPreview] = ImVec4{0.44f, 0.37f, 0.61f, 1.0f};
 
-
-        style.WindowPadding                     = ImVec2(8.00f, 8.00f);
-        style.FramePadding                      = ImVec2(5.00f, 2.00f);
-        style.CellPadding                       = ImVec2(6.00f, 6.00f);
-        style.ItemSpacing                       = ImVec2(6.00f, 6.00f);
-        style.ItemInnerSpacing                  = ImVec2(6.00f, 6.00f);
-        style.TouchExtraPadding                 = ImVec2(0.00f, 0.00f);
-        style.IndentSpacing                     = 25;
-        style.ScrollbarSize                     = 15;
-        style.GrabMinSize                       = 10;
-        style.WindowBorderSize                  = 1;
-        style.ChildBorderSize                   = 1;
-        style.PopupBorderSize                   = 1;
-        style.FrameBorderSize                   = 1;
-        style.TabBorderSize                     = 1;
-        style.WindowRounding                    = 0;
-        style.ChildRounding                     = 4;
-        style.FrameRounding                     = 4;
-        style.PopupRounding                     = 4;
-        style.ScrollbarRounding                 = 9;
-        style.GrabRounding                      = 3;
-        style.LogSliderDeadzone                 = 4;
-        style.TabRounding                       = 4;
+        auto& style = ImGui::GetStyle();
+        style.TabRounding = 4;
+        style.ScrollbarRounding = 9;
+        style.WindowRounding = 7;
+        style.GrabRounding = 3;
+        style.FrameRounding = 3;
+        style.PopupRounding = 4;
+        style.ChildRounding = 4;
 
         style.AntiAliasedFill = true;
         style.AntiAliasedLines = true;

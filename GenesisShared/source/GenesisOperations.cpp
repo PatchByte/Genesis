@@ -1,26 +1,27 @@
 #include "GenesisShared/GenesisOperations.hpp"
 #include <map>
 
-#define IMPLEMENT_CREATION_DELEGATE(StringName, ClassName) { StringName, [] () -> GenesisBaseOperation* { return new ClassName (); } }
+#define IMPLEMENT_CREATION_DELEGATE(StringName, ClassName)                    \
+    {                                                                         \
+        StringName, []() -> GenesisBaseOperation* { return new ClassName(); } \
+    }
 
-namespace genesis::operations 
+namespace genesis::operations
 {
 
     using sdOperationCreateDelegate = GenesisBaseOperation*();
 
-    GenesisBaseOperation* GenesisOperationUtils::sfCreateOperationByName(std::string OperationName)
+    GenesisBaseOperation* GenesisOperationUtils::sfCreateOperationByType(GenesisOperationType OperationType)
     {
-        static std::map<std::string, sdOperationCreateDelegate*> smDelegates = {
-            IMPLEMENT_CREATION_DELEGATE("FindPatternOperation", GenesisFindPatternOperation),
-            IMPLEMENT_CREATION_DELEGATE("MathOperation", GenesisMathOperation)
-        };
+        static std::map<GenesisOperationType, sdOperationCreateDelegate*> smDelegates = {IMPLEMENT_CREATION_DELEGATE(GenesisOperationType::FIND_PATTERN, GenesisFindPatternOperation),
+                                                                                         IMPLEMENT_CREATION_DELEGATE(GenesisOperationType::MATH, GenesisMathOperation)};
 
-        if(smDelegates.contains(OperationName))
+        if (smDelegates.contains(OperationType))
         {
-            return smDelegates.at(OperationName)();
+            return smDelegates.at(OperationType)();
         }
 
         return nullptr;
     }
 
-}
+} // namespace genesis::operations

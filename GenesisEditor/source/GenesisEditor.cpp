@@ -1,18 +1,22 @@
 #include "GenesisEditor/GenesisEditor.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
+#include "GenesisShared/GenesisFlow.hpp"
 #include "imgui.h"
+#include "imnodes.h"
 #include <thread>
 
 namespace genesis::editor
 {
 
-    GenesisEditor::GenesisEditor()
+    GenesisEditor::GenesisEditor():
+        m_TestFlowEditor(new GenesisFlow())
     {
         m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Editor");
     }
 
     GenesisEditor::~GenesisEditor()
     {
+
         if(m_Renderer)
         {
             delete m_Renderer;
@@ -22,6 +26,7 @@ namespace genesis::editor
     void GenesisEditor::Run()
     {
         m_Renderer->Initialize();
+        ImNodes::CreateContext();
 
         this->ApplyStyle();
         
@@ -35,15 +40,18 @@ namespace genesis::editor
                 ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
                 ImGui::SetWindowPos(ImVec2(0, 0));
 
-                ImGui::Button("yes");
+                m_TestFlowEditor.Render();
+                
+                ImGui::End();
+
             }
-            ImGui::End();
 
             m_Renderer->EndFrame();
 
             std::this_thread::yield();
         }
 
+        ImNodes::DestroyContext();
         m_Renderer->Shutdown();
     }
 

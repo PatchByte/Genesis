@@ -14,6 +14,10 @@ namespace genesis::operations
         m_Pattern()
     {}
 
+    GenesisFindPatternOperation::GenesisFindPatternOperation(std::string Pattern):
+        m_Pattern(Pattern)
+    {}
+
     GenesisOperationInformation GenesisFindPatternOperation::GetOperationInformation()
     {
         GenesisOperationInformation information;
