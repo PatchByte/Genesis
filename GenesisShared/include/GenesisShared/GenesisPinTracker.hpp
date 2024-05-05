@@ -7,6 +7,11 @@ namespace genesis::utils
     union GenesisPinValue
     {
     public:
+        GenesisPinValue(int PinRawValue)
+        {
+            m_PinRawValue = PinRawValue;
+        }
+
         GenesisPinValue(unsigned short NodeParentId, unsigned short NodePinId)
         {
             m_NodeParentId = NodeParentId;
@@ -30,7 +35,7 @@ namespace genesis::utils
             unsigned short m_NodeParentId;
             unsigned short m_NodePinId;
         };
-        unsigned int m_PinRawValue;
+        int m_PinRawValue;
     };
 
 }

@@ -24,7 +24,12 @@ namespace genesis::editor
 
         ImNodes::BeginNodeEditor();
 
-        
+        for(auto currentIterator : m_Operations)
+        {
+            ImNodes::BeginNode(currentIterator.first);
+            RenderNodeOperation(currentIterator.second);
+            ImNodes::EndNode();
+        }
 
         for (int i = 0; i < m_Links.size(); ++i)
         {
