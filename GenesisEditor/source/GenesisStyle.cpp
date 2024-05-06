@@ -77,7 +77,7 @@ namespace genesis::editor
         auto& style = ImGui::GetStyle();
         style.TabRounding = 4;
         style.ScrollbarRounding = 9;
-        style.WindowRounding = 7;
+        style.WindowRounding = 0;
         style.GrabRounding = 3;
         style.FrameRounding = 3;
         style.PopupRounding = 4;

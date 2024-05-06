@@ -3,6 +3,7 @@
 #include "GenesisShared/GenesisFlow.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imnodes.h"
 #include <algorithm>
 #include <cmath>
@@ -10,11 +11,13 @@
 namespace genesis::editor
 {
 
-    GenesisFlowEditor::GenesisFlowEditor() : GenesisFlow(), m_Logger("GuiLogger", {})
+    GenesisFlowEditor::GenesisFlowEditor() : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(), m_DockSpaceId(0), m_DockSpaceHasBeenBuilt(false), m_TriggerCheck(false)
     {
         AddOperationToFlow(new operations::GenesisFindPatternOperation("E8 ? ? ? ? 90"));
         AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 6));
         AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 2));
+
+        m_Logger.AddLoggerPassage(m_LogBox.CreatePassage());
     }
 
     GenesisFlowEditor::~GenesisFlowEditor()
@@ -23,18 +26,64 @@ namespace genesis::editor
 
     void GenesisFlowEditor::Render()
     {
-
-        if (auto res = CheckIfFlowIsRunnable(); res.HasError())
+        if (m_DockSpaceId == 0)
         {
-            ImGui::Text("%s\n", res.GetMessage().data());
+            m_DockSpaceId = ImGui::GetID("dockSpace");
+        }
+
+        if (m_DockSpaceHasBeenBuilt == false)
+        {
+            ImGui::DockBuilderRemoveNode(m_DockSpaceId);
+            ImGui::DockBuilderAddNode(m_DockSpaceId);
+
+            ImGui::DockBuilderSplitNode(m_DockSpaceId, ImGuiDir_Down, 0.3f, &m_DockLogWindow, &m_DockNodeWindow);
+            ImGui::DockBuilderDockWindow("Nodes", m_DockNodeWindow);
+            ImGui::DockBuilderDockWindow("Log", m_DockLogWindow);
+
+            ImGui::DockBuilderFinish(m_DockSpaceId);
+
+            m_DockSpaceHasBeenBuilt = true;
+        }
+
+        ImGui::DockSpace(m_DockSpaceId, ImVec2(-1, -1),
+                         ImGuiDockNodeFlags_NoCloseButton | ImGuiDockNodeFlags_NoWindowMenuButton | ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_HiddenTabBar);
+
+        if (ImGui::Begin("Nodes"))
+        {
+            RenderNodes();
+        }
+        ImGui::End();
+
+        if (ImGui::Begin("Log"))
+        {
+            m_LogBox.Render();
+        }
+        ImGui::End();
+    }
+
+    void GenesisFlowEditor::RenderNodes()
+    {
+        if(m_TriggerCheck)
+        {
+            m_LogBox.Clear();
+
+            if (auto res = CheckIfFlowIsRunnable(); res.HasError())
+            {
+                m_Logger.Log("Error", "Failed to check. {}", res.GetMessage());
+            }
+            else
+            {
+                m_Logger.Log("Info", "Node graph is working.");
+            }
+
+            m_TriggerCheck = false;
         }
 
         ImNodes::BeginNodeEditor();
 
         for (auto currentIterator : m_Operations)
         {
-            ImColor normalColor = ImColor(),
-                    brightColor = ImColor();
+            ImColor normalColor = ImColor(), brightColor = ImColor();
 
             sfGetColorForOperationInformation(currentIterator.second->GetOperationInformation(), &normalColor, &brightColor);
 
@@ -93,6 +142,8 @@ namespace genesis::editor
                     {
                         this->RemoveOperationFromFlow(selectedNodes[currentSelectedNodeIndex]);
                     }
+
+                    m_TriggerCheck = true;
                 }
 
                 if (hasPressedSpecialDebugKey)
@@ -117,6 +168,7 @@ namespace genesis::editor
             if (ImNodes::IsLinkCreated(&start_attr, &end_attr))
             {
                 m_Links.emplace(++m_CounterLinks, std::make_pair(start_attr, end_attr));
+                m_TriggerCheck = true;
             }
         }
 
@@ -133,6 +185,8 @@ namespace genesis::editor
                 {
                     printf("Destroying failed: %i\n", link_id);
                 }
+
+                m_TriggerCheck = true;
             }
         }
     }
@@ -140,7 +194,7 @@ namespace genesis::editor
     void GenesisFlowEditor::RenderNodeOperation(operations::GenesisBaseOperation* Operation)
     {
         ImNodes::BeginNodeTitleBar();
-        ImGui::Text("%s", Operation->GetOperationName().data());
+        ImGui::Text("%s %i", Operation->GetOperationName().data(), Operation->GetOperationId());
         ImNodes::EndNodeTitleBar();
 
         GenesisOperationEditorForNodes::sfRenderOperation(Operation);
@@ -150,17 +204,17 @@ namespace genesis::editor
     {
         float nH = 183.f;
 
-        if(Information.m_IsFlowStartNode)
+        if (Information.m_IsFlowStartNode)
         {
             nH += 100.f;
         }
 
-        if(Information.m_IsConditionalFlowStartNode)
+        if (Information.m_IsConditionalFlowStartNode)
         {
             nH += 200.f;
         }
 
-        if(Information.m_IsMathOperation)
+        if (Information.m_IsMathOperation)
         {
             nH += 50.f;
         }
@@ -169,7 +223,7 @@ namespace genesis::editor
 
         float h = nH / 360.f;
         float s = 100.f / 100.f;
-        float v = 65.f  / 100.f;
+        float v = 65.f / 100.f;
 
         ImGui::ColorConvertHSVtoRGB(h, s, v, OutputNormalColor->Value.x, OutputNormalColor->Value.y, OutputNormalColor->Value.z);
 
