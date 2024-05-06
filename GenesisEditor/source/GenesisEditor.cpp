@@ -28,13 +28,19 @@ namespace genesis::editor
         m_Renderer->Initialize();
         ImNodes::CreateContext();
 
+        ImNodesIO& io = ImNodes::GetIO();
+        io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
+        io.MultipleSelectModifier.Modifier = &ImGui::GetIO().KeyCtrl;
+
+        ImNodesStyle& style = ImNodes::GetStyle();
+        style.Flags |= ImNodesStyleFlags_GridLinesPrimary;
+
         this->ApplyStyle();
         
         while (m_Renderer->ShallRender()) 
         {
             m_Renderer->BeginFrame();
-
-
+            
             if(ImGui::Begin("GenesisEditorFrame", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse))
             {
                 ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);

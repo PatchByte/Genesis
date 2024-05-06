@@ -41,6 +41,40 @@ namespace genesis::editor
             ImNodes::Link(i, p.first, p.second);
         }
 
+        if(ImGui::IsWindowFocused())
+        {
+            if(ImGui::IsKeyPressed(ImGuiKey_Delete))
+            {
+                if(int numSelectedLinks = ImNodes::NumSelectedLinks(); numSelectedLinks > 0)
+                {
+                    int* selectedLinks = new int[numSelectedLinks];
+
+                    ImNodes::GetSelectedLinks(selectedLinks);
+
+                    for(int currentSelectedLinkIndex = 0; currentSelectedLinkIndex < numSelectedLinks; currentSelectedLinkIndex++)
+                    {
+                        m_Links.erase(selectedLinks[currentSelectedLinkIndex]);
+                    }
+                    
+                    delete[] selectedLinks;
+                }
+
+                if(int numSelectedNodes = ImNodes::NumSelectedNodes(); numSelectedNodes > 0)
+                {
+                    int* selectedNodes = new int[numSelectedNodes];
+
+                    ImNodes::GetSelectedNodes(selectedNodes);
+
+                    for (int currentSelectedNodeIndex = 0; currentSelectedNodeIndex < numSelectedNodes; currentSelectedNodeIndex++) 
+                    {
+                        this->RemoveOperationFromFlow(selectedNodes[currentSelectedNodeIndex]);
+                    }
+
+                    delete[] selectedNodes;
+                }
+            }
+        }
+
         ImNodes::EndNodeEditor();
 
         {
