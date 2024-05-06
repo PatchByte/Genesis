@@ -22,6 +22,7 @@ namespace genesis::operations
     {
         GenesisOperationInformation information;
 
+        information.m_IsFlowStartNode = true;
         information.m_DiscardsPreviousValue = true;
 
         return std::move(information);

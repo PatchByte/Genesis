@@ -5,12 +5,12 @@
 #include "imgui.h"
 #include "imnodes.h"
 #include <algorithm>
+#include <cmath>
 
 namespace genesis::editor
 {
 
-    GenesisFlowEditor::GenesisFlowEditor():
-        GenesisFlow()
+    GenesisFlowEditor::GenesisFlowEditor() : GenesisFlow(), m_Logger("GuiLogger", {})
     {
         AddOperationToFlow(new operations::GenesisFindPatternOperation("E8 ? ? ? ? 90"));
         AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 6));
@@ -24,13 +24,31 @@ namespace genesis::editor
     void GenesisFlowEditor::Render()
     {
 
+        if (auto res = CheckIfFlowIsRunnable(); res.HasError())
+        {
+            ImGui::Text("%s\n", res.GetMessage().data());
+        }
+
         ImNodes::BeginNodeEditor();
 
         for (auto currentIterator : m_Operations)
         {
+            ImColor normalColor = ImColor(),
+                    brightColor = ImColor();
+
+            sfGetColorForOperationInformation(currentIterator.second->GetOperationInformation(), &normalColor, &brightColor);
+
+            ImNodes::PushColorStyle(ImNodesCol_TitleBar, normalColor);
+            ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, brightColor);
+            ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, brightColor);
+
             ImNodes::BeginNode(currentIterator.first);
             RenderNodeOperation(currentIterator.second);
             ImNodes::EndNode();
+
+            ImNodes::PopColorStyle();
+            ImNodes::PopColorStyle();
+            ImNodes::PopColorStyle();
         }
 
         for (int i = 0; i < m_Links.size(); ++i)
@@ -41,37 +59,54 @@ namespace genesis::editor
             ImNodes::Link(i, p.first, p.second);
         }
 
-        if(ImGui::IsWindowFocused())
+        if (ImGui::IsWindowFocused())
         {
-            if(ImGui::IsKeyPressed(ImGuiKey_Delete))
+            bool hasPressedDeleteKey = ImGui::IsKeyPressed(ImGuiKey_Delete);
+            bool hasPressedSpecialDebugKey = ImGui::IsKeyPressed(ImGuiKey_PageDown);
+
+            if (int numSelectedLinks = ImNodes::NumSelectedLinks(); numSelectedLinks > 0)
             {
-                if(int numSelectedLinks = ImNodes::NumSelectedLinks(); numSelectedLinks > 0)
+                int* selectedLinks = new int[numSelectedLinks];
+
+                ImNodes::GetSelectedLinks(selectedLinks);
+
+                if (hasPressedDeleteKey)
                 {
-                    int* selectedLinks = new int[numSelectedLinks];
-
-                    ImNodes::GetSelectedLinks(selectedLinks);
-
-                    for(int currentSelectedLinkIndex = 0; currentSelectedLinkIndex < numSelectedLinks; currentSelectedLinkIndex++)
+                    for (int currentSelectedLinkIndex = 0; currentSelectedLinkIndex < numSelectedLinks; currentSelectedLinkIndex++)
                     {
                         m_Links.erase(selectedLinks[currentSelectedLinkIndex]);
                     }
-                    
-                    delete[] selectedLinks;
                 }
 
-                if(int numSelectedNodes = ImNodes::NumSelectedNodes(); numSelectedNodes > 0)
+                delete[] selectedLinks;
+            }
+
+            if (int numSelectedNodes = ImNodes::NumSelectedNodes(); numSelectedNodes > 0)
+            {
+                int* selectedNodes = new int[numSelectedNodes];
+
+                ImNodes::GetSelectedNodes(selectedNodes);
+
+                if (hasPressedDeleteKey)
                 {
-                    int* selectedNodes = new int[numSelectedNodes];
-
-                    ImNodes::GetSelectedNodes(selectedNodes);
-
-                    for (int currentSelectedNodeIndex = 0; currentSelectedNodeIndex < numSelectedNodes; currentSelectedNodeIndex++) 
+                    for (int currentSelectedNodeIndex = 0; currentSelectedNodeIndex < numSelectedNodes; currentSelectedNodeIndex++)
                     {
                         this->RemoveOperationFromFlow(selectedNodes[currentSelectedNodeIndex]);
                     }
-
-                    delete[] selectedNodes;
                 }
+
+                if (hasPressedSpecialDebugKey)
+                {
+                    for (int currentSelectedNodeIndex = 0; currentSelectedNodeIndex < numSelectedNodes; currentSelectedNodeIndex++)
+                    {
+                        for (operations::GenesisOperationId currentOperationId : this->CollectAllNodeLinkIdsToOtherNodesFromNode(selectedNodes[currentSelectedNodeIndex]))
+                        {
+                            ImNodes::SelectNode(currentOperationId);
+                        }
+                    }
+                }
+
+                delete[] selectedNodes;
             }
         }
 
@@ -89,12 +124,12 @@ namespace genesis::editor
             int link_id;
             if (ImNodes::IsLinkDestroyed(&link_id))
             {
-                if(m_Links.contains(link_id))
+                if (m_Links.contains(link_id))
                 {
                     printf("Destroying: %i\n", link_id);
                     m_Links.erase(link_id);
                 }
-                else 
+                else
                 {
                     printf("Destroying failed: %i\n", link_id);
                 }
@@ -109,6 +144,43 @@ namespace genesis::editor
         ImNodes::EndNodeTitleBar();
 
         GenesisOperationEditorForNodes::sfRenderOperation(Operation);
+    }
+
+    bool GenesisFlowEditor::sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor, ImColor* OutputBrightColor)
+    {
+        float nH = 183.f;
+
+        if(Information.m_IsFlowStartNode)
+        {
+            nH += 100.f;
+        }
+
+        if(Information.m_IsConditionalFlowStartNode)
+        {
+            nH += 200.f;
+        }
+
+        if(Information.m_IsMathOperation)
+        {
+            nH += 50.f;
+        }
+
+        nH = fmodf(nH, 360.f);
+
+        float h = nH / 360.f;
+        float s = 100.f / 100.f;
+        float v = 65.f  / 100.f;
+
+        ImGui::ColorConvertHSVtoRGB(h, s, v, OutputNormalColor->Value.x, OutputNormalColor->Value.y, OutputNormalColor->Value.z);
+
+        v = 89.f / 100.f;
+
+        ImGui::ColorConvertHSVtoRGB(h, s, v, OutputBrightColor->Value.x, OutputBrightColor->Value.y, OutputBrightColor->Value.z);
+
+        OutputNormalColor->Value.w = 1.f;
+        OutputBrightColor->Value.w = 1.f;
+
+        return true;
     }
 
 } // namespace genesis::editor

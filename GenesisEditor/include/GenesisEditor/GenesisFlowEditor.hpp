@@ -1,8 +1,10 @@
 #ifndef _GENESISFLOWEDITOR_HPP
 #define _GENESISFLOWEDITOR_HPP
 
+#include "AshLogger/AshLogger.h"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
+#include "imgui.h"
 
 namespace genesis::editor
 {
@@ -16,6 +18,10 @@ namespace genesis::editor
         void Initialize();
         void Render();
         void RenderNodeOperation(operations::GenesisBaseOperation* Operation);
+    
+        static bool sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor, ImColor* OutputBrightColor);
+    private:
+        ash::AshLogger m_Logger;
     };
 
 }

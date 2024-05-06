@@ -3,8 +3,12 @@
 #include "AshObjects/AshString.h"
 #include "GenesisShared/GenesisOperations.hpp"
 #include "GenesisShared/GenesisPinTracker.hpp"
+#include "fmt/format.h"
 #include <algorithm>
+#include <cstdlib>
+#include <functional>
 #include <utility>
+#include <vector>
 
 namespace genesis
 {
@@ -62,6 +66,94 @@ namespace genesis
         m_Operations.erase(OperationId);
 
         return false;
+    }
+
+    GenesisFlow::sdOperationIdsVector GenesisFlow::CollectAllNodeLinkIdsToOtherNodesFromNode(operations::GenesisOperationId OperationId)
+    {
+        GenesisFlow::sdOperationIdsVector result = {};
+
+        for(auto currentIterator : m_Links)
+        {
+            std::pair<int, int> value = currentIterator.second;
+
+            if(utils::GenesisPinValue(value.first).m_NodeParentId == OperationId && utils::GenesisPinValue(value.second).m_NodeParentId != OperationId)
+            {
+                result.push_back(utils::GenesisPinValue(value.second).m_NodeParentId);
+            }
+        }
+
+        return result;
+    }
+
+    GenesisFlow::sdOperationsVector GenesisFlow::CollectAllFlowStarterNodes(bool IncludeNonConditionalNodes, bool IncludeConditionalNodes)
+    {
+        sdOperationsVector result = {};
+
+        for(auto currentIterator : m_Operations)
+        {
+            const operations::GenesisOperationInformation information = currentIterator.second->GetOperationInformation();
+
+            if(information.m_IsFlowStartNode)
+            {
+                if(information.m_IsConditionalFlowStartNode)
+                {
+                    if(IncludeConditionalNodes)
+                    {
+                        result.push_back(currentIterator.second);
+                        continue;
+                    }
+                }
+
+                if(IncludeNonConditionalNodes)
+                {
+                    result.push_back(currentIterator.second);
+                    continue;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    ash::AshResult GenesisFlow::CheckIfFlowIsRunnable()
+    {
+        // Checking if any loop is present
+
+        std::vector<operations::GenesisBaseOperation*> flowStartNodes = CollectAllFlowStarterNodes(true, true);
+        
+        std::function<ash::AshResult(operations::GenesisBaseOperation*, std::vector<operations::GenesisOperationId>)> traverseNode;
+    
+        traverseNode = [this, &traverseNode] (operations::GenesisBaseOperation* Operation, std::vector<operations::GenesisOperationId> PreviousVisitedOperationsIds) -> ash::AshResult 
+        {
+            if(std::find(PreviousVisitedOperationsIds.begin(), PreviousVisitedOperationsIds.end(), Operation->GetOperationId()) != PreviousVisitedOperationsIds.end())
+            {
+                return ash::AshResult(false, fmt::format("Node {} has already been visited. Loop detected ;)", Operation->GetOperationId()));
+            }
+
+            PreviousVisitedOperationsIds.push_back(Operation->GetOperationId());
+
+            auto linksVector = CollectAllNodeLinkIdsToOtherNodesFromNode(Operation->GetOperationId());
+
+            for(operations::GenesisOperationId nextLinkNode : linksVector)
+            {
+                if(auto res = traverseNode(m_Operations.at(nextLinkNode), PreviousVisitedOperationsIds); res.HasError())
+                {
+                    return res;
+                }
+            }
+
+            return ash::AshResult(true);
+        };
+
+        for(operations::GenesisBaseOperation* currentFlowStartNode : flowStartNodes)
+        {
+            if(auto res = traverseNode(currentFlowStartNode, {}); res.HasError())
+            {
+                return res;
+            }
+        }
+
+        return ash::AshResult(true);
     }
 
     ash::AshCustomResult<unsigned long long> GenesisFlow::ProcessFlow(common::GenesisLoadedFile* LoadedFile)

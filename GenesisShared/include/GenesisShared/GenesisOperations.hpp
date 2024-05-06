@@ -74,6 +74,8 @@ namespace genesis::operations
         inline GenesisOperationInformation()
         {
             m_DiscardsPreviousValue = false;
+            m_IsFlowStartNode = false;
+            m_IsConditionalFlowStartNode = false;
             m_IsMathOperation = false;
             m_HasInputPin = false;
             m_HasOutputPin = false;
@@ -82,6 +84,8 @@ namespace genesis::operations
         }
 
         bool m_DiscardsPreviousValue : 1;
+        bool m_IsFlowStartNode : 1;
+        bool m_IsConditionalFlowStartNode : 1;
         bool m_IsMathOperation : 1;
         bool m_HasInputPin : 1;
         bool m_HasOutputPin : 1;

@@ -20,6 +20,8 @@ namespace genesis
     public:
         using sdFlowOperationsMap = std::map<operations::GenesisOperationId, operations::GenesisBaseOperation*>;
         using sdFlowLinks = std::map<int, std::pair<int, int>>;
+        using sdOperationsVector = std::vector<operations::GenesisBaseOperation*>;
+        using sdOperationIdsVector = std::vector<operations::GenesisOperationId>;
 
         GenesisFlow();
         ~GenesisFlow();
@@ -29,6 +31,11 @@ namespace genesis
 
         operations::GenesisOperationId AddOperationToFlow(operations::GenesisBaseOperation* Operation);
         bool RemoveOperationFromFlow(operations::GenesisOperationId OperationId);
+
+        sdOperationIdsVector CollectAllNodeLinkIdsToOtherNodesFromNode(operations::GenesisOperationId OperationId);
+        sdOperationsVector CollectAllFlowStarterNodes(bool IncludeNonConditionalNodes = true, bool IncludeConditionalNodes = false);
+
+        ash::AshResult CheckIfFlowIsRunnable();
 
         bool Import(ash::AshStream* Stream);
         bool Export(ash::AshStream* Stream);
