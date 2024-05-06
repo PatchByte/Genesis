@@ -19,7 +19,7 @@ namespace genesis
     {
     public:
         using sdFlowOperationsMap = std::map<operations::GenesisOperationId, operations::GenesisBaseOperation*>;
-        using sdFlowLinks = std::vector<std::pair<int, int>>;
+        using sdFlowLinks = std::map<int, std::pair<int, int>>;
 
         GenesisFlow();
         ~GenesisFlow();
@@ -34,7 +34,8 @@ namespace genesis
         bool Export(ash::AshStream* Stream);
     protected:
         std::string m_Name;
-        operations::GenesisOperationId m_Counter;
+        operations::GenesisOperationId m_CounterOperations;
+        int m_CounterLinks;
 
         sdFlowOperationsMap m_Operations;
         sdFlowLinks m_Links;

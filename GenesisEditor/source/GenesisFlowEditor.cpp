@@ -4,11 +4,13 @@
 #include "GenesisShared/GenesisOperations.hpp"
 #include "imgui.h"
 #include "imnodes.h"
+#include <algorithm>
 
 namespace genesis::editor
 {
 
-    GenesisFlowEditor::GenesisFlowEditor()
+    GenesisFlowEditor::GenesisFlowEditor():
+        GenesisFlow()
     {
         AddOperationToFlow(new operations::GenesisFindPatternOperation("E8 ? ? ? ? 90"));
         AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 6));
@@ -24,7 +26,7 @@ namespace genesis::editor
 
         ImNodes::BeginNodeEditor();
 
-        for(auto currentIterator : m_Operations)
+        for (auto currentIterator : m_Operations)
         {
             ImNodes::BeginNode(currentIterator.first);
             RenderNodeOperation(currentIterator.second);
@@ -45,7 +47,23 @@ namespace genesis::editor
             int start_attr, end_attr;
             if (ImNodes::IsLinkCreated(&start_attr, &end_attr))
             {
-                m_Links.push_back(std::make_pair(start_attr, end_attr));
+                m_Links.emplace(++m_CounterLinks, std::make_pair(start_attr, end_attr));
+            }
+        }
+
+        {
+            int link_id;
+            if (ImNodes::IsLinkDestroyed(&link_id))
+            {
+                if(m_Links.contains(link_id))
+                {
+                    printf("Destroying: %i\n", link_id);
+                    m_Links.erase(link_id);
+                }
+                else 
+                {
+                    printf("Destroying failed: %i\n", link_id);
+                }
             }
         }
     }
@@ -59,4 +77,4 @@ namespace genesis::editor
         GenesisOperationEditorForNodes::sfRenderOperation(Operation);
     }
 
-}
+} // namespace genesis::editor
