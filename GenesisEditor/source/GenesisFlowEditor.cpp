@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cmath>
 #include <utility>
+#include <vector>
 
 namespace ed = ax::NodeEditor;
 
@@ -193,6 +194,44 @@ namespace genesis::editor
             }
         }
         ed::EndDelete();
+
+        {
+
+            bool actionDelete = ImGui::IsKeyPressed(ImGuiKey_Delete);
+
+            if(auto numSelectedLinks = ed::GetSelectedLinks(nullptr, 0); numSelectedLinks > 0)
+            {
+                ed::LinkId* selectedLinks = new ed::LinkId[numSelectedLinks];
+                ed::GetSelectedLinks(selectedLinks, numSelectedLinks);
+
+                for(int currentSelectedLinkIndex = 0; currentSelectedLinkIndex < numSelectedLinks; currentSelectedLinkIndex++)
+                {
+                    ed::LinkId selectedLink = selectedLinks[currentSelectedLinkIndex];
+
+                    if(actionDelete)
+                    {
+                        m_Links.erase(selectedLink.Get());
+                    }
+                }
+            }
+
+            if(auto numSelectedNodes = ed::GetSelectedNodes(nullptr, 0); numSelectedNodes > 0)
+            {
+                ed::NodeId* selectedNodes = new ed::NodeId[numSelectedNodes];
+                ed::GetSelectedNodes(selectedNodes, numSelectedNodes);
+
+                for(int currentSelectedNodeIndex = 0; currentSelectedNodeIndex < numSelectedNodes; currentSelectedNodeIndex++)
+                {
+                    ed::NodeId selectedNode = selectedNodes[currentSelectedNodeIndex];
+
+                    if(actionDelete)
+                    {
+                        RemoveOperationFromFlow(selectedNode.Get());
+                    }
+                }
+            }
+
+        }
 
         ed::End();
 
