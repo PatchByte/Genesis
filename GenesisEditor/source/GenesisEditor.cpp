@@ -26,14 +26,8 @@ namespace genesis::editor
     void GenesisEditor::Run()
     {
         m_Renderer->Initialize();
-        ImNodes::CreateContext();
 
-        ImNodesIO& io = ImNodes::GetIO();
-        io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
-        io.MultipleSelectModifier.Modifier = &ImGui::GetIO().KeyCtrl;
-
-        ImNodesStyle& style = ImNodes::GetStyle();
-        style.Flags |= ImNodesStyleFlags_GridLinesPrimary;
+        m_TestFlowEditor.Initialize();
 
         this->ApplyStyle();
         

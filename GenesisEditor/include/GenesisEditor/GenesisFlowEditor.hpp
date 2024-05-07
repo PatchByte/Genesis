@@ -5,7 +5,9 @@
 #include "GenesisEditor/GenesisLogBox.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
+
 #include "imgui.h"
+#include "imnodes.h"
 
 namespace genesis::editor
 {
@@ -30,6 +32,8 @@ namespace genesis::editor
         ImGuiID m_DockSpaceId;
         ImGuiID m_DockNodeWindow;
         ImGuiID m_DockLogWindow;
+
+        ImNodesContext* m_Context;
 
         bool m_TriggerCheck;
     };

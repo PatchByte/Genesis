@@ -5,6 +5,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "imnodes.h"
+#include "imnodes_internal.h"
 #include <algorithm>
 #include <cmath>
 
@@ -22,6 +23,18 @@ namespace genesis::editor
 
     GenesisFlowEditor::~GenesisFlowEditor()
     {
+    }
+
+    void GenesisFlowEditor::Initialize()
+    {
+        m_Context = ImNodes::CreateContext();
+
+        ImNodesIO& io = ImNodes::GetIO();
+        io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
+        io.MultipleSelectModifier.Modifier = &ImGui::GetIO().KeyCtrl;
+
+        ImNodesStyle& style = ImNodes::GetStyle();
+        style.Flags |= ImNodesStyleFlags_GridLinesPrimary;
     }
 
     void GenesisFlowEditor::Render()
@@ -48,7 +61,7 @@ namespace genesis::editor
         ImGui::DockSpace(m_DockSpaceId, ImVec2(-1, -1),
                          ImGuiDockNodeFlags_NoCloseButton | ImGuiDockNodeFlags_NoWindowMenuButton | ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_HiddenTabBar);
 
-        if (ImGui::Begin("Nodes"))
+        if (ImGui::Begin("Nodes", nullptr, ImGuiWindowFlags_MenuBar))
         {
             RenderNodes();
         }
@@ -78,6 +91,18 @@ namespace genesis::editor
 
             m_TriggerCheck = false;
         }
+
+        if(ImGui::BeginMenuBar())
+        {
+            if(ImGui::MenuItem("Organize"))
+            {
+                
+            }
+
+            ImGui::EndMenuBar();
+        }
+
+        ImNodes::SetCurrentContext(m_Context);
 
         ImNodes::BeginNodeEditor();
 

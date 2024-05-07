@@ -30,21 +30,6 @@ namespace genesis::utils
 
     void GenesisLogBox::Render()
     {
-        // if(ImGui::BeginTable("##LogTable", 2, ImGuiTableFlags_RowBg))
-        //{
-
-        //    for(auto currentIterator : m_Logs)
-        //    {
-        //        ImGui::TableNextRow();
-        //        ImGui::TableSetColumnIndex(0);
-        //        ImGui::Text("%s", currentIterator.first.GetPrefix().data());
-        //        ImGui::TableNextColumn();
-        //        ImGui::Text("%s", currentIterator.second.data());
-        //    }
-
-        //    ImGui::EndTable();
-        //}
-
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImNodes::GetStyle().Colors[ImNodesCol_GridBackground]);
 
         if (ImGui::BeginChild("LogChild", ImVec2(-1, -1)))
@@ -58,6 +43,7 @@ namespace genesis::utils
                 ImGui::Text("%s", currentIterator.first.GetPrefix().data());
                 ImGui::NextColumn();
                 ImGui::Text("%s", currentIterator.second.data());
+                ImGui::NextColumn();
             }
 
             ImGui::EndChild();
