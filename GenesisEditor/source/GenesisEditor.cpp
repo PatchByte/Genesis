@@ -2,8 +2,10 @@
 #include "GenesisRenderer/GenesisRenderer.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "imgui.h"
-#include "imnodes.h"
+#include "imgui_node_editor.h"
 #include <thread>
+
+namespace ed = ax::NodeEditor;
 
 namespace genesis::editor
 {
@@ -51,7 +53,8 @@ namespace genesis::editor
             std::this_thread::yield();
         }
 
-        ImNodes::DestroyContext();
+        m_TestFlowEditor.Shutdown();
+
         m_Renderer->Shutdown();
     }
 

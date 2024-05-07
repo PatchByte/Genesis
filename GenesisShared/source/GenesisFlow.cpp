@@ -16,8 +16,8 @@ namespace genesis
     GenesisFlow::GenesisFlow():
         m_Name(),
         m_Operations(),
-        m_CounterLinks(),
-        m_CounterOperations(),
+        m_CounterLinks(1),
+        m_CounterOperations(1),
         m_Links()
     {}
 
@@ -46,12 +46,12 @@ namespace genesis
     {
         while(true)
         {
-            auto it = std::find_if(m_Links.begin(), m_Links.end(), [&OperationId](std::pair<int, std::pair<int, int>> Iterator) -> bool {
-                std::pair<int, int> Value = Iterator.second;
+            auto it = std::find_if(m_Links.begin(), m_Links.end(), [&OperationId](std::pair<uintptr_t, std::pair<uintptr_t, uintptr_t>> Iterator) -> bool {
+                std::pair<uintptr_t, uintptr_t> Value = Iterator.second;
 
                 if(utils::GenesisPinValue(Value.first).m_NodeParentId == OperationId || utils::GenesisPinValue(Value.second).m_NodeParentId == OperationId)
                 {
-                    printf("Removing Link %x:%x\n", Value.first, Value.second);
+                    printf("Removing Link %lx:%lx\n", Value.first, Value.second);
                     return true;
                 }
 

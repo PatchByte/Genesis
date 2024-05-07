@@ -2,10 +2,12 @@
 #include "GenesisShared/GenesisOperations.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
-#include "imnodes.h"
+#include "imgui_node_editor.h"
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+
+namespace ed = ax::NodeEditor;
 
 namespace genesis::editor
 {
@@ -21,28 +23,28 @@ namespace genesis::editor
         operations::GenesisMathOperation::Type type = Operation->GetType();
         unsigned long long value = Operation->GetValue();
 
-        ImGui::PushItemWidth(GenesisOperationEditorForNodes::sfGetMaxItemWidth("Subtraction Combo"));
-        if(ImGui::Combo("##Type", reinterpret_cast<int*>(&type), typeItems, sizeof(typeItems) / sizeof(*typeItems)))
-        {
-            Operation->SetType(type);
-        }
-        if(ImGui::InputScalar("##Value", ImGuiDataType_U32, &value, 0, 0, "%d"))
-        {
-            Operation->SetValue(value);
-        }
-        ImGui::PopItemWidth();
+        //ImGui::PushItemWidth(GenesisOperationEditorForNodes::sfGetMaxItemWidth("Subtraction Combo"));
+        //if(ImGui::Combo("##Type", reinterpret_cast<int*>(&type), typeItems, sizeof(typeItems) / sizeof(*typeItems)))
+        //{
+        //    Operation->SetType(type);
+        //}
+        //if(ImGui::InputScalar("##Value", ImGuiDataType_U32, &value, 0, 0, "%d"))
+        //{
+        //    Operation->SetValue(value);
+        //}
+        //ImGui::PopItemWidth();
         
-        ImNodes::BeginInputAttribute(OperationInformation.m_InputPinId);
+        ed::BeginPin(OperationInformation.m_InputPinId, ax::NodeEditor::PinKind::Input);
         ImGui::PushItemWidth(GenesisOperationEditorForNodes::sfGetMaxItemWidth("input"));
-        ImGui::TextUnformatted("Input");
+        ImGui::Text("Input %li", OperationInformation.m_InputPinId);
         ImGui::PopItemWidth();
-        ImNodes::EndInputAttribute();
+        ed::EndPin();
 
-        ImNodes::BeginOutputAttribute(OperationInformation.m_OutputPinId);
+        ed::BeginPin(OperationInformation.m_OutputPinId, ax::NodeEditor::PinKind::Output);
         ImGui::PushItemWidth(GenesisOperationEditorForNodes::sfGetMaxItemWidth("output"));
-        ImGui::TextUnformatted("Output");
+        ImGui::Text("Output %li", OperationInformation.m_OutputPinId);
         ImGui::PopItemWidth();
-        ImNodes::EndOutputAttribute();
+        ed::EndPin();
     }
 
 } // namespace genesis::editor

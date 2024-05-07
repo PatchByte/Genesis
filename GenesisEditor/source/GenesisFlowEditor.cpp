@@ -2,12 +2,15 @@
 #include "GenesisEditor/GenesisOperationsEditor.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
+#include "GenesisShared/GenesisPinTracker.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
-#include "imnodes.h"
-#include "imnodes_internal.h"
+#include "imgui_node_editor.h"
 #include <algorithm>
 #include <cmath>
+#include <utility>
+
+namespace ed = ax::NodeEditor;
 
 namespace genesis::editor
 {
@@ -27,14 +30,16 @@ namespace genesis::editor
 
     void GenesisFlowEditor::Initialize()
     {
-        m_Context = ImNodes::CreateContext();
+        ed::Config nodeEditorConfig = ed::Config();
 
-        ImNodesIO& io = ImNodes::GetIO();
-        io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
-        io.MultipleSelectModifier.Modifier = &ImGui::GetIO().KeyCtrl;
+        nodeEditorConfig.EnableSmoothZoom = true;
 
-        ImNodesStyle& style = ImNodes::GetStyle();
-        style.Flags |= ImNodesStyleFlags_GridLinesPrimary;
+        m_NodeEditorContext = ed::CreateEditor(&nodeEditorConfig);
+    }
+
+    void GenesisFlowEditor::Shutdown()
+    {
+        ed::DestroyEditor(m_NodeEditorContext);
     }
 
     void GenesisFlowEditor::Render()
@@ -102,9 +107,9 @@ namespace genesis::editor
             ImGui::EndMenuBar();
         }
 
-        ImNodes::SetCurrentContext(m_Context);
+        ed::SetCurrentEditor(m_NodeEditorContext);
 
-        ImNodes::BeginNodeEditor();
+        ed::Begin("MainEditor", ImVec2(-1, -1));
 
         for (auto currentIterator : m_Operations)
         {
@@ -112,116 +117,92 @@ namespace genesis::editor
 
             sfGetColorForOperationInformation(currentIterator.second->GetOperationInformation(), &normalColor, &brightColor);
 
-            ImNodes::PushColorStyle(ImNodesCol_TitleBar, normalColor);
-            ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, brightColor);
-            ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, brightColor);
+            // ImNodes::PushColorStyle(ImNodesCol_TitleBar, normalColor);
+            // ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, brightColor);
+            // ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, brightColor);
 
-            ImNodes::BeginNode(currentIterator.first);
+            ImGui::PushID(currentIterator.first);
+
+            ed::BeginNode(currentIterator.first);
             RenderNodeOperation(currentIterator.second);
-            ImNodes::EndNode();
+            ed::EndNode();
 
-            ImNodes::PopColorStyle();
-            ImNodes::PopColorStyle();
-            ImNodes::PopColorStyle();
+            ImGui::PopID();
         }
 
-        for (int i = 0; i < m_Links.size(); ++i)
+        for (auto currentIterator : m_Links)
         {
-            const std::pair<int, int> p = m_Links[i];
-            // in this case, we just use the array index of the link
-            // as the unique identifier
-            ImNodes::Link(i, p.first, p.second);
+            const std::pair<uintptr_t, uintptr_t> p = currentIterator.second;
+            ed::Link(currentIterator.first, p.first, p.second);
         }
 
-        if (ImGui::IsWindowFocused())
-        {
-            bool hasPressedDeleteKey = ImGui::IsKeyPressed(ImGuiKey_Delete);
-            bool hasPressedSpecialDebugKey = ImGui::IsKeyPressed(ImGuiKey_PageDown);
+        // Post-Actions
 
-            if (int numSelectedLinks = ImNodes::NumSelectedLinks(); numSelectedLinks > 0)
+        if (ed::BeginCreate())
+        {
+            ed::PinId startPinId, endPinId;
+            if(ed::QueryNewLink(&startPinId, &endPinId))
             {
-                int* selectedLinks = new int[numSelectedLinks];
+                utils::GenesisPinValue startPinParsed = startPinId.Get();
+                utils::GenesisPinValue endPinParsed = endPinId.Get();
 
-                ImNodes::GetSelectedLinks(selectedLinks);
-
-                if (hasPressedDeleteKey)
+                if(startPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::INPUT)
                 {
-                    for (int currentSelectedLinkIndex = 0; currentSelectedLinkIndex < numSelectedLinks; currentSelectedLinkIndex++)
-                    {
-                        m_Links.erase(selectedLinks[currentSelectedLinkIndex]);
-                    }
+                    ed::PinId carry = startPinId;
+                    startPinId = endPinId;
+                    endPinId = carry;
+
+                    startPinParsed = startPinId.Get();
+                    endPinParsed = endPinId.Get();
                 }
 
-                delete[] selectedLinks;
-            }
-
-            if (int numSelectedNodes = ImNodes::NumSelectedNodes(); numSelectedNodes > 0)
-            {
-                int* selectedNodes = new int[numSelectedNodes];
-
-                ImNodes::GetSelectedNodes(selectedNodes);
-
-                if (hasPressedDeleteKey)
+                if(startPinId && endPinId && startPinParsed.m_NodePinType == utils::GenesisPinType::INPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT)
                 {
-                    for (int currentSelectedNodeIndex = 0; currentSelectedNodeIndex < numSelectedNodes; currentSelectedNodeIndex++)
+                    if(ed::AcceptNewItem())
                     {
-                        this->RemoveOperationFromFlow(selectedNodes[currentSelectedNodeIndex]);
+                        m_Links.emplace(++m_CounterLinks, std::make_pair(startPinId.Get(), endPinId.Get()));
+                        m_TriggerCheck = true;
+                    }
+                }
+            }
+        }
+        ed::EndCreate();
+
+        if(ed::BeginDelete())
+        {
+            ed::LinkId deletedLinkId;
+
+            if (ed::QueryDeletedLink(&deletedLinkId))
+            {
+                printf("QueryDel\n");
+
+                if(ed::AcceptDeletedItem())
+                {
+                    if (m_Links.contains(deletedLinkId.Get()))
+                    {
+                        printf("Destroying: %li\n", deletedLinkId.Get());
+                        m_Links.erase(deletedLinkId.Get());
+                    }
+                    else
+                    {
+                        printf("Destroying failed: %li\n", deletedLinkId.Get());
                     }
 
                     m_TriggerCheck = true;
                 }
-
-                if (hasPressedSpecialDebugKey)
-                {
-                    for (int currentSelectedNodeIndex = 0; currentSelectedNodeIndex < numSelectedNodes; currentSelectedNodeIndex++)
-                    {
-                        for (operations::GenesisOperationId currentOperationId : this->CollectAllNodeLinkIdsToOtherNodesFromNode(selectedNodes[currentSelectedNodeIndex]))
-                        {
-                            ImNodes::SelectNode(currentOperationId);
-                        }
-                    }
-                }
-
-                delete[] selectedNodes;
             }
         }
+        ed::EndDelete();
 
-        ImNodes::EndNodeEditor();
+        ed::End();
 
-        {
-            int start_attr, end_attr;
-            if (ImNodes::IsLinkCreated(&start_attr, &end_attr))
-            {
-                m_Links.emplace(++m_CounterLinks, std::make_pair(start_attr, end_attr));
-                m_TriggerCheck = true;
-            }
-        }
-
-        {
-            int link_id;
-            if (ImNodes::IsLinkDestroyed(&link_id))
-            {
-                if (m_Links.contains(link_id))
-                {
-                    printf("Destroying: %i\n", link_id);
-                    m_Links.erase(link_id);
-                }
-                else
-                {
-                    printf("Destroying failed: %i\n", link_id);
-                }
-
-                m_TriggerCheck = true;
-            }
-        }
+        ed::SetCurrentEditor(nullptr);
     }
 
     void GenesisFlowEditor::RenderNodeOperation(operations::GenesisBaseOperation* Operation)
     {
-        ImNodes::BeginNodeTitleBar();
         ImGui::Text("%s %i", Operation->GetOperationName().data(), Operation->GetOperationId());
-        ImNodes::EndNodeTitleBar();
-
+        
         GenesisOperationEditorForNodes::sfRenderOperation(Operation);
     }
 

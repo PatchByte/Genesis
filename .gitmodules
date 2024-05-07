@@ -17,3 +17,6 @@
 [submodule "Vendors/fmt"]
 	path = Vendors/fmt
 	url = https://github.com/fmtlib/fmt.git
+[submodule "Vendors/imgui-node-editor"]
+	path = Vendors/imgui-node-editor
+	url = https://github.com/thedmd/imgui-node-editor

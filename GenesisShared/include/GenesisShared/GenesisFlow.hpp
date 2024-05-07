@@ -8,6 +8,7 @@
 #include "GenesisShared/GenesisLoadedFile.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <string>
@@ -19,7 +20,7 @@ namespace genesis
     {
     public:
         using sdFlowOperationsMap = std::map<operations::GenesisOperationId, operations::GenesisBaseOperation*>;
-        using sdFlowLinks = std::map<int, std::pair<int, int>>;
+        using sdFlowLinks = std::map<uintptr_t, std::pair<uintptr_t, uintptr_t>>;
         using sdOperationsVector = std::vector<operations::GenesisBaseOperation*>;
         using sdOperationIdsVector = std::vector<operations::GenesisOperationId>;
 

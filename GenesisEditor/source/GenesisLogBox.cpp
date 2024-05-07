@@ -4,7 +4,6 @@
 #include "fmt/format.h"
 #include "imgui.h"
 #include "imgui_internal.h"
-#include "imnodes.h"
 #include <utility>
 
 namespace genesis::utils
@@ -30,7 +29,7 @@ namespace genesis::utils
 
     void GenesisLogBox::Render()
     {
-        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImNodes::GetStyle().Colors[ImNodesCol_GridBackground]);
+        // ImGui::PushStyleColor(ImGuiCol_ChildBg, );
 
         if (ImGui::BeginChild("LogChild", ImVec2(-1, -1)))
         {

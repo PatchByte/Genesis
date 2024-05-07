@@ -90,8 +90,8 @@ namespace genesis::operations
         bool m_HasInputPin : 1;
         bool m_HasOutputPin : 1;
 
-        int m_InputPinId;
-        int m_OutputPinId;
+        uintptr_t m_InputPinId;
+        uintptr_t m_OutputPinId;
     };
 
     using GenesisOperationId = unsigned short;
@@ -125,8 +125,8 @@ namespace genesis::operations
         {
             GenesisOperationInformation operationInformation = {};
 
-            operationInformation.m_InputPinId = utils::GenesisPinValue(m_OperationId, 1).Get();
-            operationInformation.m_OutputPinId = utils::GenesisPinValue(m_OperationId, 2).Get();
+            operationInformation.m_InputPinId = utils::GenesisPinValue(m_OperationId, 1, utils::GenesisPinType::INPUT).Get();
+            operationInformation.m_OutputPinId = utils::GenesisPinValue(m_OperationId, 2, utils::GenesisPinType::OUTPUT).Get();
 
             return std::move(operationInformation);
         }

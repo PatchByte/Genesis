@@ -2,6 +2,7 @@
 #include "AshObjects/AshString.h"
 #include "GenesisShared/GenesisOperations.hpp"
 #include "Ash/AshResult.h"
+#include "GenesisShared/GenesisPinTracker.hpp"
 #include "mem/mem.h"
 #include "mem/pattern.h"
 
@@ -24,6 +25,7 @@ namespace genesis::operations
 
         information.m_IsFlowStartNode = true;
         information.m_DiscardsPreviousValue = true;
+        information.m_OutputPinId = utils::GenesisPinValue(m_OperationId, 1, utils::GenesisPinType::OUTPUT).Get();
 
         return std::move(information);
     }

@@ -7,7 +7,7 @@
 #include "GenesisShared/GenesisOperations.hpp"
 
 #include "imgui.h"
-#include "imnodes.h"
+#include "imgui_node_editor.h"
 
 namespace genesis::editor
 {
@@ -19,6 +19,7 @@ namespace genesis::editor
         ~GenesisFlowEditor();
 
         void Initialize();
+        void Shutdown();
         void Render();
         void RenderNodes();
         void RenderNodeOperation(operations::GenesisBaseOperation* Operation);
@@ -33,7 +34,7 @@ namespace genesis::editor
         ImGuiID m_DockNodeWindow;
         ImGuiID m_DockLogWindow;
 
-        ImNodesContext* m_Context;
+        ax::NodeEditor::EditorContext* m_NodeEditorContext;
 
         bool m_TriggerCheck;
     };
