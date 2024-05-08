@@ -94,7 +94,7 @@ namespace genesis::operations
         uintptr_t m_OutputPinId;
     };
 
-    using GenesisOperationId = unsigned short;
+    using GenesisOperationId = unsigned int;
 
     class GenesisBaseOperation : public ash::AshStreamableObject
     {

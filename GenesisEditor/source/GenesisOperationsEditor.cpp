@@ -11,7 +11,7 @@ namespace genesis::editor
         return smNodeMaxTakenWidth;
     }
 
-    void GenesisOperationEditorForNodes::sfRenderOperation(operations::GenesisBaseOperation* Operation)
+    void GenesisOperationEditorForNodes::sfRenderOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation)
     {
         operations::GenesisOperationInformation operationInformation = Operation->GetOperationInformation();
 
@@ -21,10 +21,10 @@ namespace genesis::editor
         case operations::GenesisOperationType::INVALID:
             return;
         case operations::GenesisOperationType::FIND_PATTERN:
-            sfRenderFindPatternOperation(dynamic_cast<operations::GenesisFindPatternOperation*>(Operation), operationInformation);
+            sfRenderFindPatternOperation(Builder, dynamic_cast<operations::GenesisFindPatternOperation*>(Operation), operationInformation);
             return;
         case operations::GenesisOperationType::MATH:
-            sfRenderMathOperation(dynamic_cast<operations::GenesisMathOperation*>(Operation), operationInformation);
+            sfRenderMathOperation(Builder, dynamic_cast<operations::GenesisMathOperation*>(Operation), operationInformation);
             break;
         }
     }

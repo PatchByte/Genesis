@@ -12,7 +12,7 @@ namespace ed = ax::NodeEditor;
 namespace genesis::editor
 {
 
-    void GenesisOperationEditorForNodes::sfRenderFindPatternOperation(operations::GenesisFindPatternOperation* Operation, const operations::GenesisOperationInformation& OperationInformation)
+    void GenesisOperationEditorForNodes::sfRenderFindPatternOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisFindPatternOperation* Operation, const operations::GenesisOperationInformation& OperationInformation)
     {
         std::string patternBuffer = Operation->GetPattern();
         
@@ -37,9 +37,9 @@ namespace genesis::editor
 
         //ImGui::PopItemWidth();
 
-        ed::BeginPin(OperationInformation.m_OutputPinId, ax::NodeEditor::PinKind::Output);
+        Builder.Output(OperationInformation.m_OutputPinId);
         ImGui::Text("Output");
-        ed::EndPin();
+        Builder.EndOutput();
     }
 
 } // namespace genesis::editor

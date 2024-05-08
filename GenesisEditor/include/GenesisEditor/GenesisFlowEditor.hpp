@@ -3,6 +3,7 @@
 
 #include "AshLogger/AshLogger.h"
 #include "GenesisEditor/GenesisLogBox.hpp"
+#include "GenesisEditor/GenesisNodeBuilder.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
 
@@ -22,7 +23,7 @@ namespace genesis::editor
         void Shutdown();
         void Render();
         void RenderNodes();
-        void RenderNodeOperation(operations::GenesisBaseOperation* Operation);
+        void RenderNodeOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation);
     
         static bool sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor, ImColor* OutputBrightColor);
     private:

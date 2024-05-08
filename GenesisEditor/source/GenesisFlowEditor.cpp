@@ -1,4 +1,5 @@
 #include "GenesisEditor/GenesisFlowEditor.hpp"
+#include "GenesisEditor/GenesisNodeBuilder.hpp"
 #include "GenesisEditor/GenesisOperationsEditor.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
@@ -82,7 +83,7 @@ namespace genesis::editor
 
     void GenesisFlowEditor::RenderNodes()
     {
-        if(m_TriggerCheck)
+        if (m_TriggerCheck)
         {
             m_LogBox.Clear();
 
@@ -98,11 +99,10 @@ namespace genesis::editor
             m_TriggerCheck = false;
         }
 
-        if(ImGui::BeginMenuBar())
+        if (ImGui::BeginMenuBar())
         {
-            if(ImGui::MenuItem("Organize"))
+            if (ImGui::MenuItem("Organize"))
             {
-                
             }
 
             ImGui::EndMenuBar();
@@ -110,7 +110,11 @@ namespace genesis::editor
 
         ed::SetCurrentEditor(m_NodeEditorContext);
 
+        ed::GetStyle().NodeRounding = 5.f;
+
         ed::Begin("MainEditor", ImVec2(-1, -1));
+
+        utils::GenesisNodeBuilder nodeBuilder = utils::GenesisNodeBuilder();
 
         for (auto currentIterator : m_Operations)
         {
@@ -124,9 +128,17 @@ namespace genesis::editor
 
             ImGui::PushID(currentIterator.first);
 
-            ed::BeginNode(currentIterator.first);
-            RenderNodeOperation(currentIterator.second);
-            ed::EndNode();
+            nodeBuilder.Begin(currentIterator.first);
+
+            nodeBuilder.Header("", normalColor);
+            ImGui::BeginGroup();
+            ImGui::Text("%s (%i)", currentIterator.second->GetOperationName().data(), currentIterator.first);
+            ImGui::Dummy({ 0.f, 2.f });
+            ImGui::EndGroup();
+            nodeBuilder.EndHeader();
+
+            RenderNodeOperation(nodeBuilder, currentIterator.second);
+            nodeBuilder.End();
 
             ImGui::PopID();
         }
@@ -142,12 +154,12 @@ namespace genesis::editor
         if (ed::BeginCreate())
         {
             ed::PinId startPinId, endPinId;
-            if(ed::QueryNewLink(&startPinId, &endPinId))
+            if (ed::QueryNewLink(&startPinId, &endPinId))
             {
                 utils::GenesisPinValue startPinParsed = startPinId.Get();
                 utils::GenesisPinValue endPinParsed = endPinId.Get();
 
-                if(startPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::INPUT)
+                if (startPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::INPUT)
                 {
                     ed::PinId carry = startPinId;
                     startPinId = endPinId;
@@ -157,9 +169,9 @@ namespace genesis::editor
                     endPinParsed = endPinId.Get();
                 }
 
-                if(startPinId && endPinId && startPinParsed.m_NodePinType == utils::GenesisPinType::INPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT)
+                if (startPinId && endPinId && startPinParsed.m_NodePinType == utils::GenesisPinType::INPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT)
                 {
-                    if(ed::AcceptNewItem())
+                    if (ed::AcceptNewItem())
                     {
                         m_Links.emplace(++m_CounterLinks, std::make_pair(startPinId.Get(), endPinId.Get()));
                         m_TriggerCheck = true;
@@ -169,19 +181,16 @@ namespace genesis::editor
         }
         ed::EndCreate();
 
-        if(ed::BeginDelete())
+        if (ed::BeginDelete())
         {
             ed::LinkId deletedLinkId;
 
             if (ed::QueryDeletedLink(&deletedLinkId))
             {
-                printf("QueryDel\n");
-
-                if(ed::AcceptDeletedItem())
+                if (ed::AcceptDeletedItem())
                 {
                     if (m_Links.contains(deletedLinkId.Get()))
                     {
-                        printf("Destroying: %li\n", deletedLinkId.Get());
                         m_Links.erase(deletedLinkId.Get());
                     }
                     else
@@ -199,38 +208,37 @@ namespace genesis::editor
 
             bool actionDelete = ImGui::IsKeyPressed(ImGuiKey_Delete);
 
-            if(auto numSelectedLinks = ed::GetSelectedLinks(nullptr, 0); numSelectedLinks > 0)
+            if (auto numSelectedLinks = ed::GetSelectedLinks(nullptr, 0); numSelectedLinks > 0)
             {
                 ed::LinkId* selectedLinks = new ed::LinkId[numSelectedLinks];
                 ed::GetSelectedLinks(selectedLinks, numSelectedLinks);
 
-                for(int currentSelectedLinkIndex = 0; currentSelectedLinkIndex < numSelectedLinks; currentSelectedLinkIndex++)
+                for (int currentSelectedLinkIndex = 0; currentSelectedLinkIndex < numSelectedLinks; currentSelectedLinkIndex++)
                 {
                     ed::LinkId selectedLink = selectedLinks[currentSelectedLinkIndex];
 
-                    if(actionDelete)
+                    if (actionDelete)
                     {
                         m_Links.erase(selectedLink.Get());
                     }
                 }
             }
 
-            if(auto numSelectedNodes = ed::GetSelectedNodes(nullptr, 0); numSelectedNodes > 0)
+            if (auto numSelectedNodes = ed::GetSelectedNodes(nullptr, 0); numSelectedNodes > 0)
             {
                 ed::NodeId* selectedNodes = new ed::NodeId[numSelectedNodes];
                 ed::GetSelectedNodes(selectedNodes, numSelectedNodes);
 
-                for(int currentSelectedNodeIndex = 0; currentSelectedNodeIndex < numSelectedNodes; currentSelectedNodeIndex++)
+                for (int currentSelectedNodeIndex = 0; currentSelectedNodeIndex < numSelectedNodes; currentSelectedNodeIndex++)
                 {
                     ed::NodeId selectedNode = selectedNodes[currentSelectedNodeIndex];
 
-                    if(actionDelete)
+                    if (actionDelete)
                     {
                         RemoveOperationFromFlow(selectedNode.Get());
                     }
                 }
             }
-
         }
 
         ed::End();
@@ -238,11 +246,9 @@ namespace genesis::editor
         ed::SetCurrentEditor(nullptr);
     }
 
-    void GenesisFlowEditor::RenderNodeOperation(operations::GenesisBaseOperation* Operation)
+    void GenesisFlowEditor::RenderNodeOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation)
     {
-        ImGui::Text("%s %i", Operation->GetOperationName().data(), Operation->GetOperationId());
-        
-        GenesisOperationEditorForNodes::sfRenderOperation(Operation);
+        GenesisOperationEditorForNodes::sfRenderOperation(Builder, Operation);
     }
 
     bool GenesisFlowEditor::sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor, ImColor* OutputBrightColor)

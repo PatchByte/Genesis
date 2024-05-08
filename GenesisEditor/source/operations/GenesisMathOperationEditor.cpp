@@ -13,7 +13,7 @@ namespace ed = ax::NodeEditor;
 namespace genesis::editor
 {
 
-    void GenesisOperationEditorForNodes::sfRenderMathOperation(operations::GenesisMathOperation* Operation, const operations::GenesisOperationInformation& OperationInformation)
+    void GenesisOperationEditorForNodes::sfRenderMathOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisMathOperation* Operation, const operations::GenesisOperationInformation& OperationInformation)
     {
         static const char* typeItems[] = {
             "Nothing (Invalid)",
@@ -23,6 +23,8 @@ namespace genesis::editor
 
         operations::GenesisMathOperation::Type type = Operation->GetType();
         unsigned long long value = Operation->GetValue();
+
+        Builder.Middle();
         
         ImGui::PushItemWidth(200);
         // if(ImGui::Combo("##Type", reinterpret_cast<int*>(&type), typeItems, sizeof(typeItems) / sizeof(*typeItems)))
@@ -45,17 +47,17 @@ namespace genesis::editor
         }
         ImGui::PopItemWidth();
         
-        ed::BeginPin(OperationInformation.m_InputPinId, ax::NodeEditor::PinKind::Input);
+        Builder.Input(OperationInformation.m_InputPinId);
         ImGui::PushItemWidth(GenesisOperationEditorForNodes::sfGetMaxItemWidth("input"));
         ImGui::Text("Input");
         ImGui::PopItemWidth();
-        ed::EndPin();
+        Builder.EndInput();
 
-        ed::BeginPin(OperationInformation.m_OutputPinId, ax::NodeEditor::PinKind::Output);
+        Builder.Output(OperationInformation.m_OutputPinId);
         ImGui::PushItemWidth(GenesisOperationEditorForNodes::sfGetMaxItemWidth("output"));
         ImGui::Text("Output");
         ImGui::PopItemWidth();
-        ed::EndPin();
+        Builder.EndOutput();
     }
 
 } // namespace genesis::editor
