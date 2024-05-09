@@ -1,9 +1,12 @@
 #include "GenesisEditor/GenesisFlowEditor.hpp"
+#include "Ash/AshBuffer.h"
+#include "Ash/AshStream.h"
 #include "GenesisEditor/GenesisNodeBuilder.hpp"
 #include "GenesisEditor/GenesisOperationsEditor.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
 #include "GenesisShared/GenesisPinTracker.hpp"
+#include "ImGuiFileDialog.h"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "imgui_node_editor.h"
@@ -101,8 +104,24 @@ namespace genesis::editor
 
         if (ImGui::BeginMenuBar())
         {
-            if (ImGui::MenuItem("Organize"))
+            if (ImGui::BeginMenu("File"))
             {
+
+                if (ImGui::MenuItem("Save", nullptr, false, m_Operations.size() > 0))
+                {
+                    IGFD::FileDialogConfig config;
+                    config.path = ".";
+                    ImGuiFileDialog::Instance()->OpenDialog("SaveFileGenesisDialog", "Save File", ".gnss", config);
+                }
+
+                if (ImGui::MenuItem("Load"))
+                {
+                    IGFD::FileDialogConfig config;
+                    config.path = ".";
+                    ImGuiFileDialog::Instance()->OpenDialog("LoadFileGenesisDialog", "Load File", ".gnss", config);
+                }
+
+                ImGui::EndMenu();
             }
 
             ImGui::EndMenuBar();
@@ -122,10 +141,6 @@ namespace genesis::editor
 
             sfGetColorForOperationInformation(currentIterator.second->GetOperationInformation(), &normalColor, &brightColor);
 
-            // ImNodes::PushColorStyle(ImNodesCol_TitleBar, normalColor);
-            // ImNodes::PushColorStyle(ImNodesCol_TitleBarHovered, brightColor);
-            // ImNodes::PushColorStyle(ImNodesCol_TitleBarSelected, brightColor);
-
             ImGui::PushID(currentIterator.first);
 
             nodeBuilder.Begin(currentIterator.first);
@@ -133,7 +148,7 @@ namespace genesis::editor
             nodeBuilder.Header("", normalColor);
             ImGui::BeginGroup();
             ImGui::Text("%s (%i)", currentIterator.second->GetOperationName().data(), currentIterator.first);
-            ImGui::Dummy({ 0.f, 2.f });
+            ImGui::Dummy({0.f, 2.f});
             ImGui::EndGroup();
             nodeBuilder.EndHeader();
 
@@ -221,7 +236,7 @@ namespace genesis::editor
 
                     if (actionDelete)
                     {
-                       // m_Links.erase(selectedLink.Get());
+                        // m_Links.erase(selectedLink.Get());
                     }
                 }
             }
@@ -246,6 +261,72 @@ namespace genesis::editor
         ed::End();
 
         ed::SetCurrentEditor(nullptr);
+
+        // Post Actions
+
+        if (ImGuiFileDialog::Instance()->Display("SaveFileGenesisDialog"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+
+                ash::AshStreamExpandableExportBuffer expandableExportBuffer = ash::AshStreamExpandableExportBuffer();
+
+                if (this->Export(&expandableExportBuffer) == false)
+                {
+                    m_Logger.Log("Error", "Failed to export");
+                }
+
+                if (auto resBuffer = expandableExportBuffer.MakeCopyOfBuffer(); resBuffer)
+                {
+                    if (auto res = resBuffer->WriteToFile(filePathName); res.WasSuccessful())
+                    {
+                        m_Logger.Log("Info", "Saved to {}!", filePathName);
+                    }
+                    else
+                    {
+                        m_Logger.Log("Error", "Failed to save to {}!", filePathName);
+                    }
+                    delete resBuffer;
+                }
+            }
+
+            // close
+            ImGuiFileDialog::Instance()->Close();
+        }
+
+        if (ImGuiFileDialog::Instance()->Display("LoadFileGenesisDialog"))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+                std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+
+                ash::AshBuffer* fileBuffer = new ash::AshBuffer();
+
+                if (auto res = fileBuffer->ReadFromFile(filePathName); res.HasError())
+                {
+                    m_Logger.Log("Error", "Failed to load from {}!", filePathName);
+                }
+
+                ash::AshStreamStaticBuffer expandableExportBuffer = ash::AshStreamStaticBuffer(fileBuffer, ash::AshStreamMode::READ);
+
+                if (this->Import(&expandableExportBuffer) == false)
+                {
+                    m_Logger.Log("Error", "Failed to load");
+                }
+                else
+                {
+                    m_Logger.Log("Info", "Loaded from {}!", filePathName);
+                }
+
+                delete fileBuffer;
+            }
+
+            // close
+            ImGuiFileDialog::Instance()->Close();
+        }
     }
 
     void GenesisFlowEditor::RenderNodeOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation)

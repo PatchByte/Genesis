@@ -5,6 +5,8 @@
 #include "GenesisShared/GenesisPinTracker.hpp"
 #include "fmt/format.h"
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <functional>
 #include <utility>
@@ -23,13 +25,7 @@ namespace genesis
 
     GenesisFlow::~GenesisFlow()
     {
-        for(auto currentIterator : m_Operations)
-        {
-            delete currentIterator.second;
-        }
-
-        m_Operations.clear();
-        m_Links.clear();
+        this->Reset();
     }
 
     operations::GenesisOperationId GenesisFlow::AddOperationToFlow(operations::GenesisBaseOperation* Operation)
@@ -164,9 +160,26 @@ namespace genesis
         exit(-1);
     }
 
-    bool GenesisFlow::Import(ash::AshStream* Stream)
+    void GenesisFlow::Reset()
     {
+        m_Name = "";
+        m_CounterOperations = 1;
+        m_CounterLinks = 0;
+
+        for(auto currentIterator : m_Operations)
+        {
+            delete currentIterator.second;
+        }
+
+        m_Operations.clear();
+        m_Links.clear();
+    }
+
+    bool GenesisFlow::Import(ash::AshStream* Stream)
+    {   
         ash::objects::AshAsciiString flowNameString = ash::objects::AshAsciiString();
+
+        this->Reset();
 
         if(flowNameString.Import(Stream) == false)
         {
@@ -174,15 +187,84 @@ namespace genesis
         }
 
         m_Name = flowNameString.GetText();
+        m_CounterOperations = Stream->Read<operations::GenesisOperationId>();
+        m_CounterLinks = Stream->Read<int>();
 
-        return false;
+        {
+            size_t operationsSize = Stream->Read<size_t>();
+
+            for(size_t currentOperationIndex = 0; currentOperationIndex < operationsSize; currentOperationIndex++)
+            {
+                operations::GenesisOperationId currentOperationId = Stream->Read<operations::GenesisOperationId>();
+                operations::GenesisBaseOperation* currentOperation = operations::GenesisOperationUtils::sfCreateOperationByType(static_cast<operations::GenesisOperationType>(Stream->Read<int>()));
+
+                if(currentOperation == nullptr)
+                {
+                    std::cout << "Failed. currentOperation is nullptr." << std::endl;
+                    std::exit(-1);
+                }
+
+                if(currentOperation->Import(Stream) == false)
+                {
+                    std::cout << "Failed to import currentOperation" << std::endl;
+                    std::exit(-1);
+                    return false;
+                }
+
+                currentOperation->SetOperationId(currentOperationId);
+
+                m_Operations.emplace(currentOperationId, currentOperation);
+            }
+        }
+
+        {
+            size_t linksSize = Stream->Read<size_t>();
+
+            for(size_t currentLinkIndex = 0; currentLinkIndex < linksSize; currentLinkIndex++)
+            {
+                uintptr_t currentLinkKey = Stream->Read<uintptr_t>();
+
+                uintptr_t currentLinkValueLeft = Stream->Read<uintptr_t>();
+                uintptr_t currentLinkValueRight = Stream->Read<uintptr_t>();
+
+                m_Links.emplace(currentLinkKey, std::make_pair(currentLinkValueLeft, currentLinkValueRight));
+            }
+        }
+
+        return Stream->IsOkay();
     }
 
     bool GenesisFlow::Export(ash::AshStream* Stream)
     {
         ash::objects::AshAsciiString(m_Name).Export(Stream);
 
-        return false;
+        Stream->Write<operations::GenesisOperationId>(m_CounterOperations);
+        Stream->Write<int>(m_CounterLinks);
+
+        Stream->Write<size_t>(m_Operations.size());
+
+        for(auto currentOperationIterator : m_Operations)
+        {
+            Stream->Write<operations::GenesisOperationId>(currentOperationIterator.first);
+            Stream->Write<int>(static_cast<int>(currentOperationIterator.second->GetOperationType()));
+
+            if(currentOperationIterator.second->Export(Stream) == false)
+            {
+                std::cout << "Failed to export currentOperationIterator." << std::endl;
+                return false;
+            }
+        }
+
+        Stream->Write<size_t>(m_Links.size());
+
+        for(auto currentLinkIterator : m_Links)
+        {
+            Stream->Write<uintptr_t>(currentLinkIterator.first);
+            Stream->Write<uintptr_t>(currentLinkIterator.second.first);
+            Stream->Write<uintptr_t>(currentLinkIterator.second.second);
+        }
+
+        return Stream->IsOkay();
     }
 
 }

@@ -52,7 +52,7 @@ namespace genesis::operations
             return false;
         }
 
-        m_Type = static_cast<GenesisMathOperation::Type>(Stream->Read<unsigned char>());
+        m_Type = static_cast<GenesisMathOperation::Type>(Stream->Read<int>());
         m_Value = Stream->Read<unsigned long long>();
 
         return Stream->IsOkay();
@@ -61,7 +61,7 @@ namespace genesis::operations
     bool GenesisMathOperation::Export(ash::AshStream* Stream)
     {
         Stream->Write(smGenesisMathOperationHeader);
-        Stream->Write(static_cast<unsigned char>(m_Type));
+        Stream->Write(static_cast<int>(m_Type));
         Stream->Write(m_Value);
 
         return Stream->IsOkay();

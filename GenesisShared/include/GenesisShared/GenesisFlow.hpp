@@ -38,6 +38,7 @@ namespace genesis
 
         ash::AshResult CheckIfFlowIsRunnable();
 
+        void Reset();
         bool Import(ash::AshStream* Stream);
         bool Export(ash::AshStream* Stream);
     protected:
