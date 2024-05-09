@@ -1,5 +1,6 @@
 #include "GenesisShared/GenesisFlow.hpp"
 #include "Ash/AshResult.h"
+#include "AshObjects/AshBufferPlug.h"
 #include "AshObjects/AshString.h"
 #include "GenesisShared/GenesisOperations.hpp"
 #include "GenesisShared/GenesisPinTracker.hpp"
@@ -20,7 +21,8 @@ namespace genesis
         m_Operations(),
         m_CounterLinks(0),
         m_CounterOperations(1),
-        m_Links()
+        m_Links(),
+        m_ReservedBufferGui()
     {}
 
     GenesisFlow::~GenesisFlow()
@@ -173,6 +175,8 @@ namespace genesis
 
         m_Operations.clear();
         m_Links.clear();
+
+        m_ReservedBufferGui.ReleaseMemory();
     }
 
     bool GenesisFlow::Import(ash::AshStream* Stream)
@@ -231,6 +235,25 @@ namespace genesis
             }
         }
 
+        ash::objects::AshDataBufferPlug reservedBufferGuiPlug = ash::objects::AshDataBufferPlug();
+
+        if(reservedBufferGuiPlug.Import(Stream) == false)
+        {
+            std::cout << "Failed to import reservedBufferGuiPlug." << std::endl;
+            return false;
+        }
+
+        if(auto res = reservedBufferGuiPlug.GetBuffer(); res)
+        {
+            printf("%lli\n", res->GetSize());
+            m_ReservedBufferGui.CopyAshBufferFromPointer(res);
+            delete res;
+        }
+        else
+        {
+            printf("Nobf\n");
+        }
+
         return Stream->IsOkay();
     }
 
@@ -263,6 +286,8 @@ namespace genesis
             Stream->Write<uintptr_t>(currentLinkIterator.second.first);
             Stream->Write<uintptr_t>(currentLinkIterator.second.second);
         }
+
+        ash::objects::AshDataBufferPlug(&m_ReservedBufferGui).Export(Stream);
 
         return Stream->IsOkay();
     }

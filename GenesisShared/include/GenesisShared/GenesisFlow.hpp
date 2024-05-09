@@ -27,7 +27,11 @@ namespace genesis
         GenesisFlow();
         ~GenesisFlow();
 
-        std::string GetFlowName() { return m_Name; }
+        std::string GetFlowName()
+        {
+            return m_Name;
+        }
+
         ash::AshCustomResult<unsigned long long> ProcessFlow(common::GenesisLoadedFile* LoadedFile);
 
         operations::GenesisOperationId AddOperationToFlow(operations::GenesisBaseOperation* Operation);
@@ -38,9 +42,10 @@ namespace genesis
 
         ash::AshResult CheckIfFlowIsRunnable();
 
-        void Reset();
-        bool Import(ash::AshStream* Stream);
-        bool Export(ash::AshStream* Stream);
+        virtual void Reset();
+        bool Import(ash::AshStream* Stream) override;
+        bool Export(ash::AshStream* Stream) override;
+
     protected:
         std::string m_Name;
         operations::GenesisOperationId m_CounterOperations;
@@ -48,8 +53,11 @@ namespace genesis
 
         sdFlowOperationsMap m_Operations;
         sdFlowLinks m_Links;
+
+        // This is a reserved buffer for the GUI implementation.
+        ash::AshBuffer m_ReservedBufferGui;
     };
 
-}
+} // namespace genesis
 
 #endif // !_GENESISFLOW_HPP

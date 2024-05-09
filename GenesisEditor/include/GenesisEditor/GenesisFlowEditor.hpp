@@ -9,6 +9,7 @@
 
 #include "imgui.h"
 #include "imgui_node_editor.h"
+#include <map>
 
 namespace genesis::editor
 {
@@ -26,6 +27,10 @@ namespace genesis::editor
         void RenderNodeOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation);
     
         static bool sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor, ImColor* OutputBrightColor);
+
+        void Reset() override;
+        bool Import(ash::AshStream* Stream) override;
+        bool Export(ash::AshStream* Stream) override;
     private:
         ash::AshLogger m_Logger;
         utils::GenesisLogBox m_LogBox;
@@ -36,8 +41,10 @@ namespace genesis::editor
         ImGuiID m_DockLogWindow;
 
         ax::NodeEditor::EditorContext* m_NodeEditorContext;
+        std::map<uintptr_t, std::string> m_NodeEditorSavedStates;
 
         bool m_TriggerCheck;
+
     };
 
 }

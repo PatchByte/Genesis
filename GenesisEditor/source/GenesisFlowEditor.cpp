@@ -1,6 +1,7 @@
 #include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "Ash/AshBuffer.h"
 #include "Ash/AshStream.h"
+#include "AshObjects/AshString.h"
 #include "GenesisEditor/GenesisNodeBuilder.hpp"
 #include "GenesisEditor/GenesisOperationsEditor.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
@@ -38,6 +39,36 @@ namespace genesis::editor
         ed::Config nodeEditorConfig = ed::Config();
 
         nodeEditorConfig.EnableSmoothZoom = true;
+        nodeEditorConfig.UserPointer = this;
+
+        nodeEditorConfig.LoadNodeSettings = [](ed::NodeId NodeId, char* Data, void* UserPointerUnCast) -> size_t
+        {
+            GenesisFlowEditor* userPointer = static_cast<GenesisFlowEditor*>(UserPointerUnCast);
+    
+            if(userPointer->m_NodeEditorSavedStates.contains(NodeId.Get()) == false)
+            {
+                return 0;
+            }
+
+            if(Data)
+            {
+                memcpy(Data, userPointer->m_NodeEditorSavedStates.at(NodeId.Get()).data(), userPointer->m_NodeEditorSavedStates.at(NodeId.Get()).size());
+            }
+
+            return userPointer->m_NodeEditorSavedStates.at(NodeId.Get()).size();
+        };
+
+        nodeEditorConfig.SaveNodeSettings = [](ed::NodeId NodeId, const char* Data, size_t Size, ed::SaveReasonFlags Reason, void* UserPointerUnCast) -> bool
+        {
+            GenesisFlowEditor* userPointer = static_cast<GenesisFlowEditor*>(UserPointerUnCast);
+
+            std::string state = "";
+            state.assign(Data, Size);
+
+            userPointer->m_NodeEditorSavedStates.emplace(NodeId.Get(), state);
+
+            return true;
+        };
 
         m_NodeEditorContext = ed::CreateEditor(&nodeEditorConfig);
     }
@@ -369,6 +400,74 @@ namespace genesis::editor
         OutputBrightColor->Value.w = 1.f;
 
         return true;
+    }
+
+    // Obligatory Save/Load stuff
+
+    void GenesisFlowEditor::Reset()
+    {
+        m_NodeEditorSavedStates.clear();
+
+        GenesisFlow::Reset();
+    }
+
+    bool GenesisFlowEditor::Import(ash::AshStream* Stream)
+    {
+        bool res = GenesisFlow::Import(Stream);
+
+        if(res)
+        {
+            ash::AshStreamStaticBuffer reservedBufferGuiStream = ash::AshStreamStaticBuffer(&m_ReservedBufferGui, ash::AshStreamMode::READ);
+
+            size_t nodeStatesSize = reservedBufferGuiStream.Read<size_t>();
+
+            for(size_t currentNodeStateIndex = 0; currentNodeStateIndex < nodeStatesSize; currentNodeStateIndex++)
+            {
+                uintptr_t currentNodeStateId = reservedBufferGuiStream.Read<uintptr_t>();
+                ash::objects::AshAsciiString currentNodeDataString = ash::objects::AshAsciiString();
+
+                if(currentNodeDataString.Import(&reservedBufferGuiStream) == false)
+                {
+                    std::cout << "Failed to import currentNodeDataString" << std::endl;
+                    return false;
+                }
+
+                m_NodeEditorSavedStates.emplace(currentNodeStateId, currentNodeDataString.GetText());
+            }
+        }
+
+        for(auto currentIterator : m_NodeEditorSavedStates)
+        {
+            auto currentContext = ed::GetCurrentEditor();
+            ed::SetCurrentEditor(m_NodeEditorContext);
+            ed::RestoreNodeState(currentIterator.first);
+            ed::SetCurrentEditor(currentContext);
+        }
+
+        return res;
+    }
+
+    bool GenesisFlowEditor::Export(ash::AshStream* Stream)
+    {
+        {
+            ash::AshStreamExpandableExportBuffer reservedBufferGuiStream = ash::AshStreamExpandableExportBuffer();
+
+            reservedBufferGuiStream.Write<size_t>(m_NodeEditorSavedStates.size());
+
+            for(auto currentIterator : m_NodeEditorSavedStates)
+            {
+                reservedBufferGuiStream.Write(currentIterator.first);
+                ash::objects::AshAsciiString(currentIterator.second).Export(&reservedBufferGuiStream);
+            }
+
+            if(auto res = reservedBufferGuiStream.MakeCopyOfBuffer(); res)
+            {
+                m_ReservedBufferGui.CopyAshBufferFromPointer(res);
+                delete res;
+            }
+        }
+
+        return GenesisFlow::Export(Stream);   
     }
 
 } // namespace genesis::editor
