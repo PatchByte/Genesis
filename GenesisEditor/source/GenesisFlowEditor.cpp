@@ -159,7 +159,7 @@ namespace genesis::editor
                 utils::GenesisPinValue startPinParsed = startPinId.Get();
                 utils::GenesisPinValue endPinParsed = endPinId.Get();
 
-                if (startPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::INPUT)
+                if (startPinParsed.m_NodePinType == utils::GenesisPinType::INPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT)
                 {
                     ed::PinId carry = startPinId;
                     startPinId = endPinId;
@@ -169,11 +169,13 @@ namespace genesis::editor
                     endPinParsed = endPinId.Get();
                 }
 
-                if (startPinId && endPinId && startPinParsed.m_NodePinType == utils::GenesisPinType::INPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT)
+                if (startPinId && endPinId && startPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::INPUT)
                 {
                     if (ed::AcceptNewItem())
                     {
-                        m_Links.emplace(++m_CounterLinks, std::make_pair(startPinId.Get(), endPinId.Get()));
+                        ax::NodeEditor::LinkId linkId = ++m_CounterLinks;
+
+                        m_Links.emplace(linkId, std::make_pair(startPinId.Get(), endPinId.Get()));
                         m_TriggerCheck = true;
                     }
                 }
@@ -219,7 +221,7 @@ namespace genesis::editor
 
                     if (actionDelete)
                     {
-                        m_Links.erase(selectedLink.Get());
+                       // m_Links.erase(selectedLink.Get());
                     }
                 }
             }
