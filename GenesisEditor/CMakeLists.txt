@@ -14,6 +14,11 @@ target_link_libraries(${PROJECT_NAME} PUBLIC Ash::Ash AshLogger::AshLogger glfw 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
+# Because almost everything that microsoft produces is garbage that is being accepted by society because everyone uses it
+if(MSVC)
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${Vulkan_INCLUDE_DIR})
+endif(MSVC)
+
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory

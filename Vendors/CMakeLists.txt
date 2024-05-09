@@ -12,8 +12,6 @@ if(GENESIS_BUILD_GUI)
     # If you this is missing please install: https://vulkan.lunarg.com/sdk/home
     find_package(Vulkan REQUIRED)
 
-    include_directories("${Vulkan_INCLUDE_DIR}")
-
     include("imgui.cmake")
     include("imgui-node-editor.cmake")
     include("imgui-file-dialog.cmake")
