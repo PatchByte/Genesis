@@ -48,7 +48,7 @@ namespace genesis::utils
             ImGui::EndChild();
         }
 
-        ImGui::PopStyleColor();
+        //ImGui::PopStyleColor();
     }
 
     void GenesisLogBox::Clear()

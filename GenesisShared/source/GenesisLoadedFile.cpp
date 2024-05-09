@@ -115,7 +115,7 @@ namespace genesis::common
 
     Address GenesisLoadedFile::TranslateVirtualAddressToImageOffset(Address VirtualAddress)
     {
-        return VirtualAddress - reinterpret_cast<Address>(m_OptionalHeader->ImageBase);
+        return VirtualAddress - m_OptionalHeader->ImageBase;
     }
 
     windows::IMAGE_SECTION_HEADER* GenesisLoadedFile::GetSectionInWhichFileOffsetResides(Address FileOffset)
