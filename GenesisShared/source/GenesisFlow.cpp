@@ -17,7 +17,6 @@ namespace genesis
 {
 
     GenesisFlow::GenesisFlow():
-        m_Name(),
         m_Operations(),
         m_CounterLinks(0),
         m_CounterOperations(1),
@@ -164,7 +163,6 @@ namespace genesis
 
     void GenesisFlow::Reset()
     {
-        m_Name = "";
         m_CounterOperations = 1;
         m_CounterLinks = 0;
 
@@ -190,7 +188,6 @@ namespace genesis
             return false;
         }
 
-        m_Name = flowNameString.GetText();
         m_CounterOperations = Stream->Read<operations::GenesisOperationId>();
         m_CounterLinks = Stream->Read<int>();
 
@@ -245,22 +242,14 @@ namespace genesis
 
         if(auto res = reservedBufferGuiPlug.GetBuffer(); res)
         {
-            printf("%lli\n", res->GetSize());
             m_ReservedBufferGui.CopyAshBufferFromPointer(res);
             delete res;
         }
-        else
-        {
-            printf("Nobf\n");
-        }
-
         return Stream->IsOkay();
     }
 
     bool GenesisFlow::Export(ash::AshStream* Stream)
     {
-        ash::objects::AshAsciiString(m_Name).Export(Stream);
-
         Stream->Write<operations::GenesisOperationId>(m_CounterOperations);
         Stream->Write<int>(m_CounterLinks);
 

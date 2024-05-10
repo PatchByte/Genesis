@@ -27,11 +27,6 @@ namespace genesis
         GenesisFlow();
         ~GenesisFlow();
 
-        std::string GetFlowName()
-        {
-            return m_Name;
-        }
-
         ash::AshCustomResult<unsigned long long> ProcessFlow(common::GenesisLoadedFile* LoadedFile);
 
         operations::GenesisOperationId AddOperationToFlow(operations::GenesisBaseOperation* Operation);
@@ -47,7 +42,6 @@ namespace genesis
         bool Export(ash::AshStream* Stream) override;
 
     protected:
-        std::string m_Name;
         operations::GenesisOperationId m_CounterOperations;
         int m_CounterLinks;
 
