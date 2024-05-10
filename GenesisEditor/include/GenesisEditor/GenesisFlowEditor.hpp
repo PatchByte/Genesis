@@ -26,7 +26,7 @@ namespace genesis::editor
         void RenderNodes();
         void RenderNodeOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation);
     
-        static bool sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor, ImColor* OutputBrightColor);
+        static bool sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor);
 
         void Reset() override;
         bool Import(ash::AshStream* Stream) override;

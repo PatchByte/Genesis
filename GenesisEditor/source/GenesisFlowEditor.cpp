@@ -168,9 +168,9 @@ namespace genesis::editor
 
         for (auto currentIterator : m_Operations)
         {
-            ImColor normalColor = ImColor(), brightColor = ImColor();
+            ImColor normalColor = ImColor();
 
-            sfGetColorForOperationInformation(currentIterator.second->GetOperationInformation(), &normalColor, &brightColor);
+            sfGetColorForOperationInformation(currentIterator.second->GetOperationInformation(), &normalColor);
 
             ImGui::PushID(currentIterator.first);
 
@@ -365,7 +365,7 @@ namespace genesis::editor
         GenesisOperationEditorForNodes::sfRenderOperation(Builder, Operation);
     }
 
-    bool GenesisFlowEditor::sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor, ImColor* OutputBrightColor)
+    bool GenesisFlowEditor::sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor)
     {
         float nH = 183.f;
 
@@ -392,12 +392,7 @@ namespace genesis::editor
 
         ImGui::ColorConvertHSVtoRGB(h, s, v, OutputNormalColor->Value.x, OutputNormalColor->Value.y, OutputNormalColor->Value.z);
 
-        v = 89.f / 100.f;
-
-        ImGui::ColorConvertHSVtoRGB(h, s, v, OutputBrightColor->Value.x, OutputBrightColor->Value.y, OutputBrightColor->Value.z);
-
         OutputNormalColor->Value.w = 1.f;
-        OutputBrightColor->Value.w = 1.f;
 
         return true;
     }
