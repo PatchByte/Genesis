@@ -1,6 +1,7 @@
 #ifndef _GENESISOUTPUT_HPP
 #define _GENESISOUTPUT_HPP
 
+#include "Ash/AshResult.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -74,11 +75,25 @@ namespace genesis::output
     class GenesisOutputClass
     {
     public:
-        GenesisOutputClass();
-        ~GenesisOutputClass();
+        GenesisOutputClass() = default;
+        ~GenesisOutputClass() = default;
+
+        ash::AshResult AddVirtualFunctions(GenesisOutputClassVirtualFunction VirtualFunction);
+        ash::AshResult AddMember(GenesisOutputClassMember Member);
+
+        inline const std::map<std::string, GenesisOutputClassVirtualFunction>& GetVirtualFunctions()
+        {
+            return m_VirtualFunctions;
+        }
+
+        inline const std::map<std::string, GenesisOutputClassMember>& GetMembers()
+        {
+            return m_Members;
+        }
+
     private:
-        std::map<std::string, GenesisOutputClassVirtualFunction*> m_VirtualFunctions;
-        std::map<std::string, GenesisOutputClassMember*> m_Members;
+        std::map<std::string, GenesisOutputClassVirtualFunction> m_VirtualFunctions;
+        std::map<std::string, GenesisOutputClassMember> m_Members;
     };
 
 } // namespace genesis::output
