@@ -1,4 +1,5 @@
 #include "GenesisShared/GenesisOutput.hpp"
+#include <vector>
 
 namespace genesis::output
 {
@@ -25,6 +26,47 @@ namespace genesis::output
         m_Members.emplace(Member.GetName(), Member);
 
         return ash::AshResult(true);
+    }
+
+    // GenesisOutputData
+
+    GenesisOutputData::GenesisOutputData()
+    {
+    }
+
+    GenesisOutputData::~GenesisOutputData()
+    {
+        for (auto currentIterator : m_Classes)
+        {
+            delete currentIterator.second;
+        }
+
+        m_Classes.clear();
+    }
+
+    GenesisOutputClass* GenesisOutputData::GetOrCreateClass(std::string Name)
+    {
+        if (m_Classes.contains(Name))
+        {
+            return m_Classes.at(Name);
+        }
+
+        GenesisOutputClass* outputClass = new GenesisOutputClass();
+
+        m_Classes.emplace(Name, outputClass);
+        return outputClass;
+    }
+
+    std::vector<std::string> GenesisOutputData::GetAllAvailableClassNames()
+    {
+        std::vector<std::string> result = {};
+
+        for (auto currentIterator : m_Classes)
+        {
+            result.push_back(currentIterator.first);
+        }
+
+        return result;
     }
 
 } // namespace genesis::output

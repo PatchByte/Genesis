@@ -14,18 +14,20 @@ namespace genesis
     public:
         using sdFlowFactory = std::function<GenesisFlow*(void* Reserved)>;
 
-        GenesisBundle(sdFlowFactory FlowFactory);
+        GenesisBundle(sdFlowFactory FlowFactory = sfDefaultFactory);
         ~GenesisBundle();
 
+        virtual void Reset();
         bool Import(ash::AshStream* Stream);
         bool Export(ash::AshStream* Stream);
 
         // Factory Function
 
-        static GenesisFlow* sfDefaultFactory();
+        static GenesisFlow* sfDefaultFactory(void* Reserved);
     protected:
         sdFlowFactory m_FlowFactory;
         std::map<std::string, GenesisFlow*> m_Flows;
+        void* m_ReservedFactoryValue;
     };
 
 }

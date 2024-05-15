@@ -12,8 +12,8 @@ namespace genesis::output
     class GenesisOutputClassVirtualFunction
     {
     public:
-        inline GenesisOutputClassVirtualFunction(std::string Name, std::string ReturnType, unsigned int VirtualTableOffset)
-            : m_Name(Name), m_ReturnType(ReturnType), m_VirtualTableOffset(VirtualTableOffset)
+        inline GenesisOutputClassVirtualFunction(std::string Name, std::string FunctionDeclaration, unsigned int VirtualTableOffset)
+            : m_Name(Name), m_FunctionDeclaration(FunctionDeclaration), m_VirtualTableOffset(VirtualTableOffset)
         {
         }
 
@@ -28,9 +28,9 @@ namespace genesis::output
             return m_Name;
         }
 
-        inline std::string GetReturnType()
+        inline std::string GetFunctionDeclaration()
         {
-            return m_ReturnType;
+            return m_FunctionDeclaration;
         }
 
         inline unsigned int GetVirtualTableOffset()
@@ -40,7 +40,7 @@ namespace genesis::output
 
     private:
         std::string m_Name;
-        std::string m_ReturnType;
+        std::string m_FunctionDeclaration;
         unsigned int m_VirtualTableOffset;
     };
 
@@ -94,6 +94,19 @@ namespace genesis::output
     private:
         std::map<std::string, GenesisOutputClassVirtualFunction> m_VirtualFunctions;
         std::map<std::string, GenesisOutputClassMember> m_Members;
+    };
+
+    class GenesisOutputData
+    {
+    public:
+        GenesisOutputData();
+        ~GenesisOutputData();
+
+        GenesisOutputClass* GetOrCreateClass(std::string Name);
+        std::vector<std::string> GetAllAvailableClassNames();
+
+    private:
+        std::map<std::string, GenesisOutputClass*> m_Classes;
     };
 
 } // namespace genesis::output
