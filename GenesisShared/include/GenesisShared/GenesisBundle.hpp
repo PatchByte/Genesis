@@ -2,6 +2,7 @@
 #define _GENESISBUNDLE_HPP
 
 #include "Ash/AshBuffer.h"
+#include "Ash/AshResult.h"
 #include "Ash/AshStreamableObject.h"
 #include "GenesisShared/GenesisFlow.hpp"
 #include <functional>
@@ -16,6 +17,10 @@ namespace genesis
 
         GenesisBundle(sdFlowFactory FlowFactory = sfDefaultFactory);
         ~GenesisBundle();
+
+        ash::AshResult AddFlow(std::string FlowName, GenesisFlow* Flow);
+        ash::AshResult RemoveFlow(std::string FlowName, bool FreeFlow = true);
+        inline std::map<std::string, GenesisFlow*> GetFlows() { return m_Flows; }
 
         virtual void Reset();
         bool Import(ash::AshStream* Stream);
