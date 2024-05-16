@@ -21,13 +21,16 @@ namespace ed = ax::NodeEditor;
 namespace genesis::editor
 {
 
-    GenesisFlowEditor::GenesisFlowEditor() : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(), m_DockSpaceId(0), m_DockSpaceHasBeenBuilt(false), m_TriggerCheck(false)
+    GenesisFlowEditor::GenesisFlowEditor(utils::GenesisLogBox* LogBox) : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(LogBox), m_TriggerCheck(false)
     {
         AddOperationToFlow(new operations::GenesisFindPatternOperation("E8 ? ? ? ? 90"));
         AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 6));
         AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 2));
 
-        m_Logger.AddLoggerPassage(m_LogBox.CreatePassage());
+        if (m_LogBox)
+        {
+            m_Logger.AddLoggerPassage(m_LogBox->CreatePassage());
+        }
     }
 
     GenesisFlowEditor::~GenesisFlowEditor()
@@ -44,13 +47,13 @@ namespace genesis::editor
         nodeEditorConfig.LoadNodeSettings = [](ed::NodeId NodeId, char* Data, void* UserPointerUnCast) -> size_t
         {
             GenesisFlowEditor* userPointer = static_cast<GenesisFlowEditor*>(UserPointerUnCast);
-    
-            if(userPointer->m_NodeEditorSavedStates.contains(NodeId.Get()) == false)
+
+            if (userPointer->m_NodeEditorSavedStates.contains(NodeId.Get()) == false)
             {
                 return 0;
             }
 
-            if(Data)
+            if (Data)
             {
                 memcpy(Data, userPointer->m_NodeEditorSavedStates.at(NodeId.Get()).data(), userPointer->m_NodeEditorSavedStates.at(NodeId.Get()).size());
             }
@@ -80,46 +83,17 @@ namespace genesis::editor
 
     void GenesisFlowEditor::Render()
     {
-        if (m_DockSpaceId == 0)
-        {
-            m_DockSpaceId = ImGui::GetID("dockSpaceFlowEditor");
-        }
-
-        if (m_DockSpaceHasBeenBuilt == false)
-        {
-            ImGui::DockBuilderRemoveNode(m_DockSpaceId);
-            ImGui::DockBuilderAddNode(m_DockSpaceId);
-
-            ImGui::DockBuilderSplitNode(m_DockSpaceId, ImGuiDir_Down, 0.3f, &m_DockLogWindow, &m_DockNodeWindow);
-            ImGui::DockBuilderDockWindow("Nodes", m_DockNodeWindow);
-            ImGui::DockBuilderDockWindow("Log", m_DockLogWindow);
-
-            ImGui::DockBuilderFinish(m_DockSpaceId);
-
-            m_DockSpaceHasBeenBuilt = true;
-        }
-
-        ImGui::DockSpace(m_DockSpaceId, ImVec2(-1, -1),
-                         ImGuiDockNodeFlags_NoCloseButton | ImGuiDockNodeFlags_NoWindowMenuButton | ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_HiddenTabBar);
-
-        if (ImGui::Begin("Nodes", nullptr, ImGuiWindowFlags_MenuBar))
-        {
-            RenderNodes();
-        }
-        ImGui::End();
-
-        if (ImGui::Begin("Log"))
-        {
-            m_LogBox.Render();
-        }
-        ImGui::End();
+        RenderNodes();
     }
 
     void GenesisFlowEditor::RenderNodes()
     {
         if (m_TriggerCheck)
         {
-            m_LogBox.Clear();
+            if (m_LogBox)
+            {
+                m_LogBox->Clear();
+            }
 
             if (auto res = CheckIfFlowIsRunnable(); res.HasError())
             {
@@ -410,18 +384,18 @@ namespace genesis::editor
     {
         bool res = GenesisFlow::Import(Stream);
 
-        if(res)
+        if (res)
         {
             ash::AshStreamStaticBuffer reservedBufferGuiStream = ash::AshStreamStaticBuffer(&m_ReservedBufferGui, ash::AshStreamMode::READ);
 
             size_t nodeStatesSize = reservedBufferGuiStream.Read<size_t>();
 
-            for(size_t currentNodeStateIndex = 0; currentNodeStateIndex < nodeStatesSize; currentNodeStateIndex++)
+            for (size_t currentNodeStateIndex = 0; currentNodeStateIndex < nodeStatesSize; currentNodeStateIndex++)
             {
                 uintptr_t currentNodeStateId = reservedBufferGuiStream.Read<uintptr_t>();
                 ash::objects::AshAsciiString currentNodeDataString = ash::objects::AshAsciiString();
 
-                if(currentNodeDataString.Import(&reservedBufferGuiStream) == false)
+                if (currentNodeDataString.Import(&reservedBufferGuiStream) == false)
                 {
                     std::cout << "Failed to import currentNodeDataString" << std::endl;
                     return false;
@@ -431,7 +405,7 @@ namespace genesis::editor
             }
         }
 
-        for(auto currentIterator : m_NodeEditorSavedStates)
+        for (auto currentIterator : m_NodeEditorSavedStates)
         {
             auto currentContext = ed::GetCurrentEditor();
             ed::SetCurrentEditor(m_NodeEditorContext);
@@ -449,20 +423,20 @@ namespace genesis::editor
 
             reservedBufferGuiStream.Write<size_t>(m_NodeEditorSavedStates.size());
 
-            for(auto currentIterator : m_NodeEditorSavedStates)
+            for (auto currentIterator : m_NodeEditorSavedStates)
             {
                 reservedBufferGuiStream.Write(currentIterator.first);
                 ash::objects::AshAsciiString(currentIterator.second).Export(&reservedBufferGuiStream);
             }
 
-            if(auto res = reservedBufferGuiStream.MakeCopyOfBuffer(); res)
+            if (auto res = reservedBufferGuiStream.MakeCopyOfBuffer(); res)
             {
                 m_ReservedBufferGui.CopyAshBufferFromPointer(res);
                 delete res;
             }
         }
 
-        return GenesisFlow::Export(Stream);   
+        return GenesisFlow::Export(Stream);
     }
 
 } // namespace genesis::editor

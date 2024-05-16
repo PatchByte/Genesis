@@ -4,6 +4,7 @@
 #include "GenesisEditor/GenesisBundleEditor.hpp"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
+
 namespace genesis::editor
 {
 
@@ -16,11 +17,12 @@ namespace genesis::editor
         void Run();
 
         void ApplyStyle();
+
     private:
         renderer::GenesisRendererBase* m_Renderer;
         GenesisBundleEditor m_TestBundleEditor;
     };
 
-}
+} // namespace genesis::editor
 
 #endif // !_GENESISEDITOR_HPP

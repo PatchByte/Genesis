@@ -7,6 +7,7 @@
 #include "GenesisShared/GenesisFlow.hpp"
 #include <functional>
 #include <map>
+
 namespace genesis
 {
 
@@ -18,9 +19,18 @@ namespace genesis
         GenesisBundle(sdFlowFactory FlowFactory = sfDefaultFactory);
         ~GenesisBundle();
 
-        ash::AshResult AddFlow(std::string FlowName, GenesisFlow* Flow);
+        ash::AshResult CreateFlow(std::string FlowName);
         ash::AshResult RemoveFlow(std::string FlowName, bool FreeFlow = true);
-        inline std::map<std::string, GenesisFlow*> GetFlows() { return m_Flows; }
+
+        inline bool HasFlow(std::string FlowName)
+        {
+            return m_Flows.contains(FlowName);
+        }
+
+        inline std::map<std::string, GenesisFlow*> GetFlows()
+        {
+            return m_Flows;
+        }
 
         virtual void Reset();
         bool Import(ash::AshStream* Stream);
@@ -29,12 +39,13 @@ namespace genesis
         // Factory Function
 
         static GenesisFlow* sfDefaultFactory(void* Reserved);
+
     protected:
         sdFlowFactory m_FlowFactory;
         std::map<std::string, GenesisFlow*> m_Flows;
         void* m_ReservedFactoryValue;
     };
 
-}
+} // namespace genesis
 
 #endif // !_GENESISBUNDLE_HPP

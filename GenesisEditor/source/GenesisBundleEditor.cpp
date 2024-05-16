@@ -9,14 +9,16 @@
 namespace genesis::editor
 {
 
-    GenesisBundleEditor::GenesisBundleEditor() : GenesisBundle(GenesisBundleEditor::sfDefaultFactory)
+    GenesisBundleEditor::GenesisBundleEditor()
+        : GenesisBundle(GenesisBundleEditor::sfDefaultFactory), m_DockSpaceHasBeenBuilt(false), m_DockSpaceId(0), m_DockSidebarWindow(0), m_DockContentWindow(0), m_DockLogWindow(0), m_SelectedFlow()
     {
+        m_ReservedFactoryValue = this;
     }
 
     void GenesisBundleEditor::Initialize()
     {
-        GenesisFlowEditor* flow1 = new GenesisFlowEditor();
-        GenesisFlowEditor* flow2 = new GenesisFlowEditor();
+        GenesisFlowEditor* flow1 = new GenesisFlowEditor(&m_LogBox);
+        GenesisFlowEditor* flow2 = new GenesisFlowEditor(&m_LogBox);
 
         // Debug
         m_Flows.emplace("Test 1", flow1);
@@ -39,9 +41,12 @@ namespace genesis::editor
             ImGui::DockBuilderRemoveNode(m_DockSpaceId);
             ImGui::DockBuilderAddNode(m_DockSpaceId);
 
-            ImGui::DockBuilderSplitNode(m_DockSpaceId, ImGuiDir_Left, 0.3f, &m_DockSidebarWindow, &m_DockContentWindow);
+            ImGui::DockBuilderSplitNode(m_DockSpaceId, ImGuiDir_Left, 0.2f, &m_DockSidebarWindow, &m_DockContentWindow);
+            ImGui::DockBuilderSplitNode(m_DockContentWindow, ImGuiDir_Up, 0.8f, &m_DockContentWindow, &m_DockLogWindow);
+
             ImGui::DockBuilderDockWindow("Sidebar", m_DockSidebarWindow);
             ImGui::DockBuilderDockWindow("Content", m_DockContentWindow);
+            ImGui::DockBuilderDockWindow("Log", m_DockLogWindow);
 
             ImGui::DockBuilderFinish(m_DockSpaceId);
 
@@ -49,9 +54,10 @@ namespace genesis::editor
         }
 
         ImGui::DockSpace(m_DockSpaceId, ImVec2(-1, -1),
-                         ImGuiDockNodeFlags_NoCloseButton | ImGuiDockNodeFlags_NoWindowMenuButton | ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_HiddenTabBar);
+                         ImGuiDockNodeFlags_NoCloseButton | ImGuiDockNodeFlags_NoWindowMenuButton | ImGuiDockNodeFlags_NoDocking | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_HiddenTabBar |
+                             ImGuiDockNodeFlags_NoUndocking);
 
-        if (ImGui::Begin("Sidebar"))
+        if (ImGui::Begin("Sidebar", nullptr))
         {
             // Copy map because of the "Delete" action.
             auto copiedFlows = m_Flows;
@@ -59,18 +65,21 @@ namespace genesis::editor
             for (auto currentIterator : copiedFlows)
             {
                 ImGui::PushID(currentIterator.first.data());
-                ImGui::Selectable(currentIterator.first.data());
+                if (ImGui::Selectable(currentIterator.first.data(), m_SelectedFlow == currentIterator.first))
+                {
+                    m_SelectedFlow = currentIterator.first;
+                }
 
                 static bool sTriggerRenamePopup = false;
 
-                if(ImGui::BeginPopupContextItem())
+                if (ImGui::BeginPopupContextItem())
                 {
-                    if(ImGui::MenuItem("Delete"))
+                    if (ImGui::MenuItem("Delete"))
                     {
                         this->RemoveFlow(currentIterator.first);
                     }
 
-                    if(ImGui::MenuItem("Rename"))
+                    if (ImGui::MenuItem("Rename"))
                     {
                         sTriggerRenamePopup |= true;
                     }
@@ -78,24 +87,24 @@ namespace genesis::editor
                     ImGui::EndPopup();
                 }
 
-                if(sTriggerRenamePopup)
+                if (sTriggerRenamePopup)
                 {
                     ImGui::OpenPopup("RenamePopup");
                 }
 
-                if(ImGui::BeginPopupModal("RenamePopup"))
+                if (ImGui::BeginPopupModal("RenamePopup"))
                 {
                     static char sNameBuffer[512] = {0};
 
-                    if(sTriggerRenamePopup == true)
+                    if (sTriggerRenamePopup == true)
                     {
                         sTriggerRenamePopup = false;
-                        strcpy(sNameBuffer, currentIterator.first.data());
+                        std::strcpy(sNameBuffer, currentIterator.first.data());
                     }
 
                     ImGui::InputText("Name", sNameBuffer, sizeof(sNameBuffer) - 1);
                     ImGui::SameLine();
-                    if(ImGui::Button("Ok") || ImGui::IsKeyPressed(ImGuiKey_Enter))
+                    if (ImGui::Button("Ok") || ImGui::IsKeyPressed(ImGuiKey_Enter))
                     {
                         GenesisFlow* renameTarget = m_Flows.at(currentIterator.first);
                         m_Flows.erase(currentIterator.first);
@@ -114,11 +123,19 @@ namespace genesis::editor
         {
         }
         ImGui::End();
+
+        if (ImGui::Begin("Log"))
+        {
+            m_LogBox.Render();
+        }
+        ImGui::End();
     }
 
     GenesisFlow* GenesisBundleEditor::sfDefaultFactory(void* Reserved)
     {
-        return new GenesisFlowEditor();
+        GenesisBundleEditor* editor = reinterpret_cast<GenesisBundleEditor*>(Reserved);
+
+        return new GenesisFlowEditor(&editor->m_LogBox);
     }
 
 } // namespace genesis::editor

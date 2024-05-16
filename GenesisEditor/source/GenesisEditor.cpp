@@ -10,8 +10,7 @@ namespace ed = ax::NodeEditor;
 namespace genesis::editor
 {
 
-    GenesisEditor::GenesisEditor():
-        m_TestBundleEditor()
+    GenesisEditor::GenesisEditor() : m_TestBundleEditor()
     {
         m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Editor");
     }
@@ -19,7 +18,7 @@ namespace genesis::editor
     GenesisEditor::~GenesisEditor()
     {
 
-        if(m_Renderer)
+        if (m_Renderer)
         {
             delete m_Renderer;
         }
@@ -32,20 +31,55 @@ namespace genesis::editor
         m_TestBundleEditor.Initialize();
 
         this->ApplyStyle();
-        
-        while (m_Renderer->ShallRender()) 
+
+        while (m_Renderer->ShallRender())
         {
             m_Renderer->BeginFrame();
-            
-            if(ImGui::Begin("GenesisEditorFrame", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse))
+
+            if (ImGui::Begin("GenesisEditorFrame", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar))
             {
                 ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
                 ImGui::SetWindowPos(ImVec2(0, 0));
 
-                m_TestBundleEditor.Render();
-                
-                ImGui::End();
+                static bool sTriggerNewPopup = false;
 
+                if (ImGui::BeginMenuBar())
+                {
+                    if (ImGui::BeginMenu("Flows"))
+                    {
+                        if (ImGui::MenuItem("New"))
+                        {
+                            sTriggerNewPopup = true;
+                        }
+
+                        ImGui::EndMenu();
+                    }
+
+                    ImGui::EndMenuBar();
+                }
+
+                if (sTriggerNewPopup)
+                {
+                    ImGui::OpenPopup("NewPopup");
+                }
+
+                if (ImGui::BeginPopupModal("NewPopup"))
+                {
+                    static char sNameBuffer[512] = {0};
+
+                    ImGui::InputText("Name", sNameBuffer, sizeof(sNameBuffer) - 1);
+                    ImGui::SameLine();
+                    if (ImGui::Button("Ok") || ImGui::IsKeyPressed(ImGuiKey_Enter))
+                    {
+                        m_TestBundleEditor.CreateFlow(sNameBuffer);
+                    }
+
+                    ImGui::EndPopup();
+                }
+
+                m_TestBundleEditor.Render();
+
+                ImGui::End();
             }
 
             m_Renderer->EndFrame();
@@ -58,4 +92,4 @@ namespace genesis::editor
         m_Renderer->Shutdown();
     }
 
-}
+} // namespace genesis::editor

@@ -17,7 +17,7 @@ namespace genesis::editor
     class GenesisFlowEditor : public GenesisFlow
     {
     public:
-        GenesisFlowEditor();
+        GenesisFlowEditor(utils::GenesisLogBox* LogBox);
         ~GenesisFlowEditor();
 
         void Initialize();
@@ -33,12 +33,7 @@ namespace genesis::editor
         bool Export(ash::AshStream* Stream) override;
     private:
         ash::AshLogger m_Logger;
-        utils::GenesisLogBox m_LogBox;
-
-        bool m_DockSpaceHasBeenBuilt;
-        ImGuiID m_DockSpaceId;
-        ImGuiID m_DockNodeWindow;
-        ImGuiID m_DockLogWindow;
+        utils::GenesisLogBox* m_LogBox;
 
         ax::NodeEditor::EditorContext* m_NodeEditorContext;
         std::map<uintptr_t, std::string> m_NodeEditorSavedStates;

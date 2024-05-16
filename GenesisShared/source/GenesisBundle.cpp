@@ -17,14 +17,14 @@ namespace genesis
         this->Reset();
     }
 
-    ash::AshResult GenesisBundle::AddFlow(std::string FlowName, GenesisFlow* Flow)
+    ash::AshResult GenesisBundle::CreateFlow(std::string FlowName)
     {
         if (m_Flows.contains(FlowName))
         {
             return ash::AshResult(false, "Already containing a flow with this name");
         }
 
-        m_Flows.emplace(FlowName, Flow);
+        m_Flows.emplace(FlowName, m_FlowFactory(m_ReservedFactoryValue));
         return ash::AshResult(true);
     }
 
