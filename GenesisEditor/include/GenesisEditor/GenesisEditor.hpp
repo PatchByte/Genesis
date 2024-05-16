@@ -1,6 +1,7 @@
 #ifndef _GENESISEDITOR_HPP
 #define _GENESISEDITOR_HPP
 
+#include "GenesisEditor/GenesisBundleEditor.hpp"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
 namespace genesis::editor
@@ -17,7 +18,7 @@ namespace genesis::editor
         void ApplyStyle();
     private:
         renderer::GenesisRendererBase* m_Renderer;
-        GenesisFlowEditor m_TestFlowEditor;
+        GenesisBundleEditor m_TestBundleEditor;
     };
 
 }

@@ -82,7 +82,7 @@ namespace genesis::editor
     {
         if (m_DockSpaceId == 0)
         {
-            m_DockSpaceId = ImGui::GetID("dockSpace");
+            m_DockSpaceId = ImGui::GetID("dockSpaceFlowEditor");
         }
 
         if (m_DockSpaceHasBeenBuilt == false)

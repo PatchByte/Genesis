@@ -11,7 +11,7 @@ namespace genesis::editor
 {
 
     GenesisEditor::GenesisEditor():
-        m_TestFlowEditor()
+        m_TestBundleEditor()
     {
         m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Editor");
     }
@@ -29,7 +29,7 @@ namespace genesis::editor
     {
         m_Renderer->Initialize();
 
-        m_TestFlowEditor.Initialize();
+        m_TestBundleEditor.Initialize();
 
         this->ApplyStyle();
         
@@ -42,7 +42,7 @@ namespace genesis::editor
                 ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
                 ImGui::SetWindowPos(ImVec2(0, 0));
 
-                m_TestFlowEditor.Render();
+                m_TestBundleEditor.Render();
                 
                 ImGui::End();
 
@@ -53,7 +53,7 @@ namespace genesis::editor
             std::this_thread::yield();
         }
 
-        m_TestFlowEditor.Shutdown();
+        m_TestBundleEditor.Shutdown();
 
         m_Renderer->Shutdown();
     }
