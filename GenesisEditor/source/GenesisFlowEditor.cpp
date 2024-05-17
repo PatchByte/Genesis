@@ -91,6 +91,20 @@ namespace genesis::editor
 
     void GenesisFlowEditor::RenderNodes()
     {
+        if(m_TriggerCheck)
+        {
+            m_LogBox->Clear();
+            m_TriggerCheck = false;
+            
+            if(auto resIsRunnable = this->CheckIfFlowIsRunnable(); resIsRunnable.HasError())
+            {
+                m_Logger.Log("Error", "Flow is not runnable. {}", resIsRunnable.GetMessage());
+            }
+            else
+            {
+                m_Logger.Log("Info", "Flow is okay!");
+            }
+        }
 
         if (m_Canvas.Begin("##EditorCanvas", {-1, -1}))
         {

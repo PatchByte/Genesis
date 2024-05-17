@@ -179,14 +179,7 @@ namespace genesis
 
     bool GenesisFlow::Import(ash::AshStream* Stream)
     {   
-        ash::objects::AshAsciiString flowNameString = ash::objects::AshAsciiString();
-
         this->Reset();
-
-        if(flowNameString.Import(Stream) == false)
-        {
-            return false;
-        }
 
         m_CounterOperations = Stream->Read<operations::GenesisOperationId>();
         m_CounterLinks = Stream->Read<int>();

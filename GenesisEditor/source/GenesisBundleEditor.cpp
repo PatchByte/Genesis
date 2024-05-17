@@ -9,16 +9,16 @@
 namespace genesis::editor
 {
 
-    GenesisBundleEditor::GenesisBundleEditor()
-        : GenesisBundle(GenesisBundleEditor::sfDefaultFactory), m_DockSpaceHasBeenBuilt(false), m_DockSpaceId(0), m_DockSidebarWindow(0), m_DockContentWindow(0), m_DockLogWindow(0), m_SelectedFlow()
+    GenesisBundleEditor::GenesisBundleEditor(utils::GenesisLogBox* LogBox)
+        : GenesisBundle(GenesisBundleEditor::sfDefaultFactory), m_DockSpaceHasBeenBuilt(false), m_DockSpaceId(0), m_DockSidebarWindow(0), m_DockContentWindow(0), m_DockLogWindow(0), m_SelectedFlow(), m_LogBox(LogBox)
     {
         m_ReservedFactoryValue = this;
     }
 
     void GenesisBundleEditor::Initialize()
     {
-        GenesisFlowEditor* flow1 = new GenesisFlowEditor(&m_LogBox);
-        GenesisFlowEditor* flow2 = new GenesisFlowEditor(&m_LogBox);
+        GenesisFlowEditor* flow1 = new GenesisFlowEditor(m_LogBox);
+        GenesisFlowEditor* flow2 = new GenesisFlowEditor(m_LogBox);
 
         // Debug
         m_Flows.emplace("Test 1", flow1);
@@ -139,7 +139,10 @@ namespace genesis::editor
 
         if (ImGui::Begin("Log"))
         {
-            m_LogBox.Render();
+            if(m_LogBox)
+            {
+                m_LogBox->Render();
+            }
         }
         ImGui::End();
     }
@@ -148,7 +151,7 @@ namespace genesis::editor
     {
         GenesisBundleEditor* editor = reinterpret_cast<GenesisBundleEditor*>(Reserved);
 
-        return new GenesisFlowEditor(&editor->m_LogBox);
+        return new GenesisFlowEditor(editor->m_LogBox);
     }
 
 } // namespace genesis::editor

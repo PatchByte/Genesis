@@ -12,7 +12,7 @@ namespace genesis::editor
     class GenesisBundleEditor : public GenesisBundle
     {
     public:
-        GenesisBundleEditor();
+        GenesisBundleEditor(utils::GenesisLogBox* LogBox);
 
         void Initialize();
         void Shutdown();
@@ -27,7 +27,7 @@ namespace genesis::editor
         ImGuiID m_DockContentWindow;
         ImGuiID m_DockLogWindow;
 
-        utils::GenesisLogBox m_LogBox;
+        utils::GenesisLogBox* m_LogBox;
 
         std::string m_SelectedFlow;
     };

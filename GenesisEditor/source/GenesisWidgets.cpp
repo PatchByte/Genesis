@@ -33,8 +33,11 @@ namespace genesis::widgets
             m_TriggerPopup = false;
         }
 
-        if (ImGui::BeginPopup(popupKey.data()))
+        if (ImGui::BeginPopupModal(popupKey.data(), nullptr, ImGuiWindowFlags_AlwaysAutoResize))
         {
+            ImGui::Text("Please choose an option with your arrow keys and press enter.");
+            ImGui::Separator();
+
             for (size_t currentIndex = m_StartAtOffset; currentIndex < m_Items.size(); currentIndex++)
             {
                 if (ImGui::Selectable(m_Items[currentIndex].data()))

@@ -21,6 +21,8 @@ namespace genesis::operations
             return smDelegates.at(OperationType)();
         }
 
+        printf("no contain: %i\n", OperationType);
+
         return nullptr;
     }
 
