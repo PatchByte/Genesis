@@ -27,6 +27,11 @@ namespace genesis
             return m_Flows.contains(FlowName);
         }
 
+        inline GenesisFlow* GetFlow(std::string FlowName)
+        {
+            return HasFlow(FlowName) ? m_Flows.at(FlowName) : nullptr;
+        }
+
         inline std::map<std::string, GenesisFlow*> GetFlows()
         {
             return m_Flows;

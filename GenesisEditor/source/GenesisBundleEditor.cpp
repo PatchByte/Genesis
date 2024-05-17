@@ -23,6 +23,13 @@ namespace genesis::editor
         // Debug
         m_Flows.emplace("Test 1", flow1);
         m_Flows.emplace("Test 2", flow2);
+
+        // Initialization
+
+        for(auto currentIterator : m_Flows)
+        {
+            dynamic_cast<GenesisFlowEditor*>(currentIterator.second)->Initialize();
+        }
     }
 
     void GenesisBundleEditor::Shutdown()
@@ -121,6 +128,12 @@ namespace genesis::editor
 
         if (ImGui::Begin("Content"))
         {
+            if(auto unCastSelectedFlow = GetFlow(m_SelectedFlow))
+            {
+                GenesisFlowEditor* selectedFlow = dynamic_cast<GenesisFlowEditor*>(unCastSelectedFlow);
+
+                selectedFlow->Render();
+            }
         }
         ImGui::End();
 

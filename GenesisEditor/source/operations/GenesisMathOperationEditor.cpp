@@ -13,40 +13,32 @@ namespace ed = ax::NodeEditor;
 namespace genesis::editor
 {
 
-    void GenesisOperationEditorForNodes::sfRenderMathOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisMathOperation* Operation, const operations::GenesisOperationInformation& OperationInformation)
+    void GenesisOperationEditorForNodes::sfRenderMathOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisMathOperation* Operation,
+                                                               const operations::GenesisOperationInformation& OperationInformation)
     {
-        static const char* typeItems[] = {
-            "Nothing (Invalid)",
-            "Addition",
-            "Subtraction"
-        };
+        static const char* typeItems[] = {"Nothing (Invalid)", "Addition", "Subtraction"};
+
+        static widgets::GenesisComboBoxPopupWorkaround comboBox = widgets::GenesisComboBoxPopupWorkaround();
 
         operations::GenesisMathOperation::Type type = Operation->GetType();
         unsigned long long value = Operation->GetValue();
 
         Builder.Middle();
-        
+
         ImGui::PushItemWidth(200);
-        // if(ImGui::Combo("##Type", reinterpret_cast<int*>(&type), typeItems, sizeof(typeItems) / sizeof(*typeItems)))
-        // {
-        //     Operation->SetType(type);
-        // }
 
-        if(widgets::GenesisComboBoxPopupWorkaround::sfRenderPopUpButton("##Type", typeItems[static_cast<int>(type)], {
-            "Nothing",
-            "Addition",
-            "Subtraction"
-        }, reinterpret_cast<int*>(&type), 1))
-        {
-            Operation->SetType(type);
-        }
+        comboBox.SetData("##Type", {"Nothing", "Addition", "Subtraction"}, reinterpret_cast<int*>(&type), 1);
+        comboBox.RenderButton();
 
-        if(ImGui::InputScalar("##Value", ImGuiDataType_U64, &value, 0, 0, "%d"))
+        ImGui::PopItemWidth();
+        ImGui::PushItemWidth(200);
+
+        if (ImGui::InputScalar("##Value", ImGuiDataType_U64, &value, 0, 0, "%d"))
         {
             Operation->SetValue(value);
         }
         ImGui::PopItemWidth();
-        
+
         Builder.Input(OperationInformation.m_InputPinId);
         ImGui::PushItemWidth(GenesisOperationEditorForNodes::sfGetMaxItemWidth("input"));
         ImGui::Text("Input");
@@ -58,6 +50,16 @@ namespace genesis::editor
         ImGui::Text("Output");
         ImGui::PopItemWidth();
         Builder.EndOutput();
+
+        // Because of manual post actions
+        Builder.End();
+
+        comboBox.RenderPost();
+
+        if (comboBox.HasChanged())
+        {
+            Operation->SetType(type);
+        }
     }
 
 } // namespace genesis::editor

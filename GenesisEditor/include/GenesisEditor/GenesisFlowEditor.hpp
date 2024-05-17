@@ -8,6 +8,7 @@
 #include "GenesisShared/GenesisOperations.hpp"
 
 #include "imgui.h"
+#include "imgui_canvas.h"
 #include "imgui_node_editor.h"
 #include <map>
 
@@ -31,14 +32,19 @@ namespace genesis::editor
         void Reset() override;
         bool Import(ash::AshStream* Stream) override;
         bool Export(ash::AshStream* Stream) override;
+
+        void TriggerActionFocusFirstNode() { m_TriggerActionFocusFirstNode = true; }
     private:
         ash::AshLogger m_Logger;
         utils::GenesisLogBox* m_LogBox;
 
         ax::NodeEditor::EditorContext* m_NodeEditorContext;
+        ImGuiEx::Canvas m_Canvas;
+        
         std::map<uintptr_t, std::string> m_NodeEditorSavedStates;
 
         bool m_TriggerCheck;
+        bool m_TriggerActionFocusFirstNode;
 
     };
 

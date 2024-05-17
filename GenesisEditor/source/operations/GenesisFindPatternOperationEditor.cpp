@@ -40,6 +40,8 @@ namespace genesis::editor
         Builder.Output(OperationInformation.m_OutputPinId);
         ImGui::Text("Output");
         Builder.EndOutput();
+
+        Builder.End();
     }
 
 } // namespace genesis::editor

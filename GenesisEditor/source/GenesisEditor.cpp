@@ -61,9 +61,10 @@ namespace genesis::editor
                 if (sTriggerNewPopup)
                 {
                     ImGui::OpenPopup("NewPopup");
+                    sTriggerNewPopup = false;
                 }
 
-                if (ImGui::BeginPopupModal("NewPopup"))
+                if (ImGui::BeginPopupModal("NewPopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
                 {
                     static char sNameBuffer[512] = {0};
 
@@ -72,15 +73,24 @@ namespace genesis::editor
                     if (ImGui::Button("Ok") || ImGui::IsKeyPressed(ImGuiKey_Enter))
                     {
                         m_TestBundleEditor.CreateFlow(sNameBuffer);
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    ImGui::SameLine();
+
+                    if(ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
+                    {
+                        ImGui::CloseCurrentPopup();
                     }
 
                     ImGui::EndPopup();
                 }
-
+                
                 m_TestBundleEditor.Render();
 
                 ImGui::End();
             }
+
 
             m_Renderer->EndFrame();
 

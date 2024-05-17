@@ -9,6 +9,7 @@
 #include "GenesisShared/GenesisPinTracker.hpp"
 #include "ImGuiFileDialog.h"
 #include "imgui.h"
+#include "imgui_canvas.h"
 #include "imgui_internal.h"
 #include "imgui_node_editor.h"
 #include <algorithm>
@@ -21,7 +22,8 @@ namespace ed = ax::NodeEditor;
 namespace genesis::editor
 {
 
-    GenesisFlowEditor::GenesisFlowEditor(utils::GenesisLogBox* LogBox) : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(LogBox), m_TriggerCheck(false)
+    GenesisFlowEditor::GenesisFlowEditor(utils::GenesisLogBox* LogBox)
+        : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(LogBox), m_TriggerCheck(false), m_TriggerActionFocusFirstNode(false), m_Canvas()
     {
         AddOperationToFlow(new operations::GenesisFindPatternOperation("E8 ? ? ? ? 90"));
         AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 6));
@@ -41,7 +43,7 @@ namespace genesis::editor
     {
         ed::Config nodeEditorConfig = ed::Config();
 
-        nodeEditorConfig.EnableSmoothZoom = true;
+        nodeEditorConfig.EnableSmoothZoom = false;
         nodeEditorConfig.UserPointer = this;
 
         nodeEditorConfig.LoadNodeSettings = [](ed::NodeId NodeId, char* Data, void* UserPointerUnCast) -> size_t
@@ -83,254 +85,157 @@ namespace genesis::editor
 
     void GenesisFlowEditor::Render()
     {
+
         RenderNodes();
     }
 
     void GenesisFlowEditor::RenderNodes()
     {
-        if (m_TriggerCheck)
+
+        if (m_Canvas.Begin("##EditorCanvas", {-1, -1}))
         {
-            if (m_LogBox)
+
+            ed::SetCurrentEditor(m_NodeEditorContext);
+            ed::GetStyle().NodeRounding = 5.f;
+
+            ed::Begin("MainEditor", {-1, -1});
+
+            utils::GenesisNodeBuilder nodeBuilder = utils::GenesisNodeBuilder();
+
+            for (auto currentIterator : m_Operations)
             {
-                m_LogBox->Clear();
+                ImColor normalColor = ImColor();
+
+                sfGetColorForOperationInformation(currentIterator.second->GetOperationInformation(), &normalColor);
+
+                ImGui::PushID(currentIterator.first);
+
+                nodeBuilder.Begin(currentIterator.first);
+
+                nodeBuilder.Header("", normalColor);
+                ImGui::BeginGroup();
+                ImGui::Text("%s (%i)", currentIterator.second->GetOperationName().data(), currentIterator.first);
+                ImGui::Dummy({0.f, 2.f});
+                ImGui::EndGroup();
+                nodeBuilder.EndHeader();
+
+                RenderNodeOperation(nodeBuilder, currentIterator.second);
+               // odeBuilder.End();
+
+                ImGui::PopID();
             }
 
-            if (auto res = CheckIfFlowIsRunnable(); res.HasError())
+            for (auto currentIterator : m_Links)
             {
-                m_Logger.Log("Error", "Failed to check. {}", res.GetMessage());
-            }
-            else
-            {
-                m_Logger.Log("Info", "Node graph is working.");
+                const std::pair<uintptr_t, uintptr_t> p = currentIterator.second;
+                ed::Link(currentIterator.first, p.first, p.second);
             }
 
-            m_TriggerCheck = false;
-        }
+            // Post-Actions
 
-        if (ImGui::BeginMenuBar())
-        {
-            if (ImGui::BeginMenu("File"))
+            if (ed::BeginCreate())
             {
-
-                if (ImGui::MenuItem("Save", nullptr, false, m_Operations.size() > 0))
+                ed::PinId startPinId, endPinId;
+                if (ed::QueryNewLink(&startPinId, &endPinId))
                 {
-                    IGFD::FileDialogConfig config;
-                    config.path = ".";
-                    ImGuiFileDialog::Instance()->OpenDialog("SaveFileGenesisDialog", "Save File", ".gnss", config);
-                }
+                    utils::GenesisPinValue startPinParsed = startPinId.Get();
+                    utils::GenesisPinValue endPinParsed = endPinId.Get();
 
-                if (ImGui::MenuItem("Load"))
-                {
-                    IGFD::FileDialogConfig config;
-                    config.path = ".";
-                    ImGuiFileDialog::Instance()->OpenDialog("LoadFileGenesisDialog", "Load File", ".gnss", config);
-                }
-
-                ImGui::EndMenu();
-            }
-
-            ImGui::EndMenuBar();
-        }
-
-        ed::SetCurrentEditor(m_NodeEditorContext);
-
-        ed::GetStyle().NodeRounding = 5.f;
-
-        ed::Begin("MainEditor", ImVec2(-1, -1));
-
-        utils::GenesisNodeBuilder nodeBuilder = utils::GenesisNodeBuilder();
-
-        for (auto currentIterator : m_Operations)
-        {
-            ImColor normalColor = ImColor();
-
-            sfGetColorForOperationInformation(currentIterator.second->GetOperationInformation(), &normalColor);
-
-            ImGui::PushID(currentIterator.first);
-
-            nodeBuilder.Begin(currentIterator.first);
-
-            nodeBuilder.Header("", normalColor);
-            ImGui::BeginGroup();
-            ImGui::Text("%s (%i)", currentIterator.second->GetOperationName().data(), currentIterator.first);
-            ImGui::Dummy({0.f, 2.f});
-            ImGui::EndGroup();
-            nodeBuilder.EndHeader();
-
-            RenderNodeOperation(nodeBuilder, currentIterator.second);
-            nodeBuilder.End();
-
-            ImGui::PopID();
-        }
-
-        for (auto currentIterator : m_Links)
-        {
-            const std::pair<uintptr_t, uintptr_t> p = currentIterator.second;
-            ed::Link(currentIterator.first, p.first, p.second);
-        }
-
-        // Post-Actions
-
-        if (ed::BeginCreate())
-        {
-            ed::PinId startPinId, endPinId;
-            if (ed::QueryNewLink(&startPinId, &endPinId))
-            {
-                utils::GenesisPinValue startPinParsed = startPinId.Get();
-                utils::GenesisPinValue endPinParsed = endPinId.Get();
-
-                if (startPinParsed.m_NodePinType == utils::GenesisPinType::INPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT)
-                {
-                    ed::PinId carry = startPinId;
-                    startPinId = endPinId;
-                    endPinId = carry;
-
-                    startPinParsed = startPinId.Get();
-                    endPinParsed = endPinId.Get();
-                }
-
-                if (startPinId && endPinId && startPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::INPUT)
-                {
-                    if (ed::AcceptNewItem())
+                    if (startPinParsed.m_NodePinType == utils::GenesisPinType::INPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT)
                     {
-                        ax::NodeEditor::LinkId linkId = ++m_CounterLinks;
+                        ed::PinId carry = startPinId;
+                        startPinId = endPinId;
+                        endPinId = carry;
 
-                        m_Links.emplace(linkId, std::make_pair(startPinId.Get(), endPinId.Get()));
+                        startPinParsed = startPinId.Get();
+                        endPinParsed = endPinId.Get();
+                    }
+
+                    if (startPinId && endPinId && startPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::INPUT)
+                    {
+                        if (ed::AcceptNewItem())
+                        {
+                            ax::NodeEditor::LinkId linkId = ++m_CounterLinks;
+
+                            m_Links.emplace(linkId, std::make_pair(startPinId.Get(), endPinId.Get()));
+                            m_TriggerCheck = true;
+                        }
+                    }
+                }
+            }
+            ed::EndCreate();
+
+            if (ed::BeginDelete())
+            {
+                ed::LinkId deletedLinkId;
+
+                if (ed::QueryDeletedLink(&deletedLinkId))
+                {
+                    if (ed::AcceptDeletedItem())
+                    {
+                        if (m_Links.contains(deletedLinkId.Get()))
+                        {
+                            m_Links.erase(deletedLinkId.Get());
+                        }
+                        else
+                        {
+                            printf("Destroying failed: %li\n", deletedLinkId.Get());
+                        }
+
                         m_TriggerCheck = true;
                     }
                 }
             }
-        }
-        ed::EndCreate();
+            ed::EndDelete();
 
-        if (ed::BeginDelete())
-        {
-            ed::LinkId deletedLinkId;
-
-            if (ed::QueryDeletedLink(&deletedLinkId))
             {
-                if (ed::AcceptDeletedItem())
-                {
-                    if (m_Links.contains(deletedLinkId.Get()))
-                    {
-                        m_Links.erase(deletedLinkId.Get());
-                    }
-                    else
-                    {
-                        printf("Destroying failed: %li\n", deletedLinkId.Get());
-                    }
 
-                    m_TriggerCheck = true;
+                bool actionDelete = ImGui::IsKeyPressed(ImGuiKey_Delete);
+
+                if (auto numSelectedLinks = ed::GetSelectedLinks(nullptr, 0); numSelectedLinks > 0)
+                {
+                    ed::LinkId* selectedLinks = new ed::LinkId[numSelectedLinks];
+                    ed::GetSelectedLinks(selectedLinks, numSelectedLinks);
+
+                    for (int currentSelectedLinkIndex = 0; currentSelectedLinkIndex < numSelectedLinks; currentSelectedLinkIndex++)
+                    {
+                        ed::LinkId selectedLink = selectedLinks[currentSelectedLinkIndex];
+
+                        if (actionDelete)
+                        {
+                            // m_Links.erase(selectedLink.Get());
+                        }
+                    }
                 }
-            }
-        }
-        ed::EndDelete();
 
-        {
-
-            bool actionDelete = ImGui::IsKeyPressed(ImGuiKey_Delete);
-
-            if (auto numSelectedLinks = ed::GetSelectedLinks(nullptr, 0); numSelectedLinks > 0)
-            {
-                ed::LinkId* selectedLinks = new ed::LinkId[numSelectedLinks];
-                ed::GetSelectedLinks(selectedLinks, numSelectedLinks);
-
-                for (int currentSelectedLinkIndex = 0; currentSelectedLinkIndex < numSelectedLinks; currentSelectedLinkIndex++)
+                if (auto numSelectedNodes = ed::GetSelectedNodes(nullptr, 0); numSelectedNodes > 0)
                 {
-                    ed::LinkId selectedLink = selectedLinks[currentSelectedLinkIndex];
+                    ed::NodeId* selectedNodes = new ed::NodeId[numSelectedNodes];
+                    ed::GetSelectedNodes(selectedNodes, numSelectedNodes);
 
-                    if (actionDelete)
+                    for (int currentSelectedNodeIndex = 0; currentSelectedNodeIndex < numSelectedNodes; currentSelectedNodeIndex++)
                     {
-                        // m_Links.erase(selectedLink.Get());
+                        ed::NodeId selectedNode = selectedNodes[currentSelectedNodeIndex];
+
+                        if (actionDelete)
+                        {
+                            RemoveOperationFromFlow(selectedNode.Get());
+                        }
                     }
                 }
             }
 
-            if (auto numSelectedNodes = ed::GetSelectedNodes(nullptr, 0); numSelectedNodes > 0)
+            if (m_TriggerActionFocusFirstNode || ImGui::IsKeyPressed(ImGuiKey_PageDown))
             {
-                ed::NodeId* selectedNodes = new ed::NodeId[numSelectedNodes];
-                ed::GetSelectedNodes(selectedNodes, numSelectedNodes);
-
-                for (int currentSelectedNodeIndex = 0; currentSelectedNodeIndex < numSelectedNodes; currentSelectedNodeIndex++)
+                if (m_Operations.size() > 0)
                 {
-                    ed::NodeId selectedNode = selectedNodes[currentSelectedNodeIndex];
-
-                    if (actionDelete)
-                    {
-                        RemoveOperationFromFlow(selectedNode.Get());
-                    }
+                    ed::CenterNodeOnScreen(m_Operations.begin()->second->GetOperationId());
                 }
             }
-        }
+            ed::End();
+            ed::SetCurrentEditor(nullptr);
 
-        ed::End();
-
-        ed::SetCurrentEditor(nullptr);
-
-        // Post Actions
-
-        if (ImGuiFileDialog::Instance()->Display("SaveFileGenesisDialog"))
-        {
-            if (ImGuiFileDialog::Instance()->IsOk())
-            {
-                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-
-                ash::AshStreamExpandableExportBuffer expandableExportBuffer = ash::AshStreamExpandableExportBuffer();
-
-                if (this->Export(&expandableExportBuffer) == false)
-                {
-                    m_Logger.Log("Error", "Failed to export");
-                }
-
-                if (auto resBuffer = expandableExportBuffer.MakeCopyOfBuffer(); resBuffer)
-                {
-                    if (auto res = resBuffer->WriteToFile(filePathName); res.WasSuccessful())
-                    {
-                        m_Logger.Log("Info", "Saved to {}!", filePathName);
-                    }
-                    else
-                    {
-                        m_Logger.Log("Error", "Failed to save to {}!", filePathName);
-                    }
-                    delete resBuffer;
-                }
-            }
-
-            // close
-            ImGuiFileDialog::Instance()->Close();
-        }
-
-        if (ImGuiFileDialog::Instance()->Display("LoadFileGenesisDialog"))
-        {
-            if (ImGuiFileDialog::Instance()->IsOk())
-            {
-                std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-                std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-
-                ash::AshBuffer* fileBuffer = new ash::AshBuffer();
-
-                if (auto res = fileBuffer->ReadFromFile(filePathName); res.HasError())
-                {
-                    m_Logger.Log("Error", "Failed to load from {}!", filePathName);
-                }
-
-                ash::AshStreamStaticBuffer expandableExportBuffer = ash::AshStreamStaticBuffer(fileBuffer, ash::AshStreamMode::READ);
-
-                if (this->Import(&expandableExportBuffer) == false)
-                {
-                    m_Logger.Log("Error", "Failed to load");
-                }
-                else
-                {
-                    m_Logger.Log("Info", "Loaded from {}!", filePathName);
-                }
-
-                delete fileBuffer;
-            }
-
-            // close
-            ImGuiFileDialog::Instance()->Close();
+            m_Canvas.End();
         }
     }
 
