@@ -99,7 +99,7 @@ namespace genesis::editor
                     ImGui::OpenPopup("RenamePopup");
                 }
 
-                if (ImGui::BeginPopupModal("RenamePopup"))
+                if (ImGui::BeginPopup("RenamePopup", ImGuiWindowFlags_AlwaysAutoResize))
                 {
                     static char sNameBuffer[512] = {0};
 
@@ -116,6 +116,14 @@ namespace genesis::editor
                         GenesisFlow* renameTarget = m_Flows.at(currentIterator.first);
                         m_Flows.erase(currentIterator.first);
                         m_Flows.emplace(sNameBuffer, renameTarget);
+                        ImGui::CloseCurrentPopup();
+                    }
+
+                    ImGui::SameLine();
+
+                    if(ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
+                    {
+                        ImGui::CloseCurrentPopup();
                     }
 
                     ImGui::EndPopup();

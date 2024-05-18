@@ -7,16 +7,11 @@
 #include "GenesisShared/GenesisFlow.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
 #include "GenesisShared/GenesisPinTracker.hpp"
-#include "ImGuiFileDialog.h"
 #include "imgui.h"
-#include "imgui_canvas.h"
-#include "imgui_internal.h"
 #include "imgui_node_editor.h"
-#include <algorithm>
 #include <cmath>
 #include <map>
 #include <utility>
-#include <vector>
 
 namespace ed = ax::NodeEditor;
 
@@ -24,7 +19,7 @@ namespace genesis::editor
 {
 
     GenesisFlowEditor::GenesisFlowEditor(utils::GenesisLogBox* LogBox)
-        : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(LogBox), m_TriggerCheck(false), m_TriggerActionFocusFirstNode(false), m_Canvas()
+        : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(LogBox), m_TriggerCheck(false), m_TriggerActionFocusFirstNode(false)
     {
         AddOperationToFlow(new operations::GenesisFindPatternOperation("E8 ? ? ? ? 90"));
         AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 6));

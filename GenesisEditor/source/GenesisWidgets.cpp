@@ -35,9 +35,9 @@ namespace genesis::widgets
             m_TriggerPopup = false;
         }
 
-        if (ImGui::BeginPopupModal(popupKey.data(), nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::BeginPopup(popupKey.data(), ImGuiWindowFlags_AlwaysAutoResize))
         {
-            ImGui::Text("Please choose an option with your arrow keys and press enter.");
+            ImGui::Text("Please choose an option");
             ImGui::Separator();
 
             for (size_t currentIndex = m_StartAtOffset; currentIndex < m_Items.size(); currentIndex++)
@@ -49,6 +49,11 @@ namespace genesis::widgets
                     m_HasChanged = true;
                     break;
                 }
+            }
+
+            if(ImGui::IsKeyPressed(ImGuiKey_Escape))
+            {
+                ImGui::CloseCurrentPopup();
             }
 
             ImGui::EndPopup();

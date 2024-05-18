@@ -84,7 +84,7 @@ namespace genesis::editor
                     sTriggerNewPopup = false;
                 }
 
-                if (ImGui::BeginPopupModal("NewPopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+                if (ImGui::BeginPopup("NewPopup", ImGuiWindowFlags_AlwaysAutoResize))
                 {
                     static char sNameBuffer[512] = {0};
 

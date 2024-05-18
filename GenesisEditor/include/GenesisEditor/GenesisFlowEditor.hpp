@@ -26,28 +26,30 @@ namespace genesis::editor
         void Render();
         void RenderNodes();
         void RenderNodeOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation);
-    
+
         static bool sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor);
 
         void Reset() override;
         bool Import(ash::AshStream* Stream) override;
         bool Export(ash::AshStream* Stream) override;
 
-        void TriggerActionFocusFirstNode() { m_TriggerActionFocusFirstNode = true; }
+        void TriggerActionFocusFirstNode()
+        {
+            m_TriggerActionFocusFirstNode = true;
+        }
+
     private:
         ash::AshLogger m_Logger;
         utils::GenesisLogBox* m_LogBox;
 
         ax::NodeEditor::EditorContext* m_NodeEditorContext;
-        ImGuiEx::Canvas m_Canvas;
-        
+
         std::map<uintptr_t, std::string> m_NodeEditorSavedStates;
 
         bool m_TriggerCheck;
         bool m_TriggerActionFocusFirstNode;
-
     };
 
-}
+} // namespace genesis::editor
 
 #endif // !_GENESISFLOWEDITOR_HPP
