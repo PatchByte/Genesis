@@ -14,6 +14,7 @@
 #include "imgui_node_editor.h"
 #include <algorithm>
 #include <cmath>
+#include <map>
 #include <utility>
 #include <vector>
 
@@ -106,7 +107,7 @@ namespace genesis::editor
             }
         }
 
-        if (m_Canvas.Begin("##EditorCanvas", {-1, -1}))
+        // if (m_Canvas.Begin("##EditorCanvas", {-1, -1}))
         {
 
             ed::SetCurrentEditor(m_NodeEditorContext);
@@ -240,6 +241,8 @@ namespace genesis::editor
                 }
             }
 
+            // Debug
+
             if (m_TriggerActionFocusFirstNode || ImGui::IsKeyPressed(ImGuiKey_PageDown))
             {
                 if (m_Operations.size() > 0)
@@ -247,10 +250,42 @@ namespace genesis::editor
                     ed::CenterNodeOnScreen(m_Operations.begin()->second->GetOperationId());
                 }
             }
+
+            // New Action
+
+            ed::Suspend();
+
+            if (ed::ShowBackgroundContextMenu())
+            {
+                ImGui::OpenPopup("New ##PopupNodeEditorNewNode");
+            }
+
+            if (ImGui::BeginPopup("New ##PopupNodeEditorNewNode"))
+            {
+                static std::map<std::string, operations::GenesisOperationType> sNewItems = {
+                    { "Pattern", operations::GenesisOperationType::FIND_PATTERN },
+                    { "Math", operations::GenesisOperationType::MATH }
+                };
+
+                for(auto currentIterator : sNewItems)
+                {
+                    if(ImGui::MenuItem(currentIterator.first.data()))
+                    {
+                        operations::GenesisOperationId newOperationId = AddOperationToFlow(operations::GenesisOperationUtils::sfCreateOperationByType(currentIterator.second));
+                        ed::SetNodePosition(newOperationId, ed::ScreenToCanvas(ImGui::GetMousePos()));
+                    }
+                }
+
+                ImGui::EndPopup();
+            }
+
+            ed::Resume();
+
             ed::End();
             ed::SetCurrentEditor(nullptr);
+            // m_Canvas.End();
 
-            m_Canvas.End();
+            
         }
     }
 

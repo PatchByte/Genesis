@@ -2,13 +2,9 @@
 #include "GenesisEditor/GenesisWidgets.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
 #include "imgui.h"
-#include "imgui_internal.h"
 #include "imgui_node_editor.h"
-#include <cstddef>
 #include <cstdlib>
 #include <cstring>
-
-namespace ed = ax::NodeEditor;
 
 namespace genesis::editor
 {
@@ -16,8 +12,6 @@ namespace genesis::editor
     void GenesisOperationEditorForNodes::sfRenderMathOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisMathOperation* Operation,
                                                                const operations::GenesisOperationInformation& OperationInformation)
     {
-        static const char* typeItems[] = {"Nothing (Invalid)", "Addition", "Subtraction"};
-
         static widgets::GenesisComboBoxPopupWorkaround comboBox = widgets::GenesisComboBoxPopupWorkaround();
 
         operations::GenesisMathOperation::Type type = Operation->GetType();
