@@ -51,6 +51,10 @@ namespace genesis::editor
                         {
                             this->LoadGenesisFileFromAndApplyLogs(FilePathArray[currentFilePathIndex]);
                         }
+                        else if(currentFilePath.ends_with(".exe") || currentFilePath.ends_with(".dll"))
+                        {
+                            this->ProcessGenesisFileAndApplyLogs(FilePathArray[currentFilePathIndex]);
+                        }
                         else
                         {
                             m_Logger.Log("Error", "Unknown file {}.", FilePathArray[currentFilePathIndex]);
@@ -132,9 +136,9 @@ namespace genesis::editor
                             ImGui::EndMenu();
                         }
 
-                        if(ImGui::BeginMenu("Log"))
+                        if (ImGui::BeginMenu("Log"))
                         {
-                            if(ImGui::MenuItem("Clear"))
+                            if (ImGui::MenuItem("Clear"))
                             {
                                 m_LogBox.Clear();
                             }
@@ -358,7 +362,7 @@ namespace genesis::editor
 
     ash::AshResult GenesisEditor::ProcessGenesisFileAndApplyLogs(std::filesystem::path Input)
     {
-        if(auto res = this->ProcessGenesisFile(Input); res.WasSuccessful())
+        if (auto res = this->ProcessGenesisFile(Input); res.WasSuccessful())
         {
             m_Logger.Log("Info", res.GetMessage());
             return std::move(res);

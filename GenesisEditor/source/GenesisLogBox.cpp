@@ -38,7 +38,7 @@ namespace genesis::utils
             for (auto currentIterator : m_Logs)
             {
                 ImGui::Columns(2);
-                ImGui::SetColumnWidth(-1, ImGui::GetWindowWidth() * 0.2);
+                ImGui::SetColumnWidth(-1, ImGui::GetWindowWidth() * 0.1);
                 ImGui::Text("%s", currentIterator.first.GetPrefix().data());
                 ImGui::NextColumn();
                 ImGui::Text("%s", currentIterator.second.data());
@@ -48,7 +48,7 @@ namespace genesis::utils
             ImGui::EndChild();
         }
 
-        //ImGui::PopStyleColor();
+        // ImGui::PopStyleColor();
     }
 
     void GenesisLogBox::Clear()
@@ -58,8 +58,17 @@ namespace genesis::utils
 
     ash::AshLoggerPassage* GenesisLogBox::CreatePassage()
     {
-        return new ash::AshLoggerFunctionPassage([this](ash::AshLoggerDefaultPassage* This, ash::AshLoggerTag Tag, std::string Format, fmt::format_args Args, std::string FormattedString) -> void
-                                                 { m_Logs.push_back(std::make_pair(Tag, fmt::vformat(Format, Args))); });
+        return new ash::AshLoggerFunctionPassage(
+            [this](ash::AshLoggerDefaultPassage* This, ash::AshLoggerTag Tag, std::string Format, fmt::format_args Args, std::string FormattedString) -> void
+            {
+                std::string formatted = fmt::vformat(Format, Args);
+
+                // Log-Box output
+                m_Logs.push_back(std::make_pair(Tag, formatted));
+
+                // Console output
+                std::cout << Tag.GetPrefix() << " | " << formatted << std::endl;
+            });
     }
 
 } // namespace genesis::utils

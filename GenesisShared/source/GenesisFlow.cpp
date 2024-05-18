@@ -31,14 +31,23 @@ namespace genesis
         this->Reset();
     }
 
+    operations::GenesisOperationId GenesisFlow::FindFreeOperationId()
+    {
+        while (m_Operations.contains(m_CounterOperations)) {
+            m_CounterOperations++;
+        }
+
+        return m_CounterOperations;
+    }
+
     operations::GenesisOperationId GenesisFlow::AddOperationToFlow(operations::GenesisBaseOperation* Operation)
     {
-        Operation->SetOperationId(m_CounterOperations);
-        m_Operations.emplace(m_CounterOperations, Operation);
-        
-        m_CounterOperations++;
+        operations::GenesisOperationId operationId = FindFreeOperationId();
 
-        return Operation->GetOperationId();
+        Operation->SetOperationId(operationId);
+        m_Operations.emplace(operationId, Operation);
+
+        return operationId;
     }
 
     bool GenesisFlow::RemoveOperationFromFlow(operations::GenesisOperationId OperationId)

@@ -32,6 +32,7 @@ namespace genesis
         virtual GenesisOperationState* CreateOperationState(common::GenesisLoadedFile* LoadedFile);
         ash::AshResult ProcessFlow(output::GenesisOutputData* OutputData, common::GenesisLoadedFile* LoadedFile);
 
+        operations::GenesisOperationId FindFreeOperationId();
         operations::GenesisOperationId AddOperationToFlow(operations::GenesisBaseOperation* Operation);
         bool RemoveOperationFromFlow(operations::GenesisOperationId OperationId);
 
