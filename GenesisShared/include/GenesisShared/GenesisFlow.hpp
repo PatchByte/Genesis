@@ -7,6 +7,8 @@
 #include "AshObjects/AshPointerVector.h"
 #include "GenesisShared/GenesisLoadedFile.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
+#include "GenesisShared/GenesisOutput.hpp"
+#include "GenesisShared/GenesisState.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -27,7 +29,8 @@ namespace genesis
         GenesisFlow();
         ~GenesisFlow();
 
-        ash::AshCustomResult<unsigned long long> ProcessFlow(common::GenesisLoadedFile* LoadedFile);
+        virtual GenesisOperationState* CreateOperationState(common::GenesisLoadedFile* LoadedFile);
+        ash::AshResult ProcessFlow(output::GenesisOutputData* OutputData, common::GenesisLoadedFile* LoadedFile);
 
         operations::GenesisOperationId AddOperationToFlow(operations::GenesisBaseOperation* Operation);
         bool RemoveOperationFromFlow(operations::GenesisOperationId OperationId);

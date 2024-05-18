@@ -15,7 +15,7 @@ namespace genesis::editor
         }
         ImGui::PopItemWidth();
 
-        Builder.Input(OperationInformation.m_OutputPinId);
+        Builder.Input(OperationInformation.m_InputPinId);
         ImGui::Text("Input");
         Builder.EndInput();
 

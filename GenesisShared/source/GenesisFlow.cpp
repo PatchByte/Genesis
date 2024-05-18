@@ -3,7 +3,9 @@
 #include "AshObjects/AshBufferPlug.h"
 #include "AshObjects/AshString.h"
 #include "GenesisShared/GenesisOperations.hpp"
+#include "GenesisShared/GenesisOutput.hpp"
 #include "GenesisShared/GenesisPinTracker.hpp"
+#include "GenesisShared/GenesisState.hpp"
 #include "fmt/format.h"
 #include <algorithm>
 #include <cstddef>
@@ -155,10 +157,76 @@ namespace genesis
         return ash::AshResult(true);
     }
 
-    ash::AshCustomResult<unsigned long long> GenesisFlow::ProcessFlow(common::GenesisLoadedFile* LoadedFile)
+    GenesisOperationState* GenesisFlow::CreateOperationState(common::GenesisLoadedFile* LoadedFile)
     {
+        GenesisOperationState* state = new GenesisOperationState(LoadedFile);
+        return state;
+    }
+
+    ash::AshResult GenesisFlow::ProcessFlow(output::GenesisOutputData* OutputData, common::GenesisLoadedFile* LoadedFile)
+    {
+        // Traversing setup
+
+        std::vector<operations::GenesisBaseOperation*> flowStartNodes = CollectAllFlowStarterNodes(true, true);
+        std::function<ash::AshResult(operations::GenesisBaseOperation*, std::vector<operations::GenesisOperationId>, GenesisOperationState* CurrentOperationState)> traverseNode;
         
-        exit(-1);
+        // Traversing function
+
+        traverseNode = [this, &traverseNode] (operations::GenesisBaseOperation* Operation, std::vector<operations::GenesisOperationId> PreviousVisitedOperationsIds, GenesisOperationState* CurrentOperationState) -> ash::AshResult 
+        {
+            // Check
+
+            if(std::find(PreviousVisitedOperationsIds.begin(), PreviousVisitedOperationsIds.end(), Operation->GetOperationId()) != PreviousVisitedOperationsIds.end())
+            {
+                return ash::AshResult(false, fmt::format("Node {} has already been visited. Loop detected ;)", Operation->GetOperationId()));
+            }
+
+            PreviousVisitedOperationsIds.push_back(Operation->GetOperationId());
+
+            // Node Processing
+
+            if(auto res = Operation->ProcessOperation(CurrentOperationState); res.HasError())
+            {
+                return ash::AshResult(false, fmt::format("Node {} failed. {}", Operation->GetOperationId(), res.GetMessage()));
+            }
+
+            // Link traversal
+
+            auto linksVector = CollectAllNodeLinkIdsToOtherNodesFromNode(Operation->GetOperationId());
+
+            for(operations::GenesisOperationId nextLinkNode : linksVector)
+            {
+                GenesisOperationState* nextOperationState = new GenesisOperationState(*CurrentOperationState);
+
+                if(auto res = traverseNode(m_Operations.at(nextLinkNode), PreviousVisitedOperationsIds, nextOperationState); res.HasError())
+                {
+                    return res;
+                }
+
+                delete nextOperationState;
+            }
+
+            return ash::AshResult(true);
+        };
+
+        for(operations::GenesisBaseOperation* currentFlowStartNode : flowStartNodes)
+        {
+            GenesisOperationState* currentFlowStartNodeOperationState = this->CreateOperationState(LoadedFile);
+            currentFlowStartNodeOperationState->SetOutputData(OutputData);
+
+            auto res = traverseNode(currentFlowStartNode, {}, currentFlowStartNodeOperationState);
+            
+            // Do not need that anymore.
+            delete currentFlowStartNodeOperationState;
+
+            if(res.HasError())
+            {
+                return ash::AshResult(false, fmt::format("(Start node: {}) {}", currentFlowStartNode->GetOperationId(), res.GetMessage()));
+            }
+
+        }
+        
+        return ash::AshResult(true);
     }
 
     void GenesisFlow::Reset()

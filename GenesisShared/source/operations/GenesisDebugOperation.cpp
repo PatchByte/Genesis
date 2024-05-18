@@ -28,7 +28,7 @@ namespace genesis::operations
     {
         if(auto debugLogger = State->GetLogger())
         {
-            debugLogger->Log("Debug", "{} message: \"{}\" with value 0x{:x}.", m_OperationId, m_DebugMessage, State->GetRawValue());
+            debugLogger->Log("Debug", "Node {} \"{}\" 0x{:x}.", m_OperationId, m_DebugMessage, State->GetRawValue());
         }
 
         return ash::AshResult(true);

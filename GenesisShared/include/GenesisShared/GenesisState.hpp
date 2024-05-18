@@ -3,6 +3,7 @@
 
 #include "AshLogger/AshLogger.h"
 #include "GenesisShared/GenesisLoadedFile.hpp"
+#include "GenesisShared/GenesisOutput.hpp"
 
 namespace genesis
 {
@@ -10,7 +11,7 @@ namespace genesis
     class GenesisOperationState
     {
     public:
-        inline GenesisOperationState(common::GenesisLoadedFile* LoadedFile) : m_LoadedFile(LoadedFile), m_RawValue(0), m_Logger(nullptr)
+        inline GenesisOperationState(common::GenesisLoadedFile* LoadedFile) : m_LoadedFile(LoadedFile), m_RawValue(0), m_Logger(nullptr), m_OutputData(nullptr)
         {
         }
 
@@ -35,25 +36,35 @@ namespace genesis
         }
 
         template <typename T>
-        T GetValueAs()
+        inline T GetValueAs()
         {
             return reinterpret_cast<T>(m_PointerValue);
         }
 
-        common::GenesisLoadedFile* GetLoadedFile()
+        inline common::GenesisLoadedFile* GetLoadedFile()
         {
             return m_LoadedFile;
         }
 
         // Warning: if the return value is null no logger is available.
-        ash::AshLogger* GetLogger()
+        inline ash::AshLogger* GetLogger()
         {
             return m_Logger;
         }
 
-        void SetLogger(ash::AshLogger* Logger)
+        inline void SetLogger(ash::AshLogger* Logger)
         {
             m_Logger = Logger;
+        }
+
+        inline output::GenesisOutputData* GetOutputData()
+        {
+            return m_OutputData;
+        }
+
+        inline void SetOutputData(output::GenesisOutputData* OutputData)
+        {
+            m_OutputData = OutputData;
         }
 
     protected:
@@ -67,6 +78,7 @@ namespace genesis
 
         common::GenesisLoadedFile* m_LoadedFile;
         ash::AshLogger* m_Logger;
+        output::GenesisOutputData* m_OutputData;
     };
 
 } // namespace genesis

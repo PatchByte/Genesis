@@ -25,8 +25,10 @@ namespace genesis::editor
 
         ash::AshResult LoadGenesisFileFrom(std::filesystem::path Path);
         ash::AshResult SaveGenesisFileTo(std::filesystem::path Path);
+        ash::AshResult ProcessGenesisFile(std::filesystem::path Input);
         ash::AshResult LoadGenesisFileFromAndApplyLogs(std::filesystem::path Path);
         ash::AshResult SaveGenesisFileToAndApplyLogs(std::filesystem::path Path);
+        ash::AshResult ProcessGenesisFileAndApplyLogs(std::filesystem::path Input);
     private:
         utils::GenesisLogBox m_LogBox;
         ash::AshLogger m_Logger;

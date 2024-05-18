@@ -21,7 +21,7 @@ namespace genesis::editor
     public:
         enum class ActionType
         {
-            CENTER_ON_FIRST_NODE
+            NAVIGATE_TO_CONTENT
         };
 
         GenesisFlowEditor(utils::GenesisLogBox* LogBox);
@@ -35,11 +35,14 @@ namespace genesis::editor
 
         static bool sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor);
 
+        GenesisOperationState* CreateOperationState(common::GenesisLoadedFile* LoadedFile) override;
+
         void Reset() override;
         bool Import(ash::AshStream* Stream) override;
         bool Export(ash::AshStream* Stream) override;
 
         void DoAction(ActionType Action, void* Reserved);
+
     private:
         ash::AshLogger m_Logger;
         utils::GenesisLogBox* m_LogBox;

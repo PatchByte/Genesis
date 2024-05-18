@@ -3,6 +3,7 @@
 #include "Ash/AshStream.h"
 #include "AshObjects/AshString.h"
 #include "GenesisShared/GenesisFlow.hpp"
+#include "fmt/format.h"
 #include <cstddef>
 
 namespace genesis
@@ -44,6 +45,19 @@ namespace genesis
         }
 
         m_Flows.erase(FlowName);
+        return ash::AshResult(true);
+    }
+
+    ash::AshResult GenesisBundle::ProcessBundle(output::GenesisOutputData* OutputData, common::GenesisLoadedFile* LoadedFile)
+    {
+        for(auto currentIterator : m_Flows)
+        {
+            if(auto res = currentIterator.second->ProcessFlow(OutputData, LoadedFile); res.HasError())
+            {
+                return ash::AshResult(false, fmt::format("Flow {} failed. {}", currentIterator.first, res.GetMessage()));
+            }
+        }
+
         return ash::AshResult(true);
     }
 

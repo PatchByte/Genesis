@@ -212,10 +212,11 @@ namespace genesis::editor
 
             if (m_TriggerActionFocusFirstNode || ImGui::IsKeyPressed(ImGuiKey_PageDown))
             {
+                m_TriggerActionFocusFirstNode = false;
+
                 if (m_Operations.size() > 0)
                 {
                     ed::NavigateToContent();
-                    //ed::(m_Operations.begin()->second->GetOperationId());
                 }
             }
 
@@ -303,6 +304,17 @@ namespace genesis::editor
         return true;
     }
 
+    // Expanding previous GenesisFlow
+
+    GenesisOperationState* GenesisFlowEditor::CreateOperationState(common::GenesisLoadedFile* LoadedFile)
+    {
+        GenesisOperationState* operationState = GenesisFlow::CreateOperationState(LoadedFile);
+
+        operationState->SetLogger(&m_Logger);
+
+        return operationState;
+    }
+
     // Obligatory Save/Load stuff
 
     void GenesisFlowEditor::Reset()
@@ -368,9 +380,10 @@ namespace genesis::editor
 
     void GenesisFlowEditor::DoAction(ActionType Action, void* Reserved)
     {
-        switch (Action) {
+        switch (Action)
+        {
 
-        case ActionType::CENTER_ON_FIRST_NODE:
+        case ActionType::NAVIGATE_TO_CONTENT:
             m_TriggerActionFocusFirstNode = true;
             break;
         }

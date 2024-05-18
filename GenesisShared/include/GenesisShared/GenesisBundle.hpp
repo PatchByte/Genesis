@@ -5,6 +5,8 @@
 #include "Ash/AshResult.h"
 #include "Ash/AshStreamableObject.h"
 #include "GenesisShared/GenesisFlow.hpp"
+#include "GenesisShared/GenesisLoadedFile.hpp"
+#include "GenesisShared/GenesisOutput.hpp"
 #include <functional>
 #include <map>
 
@@ -36,6 +38,8 @@ namespace genesis
         {
             return m_Flows;
         }
+
+        ash::AshResult ProcessBundle(output::GenesisOutputData* OutputData, common::GenesisLoadedFile* LoadedFile);
 
         virtual void Reset();
         bool Import(ash::AshStream* Stream);
