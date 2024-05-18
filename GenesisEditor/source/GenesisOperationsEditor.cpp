@@ -1,4 +1,5 @@
 #include "GenesisEditor/GenesisOperationsEditor.hpp"
+#include "GenesisShared/GenesisOperations.hpp"
 #include "imgui.h"
 
 namespace genesis::editor
@@ -19,12 +20,16 @@ namespace genesis::editor
         {
         default:
         case operations::GenesisOperationType::INVALID:
+            Builder.End();
             return;
         case operations::GenesisOperationType::FIND_PATTERN:
             sfRenderFindPatternOperation(Builder, dynamic_cast<operations::GenesisFindPatternOperation*>(Operation), operationInformation);
             return;
         case operations::GenesisOperationType::MATH:
             sfRenderMathOperation(Builder, dynamic_cast<operations::GenesisMathOperation*>(Operation), operationInformation);
+            break;
+        case operations::GenesisOperationType::DEBUG:
+            sfRenderDebugOperation(Builder, dynamic_cast<operations::GenesisDebugOperation*>(Operation), operationInformation);
             break;
         }
     }

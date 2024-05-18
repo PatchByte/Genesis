@@ -230,9 +230,7 @@ namespace genesis::editor
             if (ImGui::BeginPopup("New ##PopupNodeEditorNewNode"))
             {
                 static std::map<std::string, operations::GenesisOperationType> sNewItems = {
-                    {"Pattern", operations::GenesisOperationType::FIND_PATTERN}, {"Math", operations::GenesisOperationType::MATH},
-                    //    {"Debug", operations::GenesisOperationType::DEBUG}
-                };
+                    {"Pattern", operations::GenesisOperationType::FIND_PATTERN}, {"Math", operations::GenesisOperationType::MATH}, {"Debug", operations::GenesisOperationType::DEBUG}};
 
                 ImGui::Text("Create new Node");
                 ImGui::Separator();
@@ -264,7 +262,6 @@ namespace genesis::editor
             ed::End();
 
             ed::SetCurrentEditor(nullptr);
-            // m_Canvas.End();
         }
     }
 
@@ -352,7 +349,6 @@ namespace genesis::editor
                 ed::SetCurrentEditor(m_NodeEditorContext);
                 ImVec2 pos = ed::GetNodePosition(currentIterator.first);
                 ed::SetCurrentEditor(contextBefore);
-
 
                 reservedBufferGuiStream.Write<uintptr_t>(currentIterator.first);
                 reservedBufferGuiStream.Write<float>(pos.x);

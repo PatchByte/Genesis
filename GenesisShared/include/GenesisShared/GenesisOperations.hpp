@@ -221,6 +221,16 @@ namespace genesis::operations
         GenesisOperationInformation GetOperationInformation();
         ash::AshResult ProcessOperation(GenesisOperationState* State);
 
+        inline std::string GetDebugMessage()
+        {
+            return m_DebugMessage;
+        }
+
+        inline void SetDebugMessage(std::string DebugMessage)
+        {
+            m_DebugMessage = DebugMessage;
+        }
+
         bool Import(ash::AshStream* Stream);
         bool Export(ash::AshStream* Stream);
 
