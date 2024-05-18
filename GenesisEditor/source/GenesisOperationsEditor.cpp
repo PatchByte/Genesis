@@ -31,6 +31,9 @@ namespace genesis::editor
         case operations::GenesisOperationType::DEBUG:
             sfRenderDebugOperation(Builder, dynamic_cast<operations::GenesisDebugOperation*>(Operation), operationInformation);
             break;
+        case operations::GenesisOperationType::GET:
+            sfRenderGetOperation(Builder, dynamic_cast<operations::GenesisGetOperation*>(Operation), operationInformation);
+            break;
         }
     }
 

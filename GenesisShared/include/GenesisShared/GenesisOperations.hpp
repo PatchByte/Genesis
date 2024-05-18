@@ -18,6 +18,7 @@ namespace genesis::operations
         FIND_PATTERN = 1,
         MATH = 2,
         DEBUG = 3,
+        GET = 4,
     };
 
     class GenesisOperationInformation
@@ -29,6 +30,7 @@ namespace genesis::operations
             m_IsFlowStartNode = false;
             m_IsConditionalFlowStartNode = false;
             m_IsMathOperation = false;
+            m_IsInteractOperation = false;
             m_HasInputPin = false;
             m_HasOutputPin = false;
             m_InputPinId = 0;
@@ -39,6 +41,7 @@ namespace genesis::operations
         bool m_IsFlowStartNode : 1;
         bool m_IsConditionalFlowStartNode : 1;
         bool m_IsMathOperation : 1;
+        bool m_IsInteractOperation : 1;
         bool m_HasInputPin : 1;
         bool m_HasOutputPin : 1;
 
@@ -236,6 +239,62 @@ namespace genesis::operations
 
     protected:
         std::string m_DebugMessage;
+    };
+
+    class GenesisGetOperation : public GenesisBaseOperation
+    {
+    public:
+        enum class ValueKindType : int
+        {
+            UINT8 = 0,
+            UINT16 = 1,
+            UINT32 = 2,
+            UINT64 = 3,
+            
+            // Signed types are disabled for now.
+            // If you need signed types please let me know.
+            // SINT8 = 4,
+            // SINT16 = 5,
+            // SINT32 = 6,
+            // SINT64 = 7
+        };
+
+        GenesisGetOperation();
+        GenesisGetOperation(ValueKindType ValueKind);
+
+        std::string GetOperationName()
+        {
+            return "GetOperation";
+        }
+
+        std::string GetHumanReadableName()
+        {
+            return "Get Value";
+        }
+
+        GenesisOperationType GetOperationType()
+        {
+            return GenesisOperationType::GET;
+        }
+
+        GenesisOperationInformation GetOperationInformation();
+        ash::AshResult ProcessOperation(GenesisOperationState* State);
+
+        inline ValueKindType GetValueKind()
+        {
+            return m_ValueKind;
+        }
+
+        inline void SetValueKind(ValueKindType ValueKind)
+        {
+            m_ValueKind = ValueKind;
+        }
+
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+
+    protected:
+        ValueKindType m_ValueKind;
     };
 
     // Utils

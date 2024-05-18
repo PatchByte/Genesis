@@ -231,8 +231,10 @@ namespace genesis::editor
 
             if (ImGui::BeginPopup("New ##PopupNodeEditorNewNode"))
             {
-                static std::map<std::string, operations::GenesisOperationType> sNewItems = {
-                    {"Pattern", operations::GenesisOperationType::FIND_PATTERN}, {"Math", operations::GenesisOperationType::MATH}, {"Debug", operations::GenesisOperationType::DEBUG}};
+                static std::map<std::string, operations::GenesisOperationType> sNewItems = {{"Pattern", operations::GenesisOperationType::FIND_PATTERN},
+                                                                                            {"Math", operations::GenesisOperationType::MATH},
+                                                                                            {"Debug", operations::GenesisOperationType::DEBUG},
+                                                                                            {"Get Value", operations::GenesisOperationType::GET}};
 
                 ImGui::Text("Create new Node");
                 ImGui::Separator();
