@@ -23,6 +23,7 @@ namespace genesis::editor
     private:
         utils::GenesisLogBox m_LogBox;
         ash::AshLogger m_Logger;
+        bool m_ForceDisableRendering;
 
         renderer::GenesisRendererBase* m_Renderer;
         GenesisBundleEditor m_TestBundleEditor;

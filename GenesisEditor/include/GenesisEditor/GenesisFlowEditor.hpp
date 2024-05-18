@@ -11,6 +11,7 @@
 #include "imgui_canvas.h"
 #include "imgui_node_editor.h"
 #include <map>
+#include <utility>
 
 namespace genesis::editor
 {
@@ -23,8 +24,8 @@ namespace genesis::editor
 
         void Initialize();
         void Shutdown();
-        void Render();
-        void RenderNodes();
+        void Render(std::string UniqueKey);
+        void RenderNodes(std::string UniqueKey);
         void RenderNodeOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation);
 
         static bool sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor);
@@ -44,10 +45,11 @@ namespace genesis::editor
 
         ax::NodeEditor::EditorContext* m_NodeEditorContext;
 
-        std::map<uintptr_t, std::string> m_NodeEditorSavedStates;
+        std::map<uintptr_t, std::pair<int, int>> m_NodeEditorSavedStates;
 
         bool m_TriggerCheck;
         bool m_TriggerActionFocusFirstNode;
+        bool m_TriggerRestoreStateOfNodes;
     };
 
 } // namespace genesis::editor

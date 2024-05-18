@@ -3,8 +3,8 @@
 
 #include "Ash/AshResult.h"
 #include "Ash/AshStreamableObject.h"
-#include "GenesisShared/GenesisPinTracker.hpp"
 #include "GenesisShared/GenesisLoadedFile.hpp"
+#include "GenesisShared/GenesisPinTracker.hpp"
 #include "GenesisShared/GenesisState.hpp"
 #include <string>
 #include <string_view>
@@ -16,7 +16,8 @@ namespace genesis::operations
     {
         INVALID = 0,
         FIND_PATTERN = 1,
-        MATH = 2
+        MATH = 2,
+        DEBUG = 3,
     };
 
     class GenesisOperationInformation
@@ -67,7 +68,7 @@ namespace genesis::operations
             return GenesisOperationType::INVALID;
         }
 
-        virtual GenesisOperationId GetOperationId() 
+        virtual GenesisOperationId GetOperationId()
         {
             return m_OperationId;
         }
@@ -91,6 +92,7 @@ namespace genesis::operations
         {
             return ash::AshResult(false, "Operation not implement");
         }
+
     protected:
         GenesisOperationId m_OperationId;
     };
@@ -194,6 +196,39 @@ namespace genesis::operations
         Type m_Type;
         unsigned long long m_Value;
     };
+
+    class GenesisDebugOperation : public GenesisBaseOperation
+    {
+    public:
+        GenesisDebugOperation();
+        GenesisDebugOperation(std::string DebugMessage);
+
+        std::string GetOperationName()
+        {
+            return "DebugOperation";
+        }
+
+        std::string GetHumanReadableName()
+        {
+            return "Debug";
+        }
+
+        GenesisOperationType GetOperationType()
+        {
+            return GenesisOperationType::DEBUG;
+        }
+
+        GenesisOperationInformation GetOperationInformation();
+        ash::AshResult ProcessOperation(GenesisOperationState* State);
+
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+
+    protected:
+        std::string m_DebugMessage;
+    };
+
+    // Utils
 
     class GenesisOperationUtils
     {

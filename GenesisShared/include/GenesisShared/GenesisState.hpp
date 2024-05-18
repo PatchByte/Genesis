@@ -1,6 +1,7 @@
 #ifndef _GENESISSTATE_HPP
 #define _GENESISSTATE_HPP
 
+#include "AshLogger/AshLogger.h"
 #include "GenesisShared/GenesisLoadedFile.hpp"
 
 namespace genesis
@@ -9,7 +10,7 @@ namespace genesis
     class GenesisOperationState
     {
     public:
-        inline GenesisOperationState(common::GenesisLoadedFile* LoadedFile) : m_LoadedFile(LoadedFile), m_RawValue(0)
+        inline GenesisOperationState(common::GenesisLoadedFile* LoadedFile) : m_LoadedFile(LoadedFile), m_RawValue(0), m_Logger(nullptr)
         {
         }
 
@@ -44,6 +45,17 @@ namespace genesis
             return m_LoadedFile;
         }
 
+        // Warning: if the return value is null no logger is available.
+        ash::AshLogger* GetLogger()
+        {
+            return m_Logger;
+        }
+
+        void SetLogger(ash::AshLogger* Logger)
+        {
+            m_Logger = Logger;
+        }
+
     protected:
         // The Value is most likely a pointer which is the virtual address in the image.
         // Please note it is the **virtual address**, not the offset in the image.
@@ -54,6 +66,7 @@ namespace genesis
         };
 
         common::GenesisLoadedFile* m_LoadedFile;
+        ash::AshLogger* m_Logger;
     };
 
 } // namespace genesis

@@ -1,6 +1,8 @@
 #include "Ash/AshBuffer.h"
 #include "Ash/AshResult.h"
+#include "AshObjects/AshString.h"
 #include "GenesisShared/GenesisOperations.hpp"
+#include <utility>
 
 namespace genesis::operations
 {
@@ -66,5 +68,4 @@ namespace genesis::operations
 
         return Stream->IsOkay();
     }
-
 }

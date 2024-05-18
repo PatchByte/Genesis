@@ -19,7 +19,7 @@ namespace genesis::editor
 {
 
     GenesisFlowEditor::GenesisFlowEditor(utils::GenesisLogBox* LogBox)
-        : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(LogBox), m_TriggerCheck(false), m_TriggerActionFocusFirstNode(false)
+        : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(LogBox), m_TriggerCheck(false), m_TriggerActionFocusFirstNode(false), m_TriggerRestoreStateOfNodes(false)
     {
         AddOperationToFlow(new operations::GenesisFindPatternOperation("E8 ? ? ? ? 90"));
         AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 6));
@@ -33,6 +33,7 @@ namespace genesis::editor
 
     GenesisFlowEditor::~GenesisFlowEditor()
     {
+        this->Shutdown();
     }
 
     void GenesisFlowEditor::Initialize()
@@ -42,35 +43,6 @@ namespace genesis::editor
         nodeEditorConfig.EnableSmoothZoom = false;
         nodeEditorConfig.UserPointer = this;
 
-        nodeEditorConfig.LoadNodeSettings = [](ed::NodeId NodeId, char* Data, void* UserPointerUnCast) -> size_t
-        {
-            GenesisFlowEditor* userPointer = static_cast<GenesisFlowEditor*>(UserPointerUnCast);
-
-            if (userPointer->m_NodeEditorSavedStates.contains(NodeId.Get()) == false)
-            {
-                return 0;
-            }
-
-            if (Data)
-            {
-                memcpy(Data, userPointer->m_NodeEditorSavedStates.at(NodeId.Get()).data(), userPointer->m_NodeEditorSavedStates.at(NodeId.Get()).size());
-            }
-
-            return userPointer->m_NodeEditorSavedStates.at(NodeId.Get()).size();
-        };
-
-        nodeEditorConfig.SaveNodeSettings = [](ed::NodeId NodeId, const char* Data, size_t Size, ed::SaveReasonFlags Reason, void* UserPointerUnCast) -> bool
-        {
-            GenesisFlowEditor* userPointer = static_cast<GenesisFlowEditor*>(UserPointerUnCast);
-
-            std::string state = "";
-            state.assign(Data, Size);
-
-            userPointer->m_NodeEditorSavedStates.emplace(NodeId.Get(), state);
-
-            return true;
-        };
-
         m_NodeEditorContext = ed::CreateEditor(&nodeEditorConfig);
     }
 
@@ -79,13 +51,13 @@ namespace genesis::editor
         ed::DestroyEditor(m_NodeEditorContext);
     }
 
-    void GenesisFlowEditor::Render()
+    void GenesisFlowEditor::Render(std::string UniqueKey)
     {
 
-        RenderNodes();
+        RenderNodes(UniqueKey);
     }
 
-    void GenesisFlowEditor::RenderNodes()
+    void GenesisFlowEditor::RenderNodes(std::string UniqueKey)
     {
         if (m_TriggerCheck)
         {
@@ -102,13 +74,13 @@ namespace genesis::editor
             }
         }
 
-        // if (m_Canvas.Begin("##EditorCanvas", {-1, -1}))
+        if (m_NodeEditorContext)
         {
 
             ed::SetCurrentEditor(m_NodeEditorContext);
             ed::GetStyle().NodeRounding = 5.f;
 
-            ed::Begin("MainEditor", {-1, -1});
+            ed::Begin(UniqueKey.c_str(), {-1, -1});
 
             utils::GenesisNodeBuilder nodeBuilder = utils::GenesisNodeBuilder();
 
@@ -258,13 +230,16 @@ namespace genesis::editor
             if (ImGui::BeginPopup("New ##PopupNodeEditorNewNode"))
             {
                 static std::map<std::string, operations::GenesisOperationType> sNewItems = {
-                    { "Pattern", operations::GenesisOperationType::FIND_PATTERN },
-                    { "Math", operations::GenesisOperationType::MATH }
+                    {"Pattern", operations::GenesisOperationType::FIND_PATTERN}, {"Math", operations::GenesisOperationType::MATH},
+                    //    {"Debug", operations::GenesisOperationType::DEBUG}
                 };
 
-                for(auto currentIterator : sNewItems)
+                ImGui::Text("Create new Node");
+                ImGui::Separator();
+
+                for (auto currentIterator : sNewItems)
                 {
-                    if(ImGui::MenuItem(currentIterator.first.data()))
+                    if (ImGui::MenuItem(currentIterator.first.data()))
                     {
                         operations::GenesisOperationId newOperationId = AddOperationToFlow(operations::GenesisOperationUtils::sfCreateOperationByType(currentIterator.second));
                         ed::SetNodePosition(newOperationId, ed::ScreenToCanvas(ImGui::GetMousePos()));
@@ -276,11 +251,20 @@ namespace genesis::editor
 
             ed::Resume();
 
+            if (m_TriggerRestoreStateOfNodes)
+            {
+                m_TriggerRestoreStateOfNodes = false;
+
+                for (auto currentIterator : m_NodeEditorSavedStates)
+                {
+                    ed::SetNodePosition(currentIterator.first, ImVec2(currentIterator.second.first, currentIterator.second.second));
+                }
+            }
+
             ed::End();
+
             ed::SetCurrentEditor(nullptr);
             // m_Canvas.End();
-
-            
         }
     }
 
@@ -343,25 +327,14 @@ namespace genesis::editor
             for (size_t currentNodeStateIndex = 0; currentNodeStateIndex < nodeStatesSize; currentNodeStateIndex++)
             {
                 uintptr_t currentNodeStateId = reservedBufferGuiStream.Read<uintptr_t>();
-                ash::objects::AshAsciiString currentNodeDataString = ash::objects::AshAsciiString();
+                float x = reservedBufferGuiStream.Read<float>();
+                float y = reservedBufferGuiStream.Read<float>();
 
-                if (currentNodeDataString.Import(&reservedBufferGuiStream) == false)
-                {
-                    std::cout << "Failed to import currentNodeDataString" << std::endl;
-                    return false;
-                }
-
-                m_NodeEditorSavedStates.emplace(currentNodeStateId, currentNodeDataString.GetText());
+                m_NodeEditorSavedStates.emplace(currentNodeStateId, std::make_pair(x, y));
             }
         }
 
-        for (auto currentIterator : m_NodeEditorSavedStates)
-        {
-            auto currentContext = ed::GetCurrentEditor();
-            ed::SetCurrentEditor(m_NodeEditorContext);
-            ed::RestoreNodeState(currentIterator.first);
-            ed::SetCurrentEditor(currentContext);
-        }
+        m_TriggerRestoreStateOfNodes = true;
 
         return res;
     }
@@ -371,12 +344,19 @@ namespace genesis::editor
         {
             ash::AshStreamExpandableExportBuffer reservedBufferGuiStream = ash::AshStreamExpandableExportBuffer();
 
-            reservedBufferGuiStream.Write<size_t>(m_NodeEditorSavedStates.size());
+            reservedBufferGuiStream.Write<size_t>(m_Operations.size());
 
-            for (auto currentIterator : m_NodeEditorSavedStates)
+            for (auto currentIterator : m_Operations)
             {
-                reservedBufferGuiStream.Write(currentIterator.first);
-                ash::objects::AshAsciiString(currentIterator.second).Export(&reservedBufferGuiStream);
+                ax::NodeEditor::EditorContext* contextBefore = ed::GetCurrentEditor();
+                ed::SetCurrentEditor(m_NodeEditorContext);
+                ImVec2 pos = ed::GetNodePosition(currentIterator.first);
+                ed::SetCurrentEditor(contextBefore);
+
+
+                reservedBufferGuiStream.Write<uintptr_t>(currentIterator.first);
+                reservedBufferGuiStream.Write<float>(pos.x);
+                reservedBufferGuiStream.Write<float>(pos.y);
             }
 
             if (auto res = reservedBufferGuiStream.MakeCopyOfBuffer(); res)

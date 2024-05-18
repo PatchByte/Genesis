@@ -13,6 +13,7 @@ namespace genesis::editor
     {
     public:
         GenesisBundleEditor(utils::GenesisLogBox* LogBox);
+        ~GenesisBundleEditor();
 
         void Initialize();
         void Shutdown();

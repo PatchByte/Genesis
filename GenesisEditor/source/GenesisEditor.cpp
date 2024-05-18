@@ -14,7 +14,7 @@ namespace ed = ax::NodeEditor;
 namespace genesis::editor
 {
 
-    GenesisEditor::GenesisEditor() : m_LogBox(), m_Logger("GenesisEditor", {}), m_TestBundleEditor(&m_LogBox)
+    GenesisEditor::GenesisEditor() : m_LogBox(), m_Logger("GenesisEditor", {}), m_TestBundleEditor(&m_LogBox), m_ForceDisableRendering(false)
     {
         m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Editor");
         m_Logger.AddLoggerPassage(m_LogBox.CreatePassage());
@@ -40,74 +40,76 @@ namespace genesis::editor
         while (m_Renderer->ShallRender())
         {
             m_Renderer->BeginFrame();
-
-            if (ImGui::Begin("GenesisEditorFrame", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar))
+            if (m_ForceDisableRendering == false)
             {
-                ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
-                ImGui::SetWindowPos(ImVec2(0, 0));
-
-                static bool sTriggerNewPopup = false;
-
-                if (ImGui::BeginMenuBar())
+                if (ImGui::Begin("GenesisEditorFrame", nullptr,
+                                 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_MenuBar))
                 {
-                    if (ImGui::BeginMenu("File"))
+                    ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
+                    ImGui::SetWindowPos(ImVec2(0, 0));
+
+                    static bool sTriggerNewPopup = false;
+
+                    if (ImGui::BeginMenuBar())
                     {
-                        if (ImGui::MenuItem("Open"))
+                        if (ImGui::BeginMenu("File"))
                         {
-                            ImGuiFileDialog::Instance()->OpenDialog("OpenBundleDialogKey", "Open File", ".genesis");
+                            if (ImGui::MenuItem("Open"))
+                            {
+                                ImGuiFileDialog::Instance()->OpenDialog("OpenBundleDialogKey", "Open File", ".genesis");
+                            }
+
+                            if (ImGui::MenuItem("Save"))
+                            {
+                                ImGuiFileDialog::Instance()->OpenDialog("SaveBundleDialogKey", "Save File", ".genesis");
+                            }
+
+                            ImGui::EndMenu();
                         }
 
-                        if (ImGui::MenuItem("Save"))
+                        if (ImGui::BeginMenu("Flows"))
                         {
-                            ImGuiFileDialog::Instance()->OpenDialog("SaveBundleDialogKey", "Save File", ".genesis");
+                            if (ImGui::MenuItem("New"))
+                            {
+                                sTriggerNewPopup = true;
+                            }
+
+                            ImGui::EndMenu();
                         }
 
-                        ImGui::EndMenu();
+                        ImGui::EndMenuBar();
                     }
 
-                    if (ImGui::BeginMenu("Flows"))
+                    if (sTriggerNewPopup)
                     {
-                        if (ImGui::MenuItem("New"))
+                        ImGui::OpenPopup("NewPopup");
+                        sTriggerNewPopup = false;
+                    }
+
+                    if (ImGui::BeginPopup("NewPopup", ImGuiWindowFlags_AlwaysAutoResize))
+                    {
+                        static char sNameBuffer[512] = {0};
+
+                        ImGui::InputText("Name", sNameBuffer, sizeof(sNameBuffer) - 1);
+                        ImGui::SameLine();
+                        if (ImGui::Button("Ok") || ImGui::IsKeyPressed(ImGuiKey_Enter))
                         {
-                            sTriggerNewPopup = true;
+                            m_TestBundleEditor.CreateFlow(sNameBuffer);
+                            ImGui::CloseCurrentPopup();
                         }
 
-                        ImGui::EndMenu();
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
+                        {
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGui::EndPopup();
                     }
 
-                    ImGui::EndMenuBar();
+                    m_TestBundleEditor.Render();
                 }
-
-                if (sTriggerNewPopup)
-                {
-                    ImGui::OpenPopup("NewPopup");
-                    sTriggerNewPopup = false;
-                }
-
-                if (ImGui::BeginPopup("NewPopup", ImGuiWindowFlags_AlwaysAutoResize))
-                {
-                    static char sNameBuffer[512] = {0};
-
-                    ImGui::InputText("Name", sNameBuffer, sizeof(sNameBuffer) - 1);
-                    ImGui::SameLine();
-                    if (ImGui::Button("Ok") || ImGui::IsKeyPressed(ImGuiKey_Enter))
-                    {
-                        m_TestBundleEditor.CreateFlow(sNameBuffer);
-                        ImGui::CloseCurrentPopup();
-                    }
-
-                    ImGui::SameLine();
-
-                    if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
-                    {
-                        ImGui::CloseCurrentPopup();
-                    }
-
-                    ImGui::EndPopup();
-                }
-
-                m_TestBundleEditor.Render();
-
                 ImGui::End();
             }
 
@@ -120,6 +122,8 @@ namespace genesis::editor
 
                     if (std::filesystem::exists(filePathName))
                     {
+                        m_ForceDisableRendering = true;
+
                         ash::AshBuffer fileBuffer = ash::AshBuffer();
 
                         if (fileBuffer.ReadFromFile(filePathName).WasSuccessful())
@@ -139,6 +143,8 @@ namespace genesis::editor
                         {
                             m_Logger.Log("Error", "Failed to read file {}.", filePathName);
                         }
+
+                        m_ForceDisableRendering = false;
                     }
                     else
                     {

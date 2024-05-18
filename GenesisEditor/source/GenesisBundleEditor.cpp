@@ -15,6 +15,11 @@ namespace genesis::editor
         m_ReservedFactoryValue = this;
     }
 
+    GenesisBundleEditor::~GenesisBundleEditor()
+    {
+        this->Shutdown();
+    }
+
     void GenesisBundleEditor::Initialize()
     {
         GenesisFlowEditor* flow1 = new GenesisFlowEditor(m_LogBox);
@@ -140,7 +145,7 @@ namespace genesis::editor
             {
                 GenesisFlowEditor* selectedFlow = dynamic_cast<GenesisFlowEditor*>(unCastSelectedFlow);
 
-                selectedFlow->Render();
+                selectedFlow->Render(m_SelectedFlow);
             }
         }
         ImGui::End();
@@ -157,9 +162,12 @@ namespace genesis::editor
 
     GenesisFlow* GenesisBundleEditor::sfDefaultFactory(void* Reserved)
     {
-        GenesisBundleEditor* editor = reinterpret_cast<GenesisBundleEditor*>(Reserved);
+        GenesisBundleEditor* bundleEditor = reinterpret_cast<GenesisBundleEditor*>(Reserved);
+        GenesisFlowEditor* flowEditor = new GenesisFlowEditor(bundleEditor->m_LogBox);
 
-        return new GenesisFlowEditor(editor->m_LogBox);
+        flowEditor->Initialize();
+
+        return flowEditor;
     }
 
 } // namespace genesis::editor
