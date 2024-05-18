@@ -1,6 +1,7 @@
 #ifndef _GENESISWIDGETS_HPP
 #define _GENESISWIDGETS_HPP
 
+#include "imgui.h"
 #include <string>
 #include <vector>
 
@@ -31,6 +32,12 @@ namespace genesis::widgets
         std::vector<std::string> m_Items;
         int* m_ItemsIndex;
         int m_StartAtOffset;
+    };
+
+    class GenesisGenericWidgets
+    {
+    public:
+        static bool sfRenderInputTextStlString(std::string Key, std::string* String, ImVec2 Size = { 0, 0 });
     };
 
 } // namespace genesis::widgets

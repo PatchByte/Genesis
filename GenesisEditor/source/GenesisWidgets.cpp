@@ -1,6 +1,8 @@
 #include "GenesisEditor/GenesisWidgets.hpp"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui_node_editor.h"
+#include <string>
 
 namespace ed = ax::NodeEditor;
 
@@ -66,6 +68,26 @@ namespace genesis::widgets
         }
 
         return false;
+    }
+
+    bool GenesisGenericWidgets::sfRenderInputTextStlString(std::string Key, std::string* String, ImVec2 Size)
+    {
+        bool res = ImGui::InputTextEx(
+            Key.data(), NULL, String->data(), String->capacity() + 1, Size, ImGuiInputTextFlags_CallbackResize,
+            [](ImGuiInputTextCallbackData* data) -> int
+            {
+                if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
+                {
+                    std::string* b = reinterpret_cast<std::string*>(data->UserData);
+                    b->resize(data->BufTextLen);
+                    data->Buf = b->data();
+                }
+
+                return 0;
+            },
+            String);
+        
+        return res;
     }
 
 } // namespace genesis::widgets

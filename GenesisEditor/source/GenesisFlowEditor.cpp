@@ -91,12 +91,12 @@ namespace genesis::editor
 
     void GenesisFlowEditor::RenderNodes()
     {
-        if(m_TriggerCheck)
+        if (m_TriggerCheck)
         {
             m_LogBox->Clear();
             m_TriggerCheck = false;
-            
-            if(auto resIsRunnable = this->CheckIfFlowIsRunnable(); resIsRunnable.HasError())
+
+            if (auto resIsRunnable = this->CheckIfFlowIsRunnable(); resIsRunnable.HasError())
             {
                 m_Logger.Log("Error", "Flow is not runnable. {}", resIsRunnable.GetMessage());
             }
@@ -128,13 +128,14 @@ namespace genesis::editor
 
                 nodeBuilder.Header("", normalColor);
                 ImGui::BeginGroup();
-                ImGui::Text("%s (%i)", currentIterator.second->GetOperationName().data(), currentIterator.first);
+                ImGui::Text("%s (%i)", currentIterator.second->GetHumanReadableName().data(), currentIterator.first);
                 ImGui::Dummy({0.f, 2.f});
                 ImGui::EndGroup();
                 nodeBuilder.EndHeader();
 
                 RenderNodeOperation(nodeBuilder, currentIterator.second);
-               // odeBuilder.End();
+                // RenderNodeOperation takes care of that now
+                // nodeBuilder.End();
 
                 ImGui::PopID();
             }

@@ -1,4 +1,5 @@
 #include "GenesisEditor/GenesisOperationsEditor.hpp"
+#include "GenesisEditor/GenesisWidgets.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -16,26 +17,13 @@ namespace genesis::editor
     {
         std::string patternBuffer = Operation->GetPattern();
         
-        //ImGui::PushItemWidth(GenesisOperationEditorForNodes::sfGetMaxItemWidth("Pattern Input Bla Bla"));
-        //if(ImGui::InputTextEx(
-        //    "##Pattern", NULL, patternBuffer.data(), patternBuffer.capacity() + 1, ImVec2(190, 0), ImGuiInputTextFlags_CallbackResize,
-        //    [](ImGuiInputTextCallbackData* data) -> int
-        //    {
-        //        if (data->EventFlag == ImGuiInputTextFlags_CallbackResize)
-        //        {
-        //            std::string* b = reinterpret_cast<std::string*>(data->UserData);
-        //            b->resize(data->BufTextLen);
-        //            data->Buf = b->data();
-        //        }
+        ImGui::PushItemWidth(GenesisOperationEditorForNodes::sfGetMaxItemWidth("Pattern Input Bla Bla"));
+        if(widgets::GenesisGenericWidgets::sfRenderInputTextStlString("##Pattern", &patternBuffer, ImVec2(190, 0)))
+        {
+            Operation->SetPattern(patternBuffer);    
+        }
 
-        //        return 0;
-        //    },
-        //    &patternBuffer))
-        //{
-        //    Operation->SetPattern(patternBuffer);    
-        //}
-
-        //ImGui::PopItemWidth();
+        ImGui::PopItemWidth();
 
         Builder.Output(OperationInformation.m_OutputPinId);
         ImGui::Text("Output");

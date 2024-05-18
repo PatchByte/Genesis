@@ -57,6 +57,11 @@ namespace genesis::operations
             return "GenesisBaseOperation";
         }
 
+        virtual std::string GetHumanReadableName()
+        {
+            return "Unimplemented";
+        }
+
         virtual GenesisOperationType GetOperationType()
         {
             return GenesisOperationType::INVALID;
@@ -101,6 +106,11 @@ namespace genesis::operations
             return "FindPatternOperation";
         }
 
+        std::string GetHumanReadableName()
+        {
+            return "Pattern";
+        }
+
         GenesisOperationType GetOperationType()
         {
             return GenesisOperationType::FIND_PATTERN;
@@ -142,6 +152,11 @@ namespace genesis::operations
         std::string GetOperationName()
         {
             return "MathOperation";
+        }
+
+        std::string GetHumanReadableName()
+        {
+            return "Math";
         }
 
         GenesisOperationType GetOperationType()
