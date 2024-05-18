@@ -33,16 +33,44 @@ namespace genesis::editor
         }
     }
 
-    void GenesisEditor::Run()
+    void GenesisEditor::Run(int ArgCount, const char** ArgArray)
     {
+        // Renderer
+
         m_Renderer->Initialize();
-        
+        m_Renderer->SetDropFileHandler(
+            [this](int FilePathCount, const char** FilePathArray) -> void
+            {
+                for (int currentFilePathIndex = 0; currentFilePathIndex < FilePathCount; currentFilePathIndex++)
+                {
+                    if (std::string(FilePathArray[currentFilePathIndex]).ends_with(".genesis"))
+                    {
+                        this->LoadGenesisFileFromAndApplyLogs(FilePathArray[currentFilePathIndex]);
+                    }
+                    else
+                    {
+                        m_Logger.Log("Error", "Unknown file {}.", FilePathArray[currentFilePathIndex]);
+                    }
+                }
+            });
+
+        // Fonts
+
         m_KeyboardFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("resources/212Keyboard-lmRZ.otf", 16.f);
         m_DefaultFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("resources/Cantarell-Regular.ttf", 22.);
 
         ImGui::GetIO().FontDefault = m_DefaultFont;
 
+        // Initialization
+
         m_TestBundleEditor.Initialize(m_KeyboardFont);
+
+        if(ArgCount > 1)
+        {
+            LoadGenesisFileFromAndApplyLogs(ArgArray[1]);
+        }
+
+        // Stylization
 
         this->ApplyStyle();
 
@@ -86,7 +114,7 @@ namespace genesis::editor
                                 sTriggerNewPopup = true;
                             }
 
-                            if(ImGui::MenuItem("Center on first node", "PageDown", false, hasFlowSelected))
+                            if (ImGui::MenuItem("Center on first node", "PageDown", false, hasFlowSelected))
                             {
                                 m_TestBundleEditor.GetSelectedFlow()->DoAction(GenesisFlowEditor::ActionType::CENTER_ON_FIRST_NODE, nullptr);
                             }
@@ -134,14 +162,7 @@ namespace genesis::editor
             {
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
-                    if (auto res = this->LoadGenesisFileFrom(ImGuiFileDialog::Instance()->GetFilePathName()); res.WasSuccessful())
-                    {
-                        m_Logger.Log("Info", res.GetMessage());
-                    }
-                    else
-                    {
-                        m_Logger.Log("Error", res.GetMessage());
-                    }
+                    this->LoadGenesisFileFromAndApplyLogs(ImGuiFileDialog::Instance()->GetFilePathName());
                 }
 
                 // close
@@ -152,14 +173,7 @@ namespace genesis::editor
             {
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
-                    if (auto res = this->SaveGenesisFileTo(ImGuiFileDialog::Instance()->GetFilePathName()); res.WasSuccessful())
-                    {
-                        m_Logger.Log("Info", res.GetMessage());
-                    }
-                    else
-                    {
-                        m_Logger.Log("Error", res.GetMessage());
-                    }
+                    this->SaveGenesisFileToAndApplyLogs(ImGuiFileDialog::Instance()->GetFilePathName());
                 }
 
                 // close
@@ -245,6 +259,34 @@ namespace genesis::editor
 
         // This should be reached.
         return ash::AshResult(false);
+    }
+
+    ash::AshResult GenesisEditor::LoadGenesisFileFromAndApplyLogs(std::filesystem::path Path)
+    {
+        if(auto res = this->LoadGenesisFileFrom(Path); res.WasSuccessful())
+        {
+            m_Logger.Log("Info", res.GetMessage());
+            return std::move(res);
+        }
+        else 
+        {
+            m_Logger.Log("Error", res.GetMessage());
+            return std::move(res);
+        }
+    }
+
+    ash::AshResult GenesisEditor::SaveGenesisFileToAndApplyLogs(std::filesystem::path Path)
+    {
+        if(auto res = this->SaveGenesisFileTo(Path); res.WasSuccessful())
+        {
+            m_Logger.Log("Info", res.GetMessage());
+            return std::move(res);
+        }
+        else 
+        {
+            m_Logger.Log("Error", res.GetMessage());
+            return std::move(res);
+        }
     }
 
 } // namespace genesis::editor

@@ -1,4 +1,6 @@
 #include "GenesisRenderer/GenesisVulkanRenderer.hpp"
+#include "GLFW/glfw3.h"
+#include "GenesisRenderer/GenesisRenderer.hpp"
 #include "imgui.h"
 
 #include <iostream>
@@ -342,7 +344,7 @@ namespace genesis::renderer
     }
 
     GenesisVulkanImplementation::GenesisVulkanImplementation(unsigned Width, unsigned Height, std::string Title)
-        : m_Width(Width), m_Height(Height), m_Title(Title), m_SwapChainRebuild(false), m_VkAllocator(nullptr), m_VkInstance(VK_NULL_HANDLE), m_VkPhysicalDevice(VK_NULL_HANDLE),
+        : GenesisRendererBase(), m_Width(Width), m_Height(Height), m_Title(Title), m_SwapChainRebuild(false), m_VkAllocator(nullptr), m_VkInstance(VK_NULL_HANDLE), m_VkPhysicalDevice(VK_NULL_HANDLE),
           m_VkDevice(VK_NULL_HANDLE), m_VkQueueFamily(-1), m_VkQueue(VK_NULL_HANDLE), m_VkDebugReport(VK_NULL_HANDLE), m_VkPipelineCache(VK_NULL_HANDLE), m_VkDescriptorPool(VK_NULL_HANDLE)
     {
     }
@@ -411,6 +413,21 @@ namespace genesis::renderer
         init_info.Allocator = m_VkAllocator;
         init_info.CheckVkResultFn = [](VkResult err) { check_vk_result(err); };
         ImGui_ImplVulkan_Init(&init_info);
+
+        glfwSetWindowUserPointer(m_GlfwWindow, this);
+
+        m_OriginalDropFunction = glfwSetDropCallback(m_GlfwWindow,
+                                                     [](GLFWwindow* Window, int FilePathCount, const char** FilePathArray) -> void
+                                                     {
+                                                         GenesisVulkanImplementation* vulkanImplementation = reinterpret_cast<GenesisVulkanImplementation*>(glfwGetWindowUserPointer(Window));
+
+                                                         vulkanImplementation->m_DropFileHandler(FilePathCount, FilePathArray);
+
+                                                         if (vulkanImplementation->m_OriginalDropFunction)
+                                                         {
+                                                             vulkanImplementation->m_OriginalDropFunction(Window, FilePathCount, FilePathArray);
+                                                         }
+                                                     });
 
         m_Running = true;
 

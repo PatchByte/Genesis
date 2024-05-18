@@ -19,12 +19,14 @@ namespace genesis::editor
         GenesisEditor();
         ~GenesisEditor();
 
-        void Run();
+        void Run(int ArgCount, const char** ArgArray);
 
         void ApplyStyle();
 
         ash::AshResult LoadGenesisFileFrom(std::filesystem::path Path);
         ash::AshResult SaveGenesisFileTo(std::filesystem::path Path);
+        ash::AshResult LoadGenesisFileFromAndApplyLogs(std::filesystem::path Path);
+        ash::AshResult SaveGenesisFileToAndApplyLogs(std::filesystem::path Path);
     private:
         utils::GenesisLogBox m_LogBox;
         ash::AshLogger m_Logger;

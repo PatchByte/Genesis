@@ -72,6 +72,8 @@ namespace genesis::renderer
         VkDescriptorPool m_VkDescriptorPool;
 
         ImGui_ImplVulkanH_Window m_WindowData;
+
+        GLFWdropfun m_OriginalDropFunction;
     };
 
 } // namespace genesis::renderer

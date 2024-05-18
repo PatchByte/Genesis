@@ -1,6 +1,7 @@
 #ifndef _GENESISRENDERER_HPP
 #define _GENESISRENDERER_HPP
 
+#include <functional>
 #include <string>
 
 namespace genesis::renderer
@@ -9,6 +10,9 @@ namespace genesis::renderer
     class GenesisRendererBase
     {
     public:
+        using sdDropFileHandler = std::function<void(int FilePathCount, const char** FilePathArray)>;
+
+        GenesisRendererBase();
         virtual ~GenesisRendererBase() = default;
 
         virtual bool Initialize()
@@ -35,6 +39,19 @@ namespace genesis::renderer
         {
             return false;
         }
+
+        virtual sdDropFileHandler GetDropFileHandler()
+        {
+            return m_DropFileHandler;
+        }
+
+        virtual void SetDropFileHandler(sdDropFileHandler DropFileHandler)
+        {
+            m_DropFileHandler = DropFileHandler;
+        }
+
+    protected:
+        sdDropFileHandler m_DropFileHandler;
     };
 
     class GenesisRendererProvider
