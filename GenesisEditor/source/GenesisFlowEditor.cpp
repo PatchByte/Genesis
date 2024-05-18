@@ -214,7 +214,8 @@ namespace genesis::editor
             {
                 if (m_Operations.size() > 0)
                 {
-                    ed::CenterNodeOnScreen(m_Operations.begin()->second->GetOperationId());
+                    ed::NavigateToContent();
+                    //ed::(m_Operations.begin()->second->GetOperationId());
                 }
             }
 
@@ -363,6 +364,16 @@ namespace genesis::editor
         }
 
         return GenesisFlow::Export(Stream);
+    }
+
+    void GenesisFlowEditor::DoAction(ActionType Action, void* Reserved)
+    {
+        switch (Action) {
+
+        case ActionType::CENTER_ON_FIRST_NODE:
+            m_TriggerActionFocusFirstNode = true;
+            break;
+        }
     }
 
 } // namespace genesis::editor

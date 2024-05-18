@@ -1,6 +1,7 @@
 #ifndef _GENESISBUNDLEEDITOR_HPP
 #define _GENESISBUNDLEEDITOR_HPP
 
+#include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "GenesisEditor/GenesisLogBox.hpp"
 #include "GenesisShared/GenesisBundle.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
@@ -15,9 +16,19 @@ namespace genesis::editor
         GenesisBundleEditor(utils::GenesisLogBox* LogBox);
         ~GenesisBundleEditor();
 
-        void Initialize();
+        void Initialize(ImFont* KeyboardFont);
         void Shutdown();
         void Render();
+
+        inline bool HasFlowSelected()
+        {
+            return m_Flows.contains(m_SelectedFlow);
+        }
+
+        inline GenesisFlowEditor* GetSelectedFlow()
+        {
+            return dynamic_cast<GenesisFlowEditor*>(m_Flows.at(m_SelectedFlow));
+        }
 
         static GenesisFlow* sfDefaultFactory(void* Reserved);
 
@@ -31,6 +42,8 @@ namespace genesis::editor
         utils::GenesisLogBox* m_LogBox;
 
         std::string m_SelectedFlow;
+
+        ImFont* m_KeyboardFont;
     };
 
 } // namespace genesis::editor

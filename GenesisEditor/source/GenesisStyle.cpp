@@ -86,8 +86,6 @@ namespace genesis::editor
         style.AntiAliasedFill = true;
         style.AntiAliasedLines = true;
         style.AntiAliasedLinesUseTex = true;
-
-        ImGui::GetIO().Fonts->AddFontFromFileTTF("resources/Cantarell-Regular.ttf", 22.);
     }
 
 } // namespace genesis::editor

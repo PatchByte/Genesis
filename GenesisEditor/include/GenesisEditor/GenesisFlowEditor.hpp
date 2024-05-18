@@ -19,6 +19,11 @@ namespace genesis::editor
     class GenesisFlowEditor : public GenesisFlow
     {
     public:
+        enum class ActionType
+        {
+            CENTER_ON_FIRST_NODE
+        };
+
         GenesisFlowEditor(utils::GenesisLogBox* LogBox);
         ~GenesisFlowEditor();
 
@@ -34,11 +39,7 @@ namespace genesis::editor
         bool Import(ash::AshStream* Stream) override;
         bool Export(ash::AshStream* Stream) override;
 
-        void TriggerActionFocusFirstNode()
-        {
-            m_TriggerActionFocusFirstNode = true;
-        }
-
+        void DoAction(ActionType Action, void* Reserved);
     private:
         ash::AshLogger m_Logger;
         utils::GenesisLogBox* m_LogBox;

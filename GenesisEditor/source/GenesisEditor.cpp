@@ -1,10 +1,14 @@
 #include "GenesisEditor/GenesisEditor.hpp"
 #include "Ash/AshBuffer.h"
+#include "Ash/AshResult.h"
 #include "Ash/AshStream.h"
+#include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "ImGuiFileDialog.h"
+#include "fmt/format.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui_node_editor.h"
 #include <filesystem>
 #include <thread>
@@ -32,14 +36,20 @@ namespace genesis::editor
     void GenesisEditor::Run()
     {
         m_Renderer->Initialize();
+        
+        m_KeyboardFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("resources/212Keyboard-lmRZ.otf", 16.f);
+        m_DefaultFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("resources/Cantarell-Regular.ttf", 22.);
 
-        m_TestBundleEditor.Initialize();
+        ImGui::GetIO().FontDefault = m_DefaultFont;
+
+        m_TestBundleEditor.Initialize(m_KeyboardFont);
 
         this->ApplyStyle();
 
         while (m_Renderer->ShallRender())
         {
             m_Renderer->BeginFrame();
+
             if (m_ForceDisableRendering == false)
             {
                 if (ImGui::Begin("GenesisEditorFrame", nullptr,
@@ -67,11 +77,18 @@ namespace genesis::editor
                             ImGui::EndMenu();
                         }
 
-                        if (ImGui::BeginMenu("Flows"))
+                        if (ImGui::BeginMenu("Flow"))
                         {
+                            bool hasFlowSelected = m_TestBundleEditor.HasFlowSelected();
+
                             if (ImGui::MenuItem("New"))
                             {
                                 sTriggerNewPopup = true;
+                            }
+
+                            if(ImGui::MenuItem("Center on first node", "PageDown", false, hasFlowSelected))
+                            {
+                                m_TestBundleEditor.GetSelectedFlow()->DoAction(GenesisFlowEditor::ActionType::CENTER_ON_FIRST_NODE, nullptr);
                             }
 
                             ImGui::EndMenu();
@@ -117,38 +134,13 @@ namespace genesis::editor
             {
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
-                    ash::AshStreamExpandableExportBuffer expandableStream = ash::AshStreamExpandableExportBuffer();
-                    std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-
-                    if (std::filesystem::exists(filePathName))
+                    if (auto res = this->LoadGenesisFileFrom(ImGuiFileDialog::Instance()->GetFilePathName()); res.WasSuccessful())
                     {
-                        m_ForceDisableRendering = true;
-
-                        ash::AshBuffer fileBuffer = ash::AshBuffer();
-
-                        if (fileBuffer.ReadFromFile(filePathName).WasSuccessful())
-                        {
-                            ash::AshStreamStaticBuffer fileBufferStream = ash::AshStreamStaticBuffer(&fileBuffer, ash::AshStreamMode::READ);
-
-                            if (m_TestBundleEditor.Import(&fileBufferStream))
-                            {
-                                m_Logger.Log("Info", "Loaded file {}.", filePathName);
-                            }
-                            else
-                            {
-                                m_Logger.Log("Error", "Failed to deserialize file {}.", filePathName);
-                            }
-                        }
-                        else
-                        {
-                            m_Logger.Log("Error", "Failed to read file {}.", filePathName);
-                        }
-
-                        m_ForceDisableRendering = false;
+                        m_Logger.Log("Info", res.GetMessage());
                     }
                     else
                     {
-                        m_Logger.Log("Error", "File {} does not exist.", filePathName);
+                        m_Logger.Log("Error", res.GetMessage());
                     }
                 }
 
@@ -160,28 +152,13 @@ namespace genesis::editor
             {
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
-                    ash::AshStreamExpandableExportBuffer expandableStream = ash::AshStreamExpandableExportBuffer();
-                    std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-
-                    if (m_TestBundleEditor.Export(&expandableStream))
+                    if (auto res = this->SaveGenesisFileTo(ImGuiFileDialog::Instance()->GetFilePathName()); res.WasSuccessful())
                     {
-                        if (auto exportBuffer = expandableStream.MakeCopyOfBuffer())
-                        {
-                            if (exportBuffer->WriteToFile(filePathName).WasSuccessful())
-                            {
-                                m_Logger.Log("Info", "Saved to {}.", filePathName);
-                            }
-                            else
-                            {
-                                m_Logger.Log("Error", "Failed to save to {}.", filePathName);
-                            }
-
-                            delete exportBuffer;
-                        }
+                        m_Logger.Log("Info", res.GetMessage());
                     }
                     else
                     {
-                        m_Logger.Log("Error", "Failed to export bundle.");
+                        m_Logger.Log("Error", res.GetMessage());
                     }
                 }
 
@@ -197,6 +174,77 @@ namespace genesis::editor
         m_TestBundleEditor.Shutdown();
 
         m_Renderer->Shutdown();
+    }
+
+    ash::AshResult GenesisEditor::LoadGenesisFileFrom(std::filesystem::path Path)
+    {
+        ash::AshStreamExpandableExportBuffer expandableStream = ash::AshStreamExpandableExportBuffer();
+        std::string filePathName = Path;
+
+        if (std::filesystem::exists(filePathName))
+        {
+            m_ForceDisableRendering = true;
+
+            ash::AshBuffer fileBuffer = ash::AshBuffer();
+
+            if (fileBuffer.ReadFromFile(filePathName).WasSuccessful())
+            {
+                ash::AshStreamStaticBuffer fileBufferStream = ash::AshStreamStaticBuffer(&fileBuffer, ash::AshStreamMode::READ);
+
+                if (m_TestBundleEditor.Import(&fileBufferStream))
+                {
+                    m_ForceDisableRendering = false;
+                    return ash::AshResult(true, fmt::format("Loaded file {}.", filePathName));
+                }
+                else
+                {
+                    m_ForceDisableRendering = false;
+                    return ash::AshResult(false, fmt::format("Failed to deserialize file {}.", filePathName));
+                }
+            }
+            else
+            {
+                m_ForceDisableRendering = false;
+                return ash::AshResult(false, fmt::format("Failed to read file {}.", filePathName));
+            }
+        }
+        else
+        {
+            return ash::AshResult(false, fmt::format("File {} does not exist.", filePathName));
+        }
+
+        // This should not be reached.
+        return ash::AshResult(false);
+    }
+
+    ash::AshResult GenesisEditor::SaveGenesisFileTo(std::filesystem::path Path)
+    {
+        ash::AshStreamExpandableExportBuffer expandableStream = ash::AshStreamExpandableExportBuffer();
+        std::string filePathName = Path;
+
+        if (m_TestBundleEditor.Export(&expandableStream))
+        {
+            if (auto exportBuffer = expandableStream.MakeCopyOfBuffer())
+            {
+                if (exportBuffer->WriteToFile(filePathName).WasSuccessful())
+                {
+                    return ash::AshResult(true, fmt::format("Saved to {}.", filePathName));
+                }
+                else
+                {
+                    return ash::AshResult(false, fmt::format("Failed to save to {}.", filePathName));
+                }
+
+                delete exportBuffer;
+            }
+        }
+        else
+        {
+            return ash::AshResult(false, "Failed to export bundle.");
+        }
+
+        // This should be reached.
+        return ash::AshResult(false);
     }
 
 } // namespace genesis::editor

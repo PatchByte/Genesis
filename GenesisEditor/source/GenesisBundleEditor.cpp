@@ -20,8 +20,10 @@ namespace genesis::editor
         this->Shutdown();
     }
 
-    void GenesisBundleEditor::Initialize()
+    void GenesisBundleEditor::Initialize(ImFont* KeyboardFont)
     {
+        m_KeyboardFont = KeyboardFont;
+
         GenesisFlowEditor* flow1 = new GenesisFlowEditor(m_LogBox);
         GenesisFlowEditor* flow2 = new GenesisFlowEditor(m_LogBox);
 
@@ -71,6 +73,13 @@ namespace genesis::editor
 
         if (ImGui::Begin("Sidebar", nullptr))
         {
+
+            // Sidebar upper separator
+
+            ImGui::Text("Flows");
+
+            ImGui::Separator();
+
             // Copy map because of the "Delete" action.
             auto copiedFlows = m_Flows;
 
@@ -136,6 +145,7 @@ namespace genesis::editor
 
                 ImGui::PopID();
             }
+
         }
         ImGui::End();
 
