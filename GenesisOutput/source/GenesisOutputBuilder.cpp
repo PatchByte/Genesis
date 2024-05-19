@@ -32,15 +32,33 @@ namespace genesis::output
             outputStream << "{" << std::endl;
             outputStream << "public:" << std::endl;
 
+            // VTable
+
+            outputStream << "class VTable" << std::endl;
+            outputStream << "{" << std::endl;
+            outputStream << "public:" << std::endl;
+
+            for (auto currentVirtualFunction : currentClass->GetVirtualFunctions())
+            {
+                outputStream << "static constexpr unsigned long long " << currentVirtualFunction.second.GetName() << " = " << std::hex << "0x" << currentVirtualFunction.second.GetVirtualTableOffset()
+                             << ";" << std::dec << std::endl;
+            }
+
+            outputStream << "};" << std::endl;
+            outputStream << std::endl;
+
             // Members
-            
+
             outputStream << "class Members" << std::endl;
             outputStream << "{" << std::endl;
             outputStream << "public:" << std::endl;
+
             for (auto currentMember : currentClass->GetMembers())
             {
-                outputStream << "static constexpr unsigned long long " << currentMember.second.GetName() << " = " << std::hex << "0x" << currentMember.second.GetOffset() << ";" << std::dec << std::endl;
+                outputStream << "static constexpr unsigned long long " << currentMember.second.GetName() << " = " << std::hex << "0x" << currentMember.second.GetOffset() << ";" << std::dec
+                             << std::endl;
             }
+
             outputStream << "};" << std::endl;
 
             outputStream << "};" << std::endl;
