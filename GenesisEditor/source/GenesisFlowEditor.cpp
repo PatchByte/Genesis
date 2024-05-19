@@ -10,6 +10,7 @@
 #include "imgui.h"
 #include "imgui_node_editor.h"
 #include <cmath>
+#include <cstddef>
 #include <map>
 #include <utility>
 
@@ -76,7 +77,6 @@ namespace genesis::editor
 
         if (m_NodeEditorContext)
         {
-
             ed::SetCurrentEditor(m_NodeEditorContext);
             ed::GetStyle().NodeRounding = 5.f;
 
@@ -234,7 +234,8 @@ namespace genesis::editor
                 static std::map<std::string, operations::GenesisOperationType> sNewItems = {{"Pattern", operations::GenesisOperationType::FIND_PATTERN},
                                                                                             {"Math", operations::GenesisOperationType::MATH},
                                                                                             {"Debug", operations::GenesisOperationType::DEBUG},
-                                                                                            {"Get Value", operations::GenesisOperationType::GET}};
+                                                                                            {"Get Value", operations::GenesisOperationType::GET},
+                                                                                            {"Class Member Variable", operations::GenesisOperationType::OUTPUT_DATA_CLASS_MEMBER_VARIABLE}};
 
                 ImGui::Text("Create new Node");
                 ImGui::Separator();
@@ -259,6 +260,8 @@ namespace genesis::editor
 
                 for (auto currentIterator : m_NodeEditorSavedStates)
                 {
+                    ed::RestoreNodeState(currentIterator.first);
+                    ed::SetNodeZPosition(currentIterator.first, 2.f);
                     ed::SetNodePosition(currentIterator.first, ImVec2(currentIterator.second.first, currentIterator.second.second));
                 }
             }
@@ -291,6 +294,11 @@ namespace genesis::editor
         if (Information.m_IsMathOperation)
         {
             nH += 50.f;
+        }
+
+        if (Information.m_IsInteractOperation)
+        {
+            nH += 300.f;
         }
 
         nH = fmodf(nH, 360.f);
@@ -338,11 +346,12 @@ namespace genesis::editor
 
             for (size_t currentNodeStateIndex = 0; currentNodeStateIndex < nodeStatesSize; currentNodeStateIndex++)
             {
-                uintptr_t currentNodeStateId = reservedBufferGuiStream.Read<uintptr_t>();
-                float x = reservedBufferGuiStream.Read<float>();
-                float y = reservedBufferGuiStream.Read<float>();
+                ImVec2 pos = {};
 
-                m_NodeEditorSavedStates.emplace(currentNodeStateId, std::make_pair(x, y));
+                uintptr_t currentNodeStateId = reservedBufferGuiStream.Read<uintptr_t>();
+                reservedBufferGuiStream.ReadRawIntoPointer(&pos, sizeof(pos));
+
+                m_NodeEditorSavedStates.emplace(currentNodeStateId, std::make_pair(pos.x, pos.y));
             }
         }
 
@@ -356,18 +365,32 @@ namespace genesis::editor
         {
             ash::AshStreamExpandableExportBuffer reservedBufferGuiStream = ash::AshStreamExpandableExportBuffer();
 
-            reservedBufferGuiStream.Write<size_t>(m_Operations.size());
-
-            for (auto currentIterator : m_Operations)
+            if (m_TriggerRestoreStateOfNodes == false)
             {
-                ax::NodeEditor::EditorContext* contextBefore = ed::GetCurrentEditor();
-                ed::SetCurrentEditor(m_NodeEditorContext);
-                ImVec2 pos = ed::GetNodePosition(currentIterator.first);
-                ed::SetCurrentEditor(contextBefore);
+                reservedBufferGuiStream.Write<size_t>(m_Operations.size());
 
-                reservedBufferGuiStream.Write<uintptr_t>(currentIterator.first);
-                reservedBufferGuiStream.Write<float>(pos.x);
-                reservedBufferGuiStream.Write<float>(pos.y);
+                for (auto currentIterator : m_Operations)
+                {
+                    ax::NodeEditor::EditorContext* contextBefore = ed::GetCurrentEditor();
+                    ed::SetCurrentEditor(m_NodeEditorContext);
+                    ImVec2 pos = ed::GetNodePosition(currentIterator.first);
+                    ed::SetCurrentEditor(contextBefore);
+
+                    reservedBufferGuiStream.Write<uintptr_t>(currentIterator.first);
+                    reservedBufferGuiStream.WriteRawFromPointer(&pos, sizeof(pos));
+                }
+            }
+            else
+            {
+                reservedBufferGuiStream.Write<size_t>(m_NodeEditorSavedStates.size());
+
+                for (auto currentIterator : m_NodeEditorSavedStates)
+                {
+                    ImVec2 pos = {currentIterator.second.first, currentIterator.second.second};
+
+                    reservedBufferGuiStream.Write<uintptr_t>(currentIterator.first);
+                    reservedBufferGuiStream.WriteRawFromPointer(&pos, sizeof(pos));
+                }
             }
 
             if (auto res = reservedBufferGuiStream.MakeCopyOfBuffer(); res)

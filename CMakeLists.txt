@@ -9,6 +9,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 add_subdirectory("Vendors")
 add_subdirectory("GenesisShared")
+add_subdirectory("GenesisOutput")
 
 if(GENESIS_BUILD_GUI)
     add_subdirectory("GenesisRenderer")

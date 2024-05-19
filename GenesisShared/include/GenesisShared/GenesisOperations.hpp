@@ -19,6 +19,7 @@ namespace genesis::operations
         MATH = 2,
         DEBUG = 3,
         GET = 4,
+        OUTPUT_DATA_CLASS_MEMBER_VARIABLE = 5
     };
 
     class GenesisOperationInformation
@@ -31,6 +32,7 @@ namespace genesis::operations
             m_IsConditionalFlowStartNode = false;
             m_IsMathOperation = false;
             m_IsInteractOperation = false;
+            m_IsOutputOperation = false;
             m_HasInputPin = false;
             m_HasOutputPin = false;
             m_InputPinId = 0;
@@ -42,6 +44,7 @@ namespace genesis::operations
         bool m_IsConditionalFlowStartNode : 1;
         bool m_IsMathOperation : 1;
         bool m_IsInteractOperation : 1;
+        bool m_IsOutputOperation : 1;
         bool m_HasInputPin : 1;
         bool m_HasOutputPin : 1;
 
@@ -250,7 +253,7 @@ namespace genesis::operations
             UINT16 = 1,
             UINT32 = 2,
             UINT64 = 3,
-            
+
             // Signed types are disabled for now.
             // If you need signed types please let me know.
             // SINT8 = 4,
@@ -295,6 +298,69 @@ namespace genesis::operations
 
     protected:
         ValueKindType m_ValueKind;
+    };
+
+    class GenesisOutputDataClassMemberVariableOperation : public GenesisBaseOperation
+    {
+    public:
+        GenesisOutputDataClassMemberVariableOperation();
+        GenesisOutputDataClassMemberVariableOperation(std::string ClassName, std::string MemberName, std::string TypeDefinition);
+
+        std::string GetOperationName()
+        {
+            return "OutputDataClassMemberVariableOperation";
+        }
+
+        std::string GetHumanReadableName()
+        {
+            return "Class Member Variable";
+        }
+
+        GenesisOperationType GetOperationType()
+        {
+            return GenesisOperationType::OUTPUT_DATA_CLASS_MEMBER_VARIABLE;
+        }
+
+        GenesisOperationInformation GetOperationInformation();
+        ash::AshResult ProcessOperation(GenesisOperationState* State);
+
+        inline std::string GetClassName()
+        {
+            return m_ClassName;
+        }
+
+        inline void SetClassName(std::string ClassName)
+        {
+            m_ClassName = ClassName;
+        }
+
+        inline std::string GetMemberName()
+        {
+            return m_MemberName;
+        }
+
+        inline void SetMemberName(std::string MemberName)
+        {
+            m_MemberName = MemberName;
+        }
+
+        inline std::string GetTypeDefinition()
+        {
+            return m_TypeDefinition;
+        }
+
+        inline void SetTypeDefinition(std::string TypeDefinition)
+        {
+            m_TypeDefinition = TypeDefinition;
+        }
+
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+
+    protected:
+        std::string m_ClassName;
+        std::string m_MemberName;
+        std::string m_TypeDefinition;
     };
 
     // Utils

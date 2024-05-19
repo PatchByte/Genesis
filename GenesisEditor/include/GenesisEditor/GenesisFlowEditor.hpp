@@ -49,7 +49,7 @@ namespace genesis::editor
 
         ax::NodeEditor::EditorContext* m_NodeEditorContext;
 
-        std::map<uintptr_t, std::pair<int, int>> m_NodeEditorSavedStates;
+        std::map<uintptr_t, std::pair<float, float>> m_NodeEditorSavedStates;
 
         bool m_TriggerCheck;
         bool m_TriggerActionFocusFirstNode;

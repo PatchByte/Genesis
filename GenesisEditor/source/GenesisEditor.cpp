@@ -3,6 +3,7 @@
 #include "Ash/AshResult.h"
 #include "Ash/AshStream.h"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
+#include "GenesisOutput/GenesisOutputBuilder.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "GenesisShared/GenesisLoadedFile.hpp"
@@ -13,6 +14,7 @@
 #include "imgui_internal.h"
 #include "imgui_node_editor.h"
 #include <filesystem>
+#include <fstream>
 #include <thread>
 
 namespace ed = ax::NodeEditor;
@@ -51,7 +53,7 @@ namespace genesis::editor
                         {
                             this->LoadGenesisFileFromAndApplyLogs(FilePathArray[currentFilePathIndex]);
                         }
-                        else if(currentFilePath.ends_with(".exe") || currentFilePath.ends_with(".dll"))
+                        else if (currentFilePath.ends_with(".exe") || currentFilePath.ends_with(".dll"))
                         {
                             this->ProcessGenesisFileAndApplyLogs(FilePathArray[currentFilePathIndex]);
                         }
@@ -113,7 +115,7 @@ namespace genesis::editor
 
                             if (ImGui::MenuItem("Process File"))
                             {
-                                ImGuiFileDialog::Instance()->OpenDialog("ProcessBundleDialogKey", "Save File", ".exe,.dll");
+                                ImGuiFileDialog::Instance()->OpenDialog("ProcessBundleDialogKey", "Process File", ".exe,.dll");
                             }
 
                             ImGui::EndMenu();
@@ -206,10 +208,47 @@ namespace genesis::editor
 
             if (ImGuiFileDialog::Instance()->Display("ProcessBundleDialogKey"))
             {
+                bool openSaveOutputDialog = false;
+                void* openSaveOutputDialogUserData = nullptr;
+
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
-                    this->ProcessGenesisFileAndApplyLogs(ImGuiFileDialog::Instance()->GetFilePathName());
+                    if(auto res = this->ProcessGenesisFileAndApplyLogs(ImGuiFileDialog::Instance()->GetFilePathName()); res.WasSuccessful())
+                    {
+                        openSaveOutputDialog = true;
+                        openSaveOutputDialogUserData = new std::string(res.GetResult());
+                    }
                 }
+
+                // close
+                ImGuiFileDialog::Instance()->Close();
+
+                if(openSaveOutputDialog)
+                {
+                    IGFD::FileDialogConfig config = IGFD::FileDialogConfig();
+                    config.userDatas = openSaveOutputDialogUserData;
+
+                    ImGuiFileDialog::Instance()->OpenDialog("SaveOutputDialogKey", "Save Output Header File", ".hpp,.h", config);
+                }
+            }
+
+            if(ImGuiFileDialog::Instance()->Display("SaveOutputDialogKey"))
+            {
+                std::string* outputCode = reinterpret_cast<std::string*>(ImGuiFileDialog::Instance()->GetUserDatas());
+
+                printf("%p\n", outputCode);
+
+                if(ImGuiFileDialog::Instance()->IsOk())
+                {
+                    std::ofstream outputStream = std::ofstream(ImGuiFileDialog::Instance()->GetFilePathName(), std::ios::trunc);
+
+                    outputStream << *outputCode << std::endl;
+
+                    outputStream.flush();
+                    outputStream.close();
+                }
+
+                delete outputCode;
 
                 // close
                 ImGuiFileDialog::Instance()->Close();
@@ -296,7 +335,7 @@ namespace genesis::editor
         return ash::AshResult(false);
     }
 
-    ash::AshResult GenesisEditor::ProcessGenesisFile(std::filesystem::path Input)
+    ash::AshCustomResult<std::string> GenesisEditor::ProcessGenesisFile(std::filesystem::path Input)
     {
         if (std::filesystem::exists(Input))
         {
@@ -304,32 +343,30 @@ namespace genesis::editor
 
             if (auto res = loadedFile->Load(); res.HasError())
             {
-                return ash::AshResult(false, fmt::format("Failed to load file {}. {}", Input.string(), res.GetMessage()));
+                return ash::AshCustomResult<std::string>(false, fmt::format("Failed to load file {}. {}", Input.string(), res.GetMessage()));
             }
 
             output::GenesisOutputData* outputData = new output::GenesisOutputData();
 
-            if (auto res = m_TestBundleEditor.ProcessBundle(outputData, loadedFile); res.WasSuccessful())
+            if (auto res = m_TestBundleEditor.ProcessBundle(outputData, loadedFile); res.HasError())
             {
-                return ash::AshResult(true, fmt::format("Success processing bundle. {}", res.GetMessage()));
+                return ash::AshCustomResult<std::string>(false, fmt::format("Failed processing bundle. {}", res.GetMessage()));
             }
-            else
-            {
-                return ash::AshResult(false, fmt::format("Failed processing bundle. {}", res.GetMessage()));
-            }
+
+            std::string outputCode = output::GenesisOutputBuilder::Build(outputData);
 
             delete outputData;
             delete loadedFile;
 
-            return ash::AshResult(true);
+            return ash::AshCustomResult<std::string>(true, "Successfully processed.").AttachResult(outputCode);
         }
         else
         {
-            return ash::AshResult(false, "Input file does not exist.");
+            return ash::AshCustomResult<std::string>(false, "Input file does not exist.");
         }
 
         // This should not be reached.
-        return ash::AshResult(false);
+        return ash::AshCustomResult<std::string>(false);
     }
 
     ash::AshResult GenesisEditor::LoadGenesisFileFromAndApplyLogs(std::filesystem::path Path)
@@ -360,7 +397,7 @@ namespace genesis::editor
         }
     }
 
-    ash::AshResult GenesisEditor::ProcessGenesisFileAndApplyLogs(std::filesystem::path Input)
+    ash::AshCustomResult<std::string> GenesisEditor::ProcessGenesisFileAndApplyLogs(std::filesystem::path Input)
     {
         if (auto res = this->ProcessGenesisFile(Input); res.WasSuccessful())
         {

@@ -6,7 +6,6 @@
 #include "imgui.h"
 #include <map>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -18,17 +17,18 @@ namespace genesis::utils
     public:
         GenesisLogBox();
         ~GenesisLogBox();
-        
+
         void Initialize();
         void Render();
         void Clear();
 
         ash::AshLoggerPassage* CreatePassage();
+
     private:
         std::map<ash::AshLoggerShortTag, std::pair<ash::AshLoggerTag, ImColor>> m_TagColors;
         std::vector<std::pair<ash::AshLoggerTag, std::string>> m_Logs;
     };
 
-}
+} // namespace genesis::utils
 
 #endif // !_GENESISLOGBOX_HPP
