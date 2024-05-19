@@ -12,8 +12,7 @@ namespace genesis::output
     class GenesisOutputClassVirtualFunction
     {
     public:
-        inline GenesisOutputClassVirtualFunction(std::string Name, unsigned int VirtualTableOffset)
-            : m_Name(Name), m_VirtualTableOffset(VirtualTableOffset)
+        inline GenesisOutputClassVirtualFunction(std::string Name, unsigned int VirtualTableOffset) : m_Name(Name), m_VirtualTableOffset(VirtualTableOffset)
         {
         }
 
@@ -38,7 +37,30 @@ namespace genesis::output
         unsigned int m_VirtualTableOffset;
     };
 
+    class GenesisOutputClassNonVirtualFunction
+    {
+    public:
+        inline GenesisOutputClassNonVirtualFunction(std::string Name, unsigned long long Offset) : m_Name(Name), m_Offset(Offset)
+        {
+        }
+
+        inline std::string GetName()
+        {
+            return m_Name;
+        }
+
+        inline unsigned long long GetOffset()
+        {
+            return m_Offset;
+        }
+
+    private:
+        std::string m_Name;
+        unsigned long long m_Offset;
+    };
+
     class GenesisOutputClassMember
+
     {
     public:
         GenesisOutputClassMember(std::string Name, std::string Type, unsigned int Offset) : m_Name(Name), m_Type(Type), m_Offset(Offset)
@@ -72,12 +94,18 @@ namespace genesis::output
         GenesisOutputClass() = default;
         ~GenesisOutputClass() = default;
 
-        ash::AshResult AddVirtualFunctions(GenesisOutputClassVirtualFunction VirtualFunction);
+        ash::AshResult AddVirtualFunction(GenesisOutputClassVirtualFunction VirtualFunction);
+        ash::AshResult AddNonVirtualFunction(GenesisOutputClassNonVirtualFunction NonVirtualFunction);
         ash::AshResult AddMember(GenesisOutputClassMember Member);
 
         inline const std::map<std::string, GenesisOutputClassVirtualFunction>& GetVirtualFunctions()
         {
             return m_VirtualFunctions;
+        }
+
+        inline const std::map<std::string, GenesisOutputClassNonVirtualFunction>& GetNonVirtualFunctions()
+        {
+            return m_NonVirtualFunctions;
         }
 
         inline const std::map<std::string, GenesisOutputClassMember>& GetMembers()
@@ -87,6 +115,7 @@ namespace genesis::output
 
     private:
         std::map<std::string, GenesisOutputClassVirtualFunction> m_VirtualFunctions;
+        std::map<std::string, GenesisOutputClassNonVirtualFunction> m_NonVirtualFunctions;
         std::map<std::string, GenesisOutputClassMember> m_Members;
     };
 

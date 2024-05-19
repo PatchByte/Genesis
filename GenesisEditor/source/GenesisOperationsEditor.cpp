@@ -34,11 +34,17 @@ namespace genesis::editor
         case operations::GenesisOperationType::GET:
             sfRenderGetOperation(Builder, dynamic_cast<operations::GenesisGetOperation*>(Operation), operationInformation);
             break;
+        case operations::GenesisOperationType::RIP:
+            sfRenderRipOperation(Builder, dynamic_cast<operations::GenesisRipOperation*>(Operation), operationInformation);
+            break;
         case operations::GenesisOperationType::OUTPUT_DATA_CLASS_MEMBER_VARIABLE:
             sfRenderOutputDataClassMemberVariableOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassMemberVariableOperation*>(Operation), operationInformation);
             break;
-        case operations::GenesisOperationType::OUTPUT_DATA_CLASS_VTABLE_FUNCTION:
-            sfRenderOutputDataClassVTableFunctionOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassVTableFunctionOperation*>(Operation), operationInformation);
+        case operations::GenesisOperationType::OUTPUT_DATA_CLASS_VIRTUAL_FUNCTION:
+            sfRenderOutputDataClassVirtualFunctionOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassVirtualFunctionOperation*>(Operation), operationInformation);
+            break;
+        case operations::GenesisOperationType::OUTPUT_DATA_CLASS_NON_VIRTUAL_FUNCTION:
+            sfRenderOutputDataClassNonVirtualFunctionOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassNonVirtualFunctionOperation*>(Operation), operationInformation);
             break;
         }
     }

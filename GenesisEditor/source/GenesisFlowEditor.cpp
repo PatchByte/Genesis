@@ -235,8 +235,10 @@ namespace genesis::editor
                                                                                             {"Math", operations::GenesisOperationType::MATH},
                                                                                             {"Debug", operations::GenesisOperationType::DEBUG},
                                                                                             {"Get Value", operations::GenesisOperationType::GET},
+                                                                                            {"Rip", operations::GenesisOperationType::RIP},
                                                                                             {"Class Member Variable", operations::GenesisOperationType::OUTPUT_DATA_CLASS_MEMBER_VARIABLE},
-                                                                                            {"Class VTable Function", operations::GenesisOperationType::OUTPUT_DATA_CLASS_VTABLE_FUNCTION}};
+                                                                                            {"Class Virtual Function", operations::GenesisOperationType::OUTPUT_DATA_CLASS_VIRTUAL_FUNCTION},
+                                                                                            {"Class Non Virtual Function", operations::GenesisOperationType::OUTPUT_DATA_CLASS_NON_VIRTUAL_FUNCTION}};
 
                 ImGui::Text("Create new Node");
                 ImGui::Separator();

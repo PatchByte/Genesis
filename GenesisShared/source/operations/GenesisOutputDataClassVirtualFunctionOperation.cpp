@@ -8,19 +8,19 @@
 namespace genesis::operations
 {
 
-    static constexpr ash::AshSize smGenesisOutputDataClassVTableFunctionOperationHeader = 0x474E535343564620; 
+    static constexpr ash::AshSize smGenesisOutputDataClassVirtualFunctionOperationHeader = 0x474E535343564620; 
 
-    GenesisOutputDataClassVTableFunctionOperation::GenesisOutputDataClassVTableFunctionOperation():
+    GenesisOutputDataClassVirtualFunctionOperation::GenesisOutputDataClassVirtualFunctionOperation():
         m_ClassName(),
         m_FunctionName()
     {}
 
-    GenesisOutputDataClassVTableFunctionOperation::GenesisOutputDataClassVTableFunctionOperation(std::string ClassName, std::string FunctionName):
+    GenesisOutputDataClassVirtualFunctionOperation::GenesisOutputDataClassVirtualFunctionOperation(std::string ClassName, std::string FunctionName):
         m_ClassName(ClassName),
         m_FunctionName(FunctionName)
     {}
 
-    GenesisOperationInformation GenesisOutputDataClassVTableFunctionOperation::GetOperationInformation()
+    GenesisOperationInformation GenesisOutputDataClassVirtualFunctionOperation::GetOperationInformation()
     {
         GenesisOperationInformation operationInformation = GenesisBaseOperation::GetOperationInformation();
 
@@ -31,9 +31,9 @@ namespace genesis::operations
         return std::move(operationInformation);
     }
 
-    ash::AshResult GenesisOutputDataClassVTableFunctionOperation::ProcessOperation(GenesisOperationState* State)
+    ash::AshResult GenesisOutputDataClassVirtualFunctionOperation::ProcessOperation(GenesisOperationState* State)
     {
-        State->GetOutputData()->GetOrCreateClass(m_ClassName)->AddVirtualFunctions(output::GenesisOutputClassVirtualFunction(m_FunctionName, State->GetRawValue()));
+        State->GetOutputData()->GetOrCreateClass(m_ClassName)->AddVirtualFunction(output::GenesisOutputClassVirtualFunction(m_FunctionName, State->GetRawValue()));
 
         if(State->GetRawValue() % 8)
         {
@@ -43,11 +43,11 @@ namespace genesis::operations
         return ash::AshResult(true);
     }
 
-    bool GenesisOutputDataClassVTableFunctionOperation::Import(ash::AshStream* Stream)
+    bool GenesisOutputDataClassVirtualFunctionOperation::Import(ash::AshStream* Stream)
     {
         ash::objects::AshAsciiString classNameObject = ash::objects::AshAsciiString(), functionNameObject = ash::objects::AshAsciiString();
 
-        if(Stream->Read<ash::AshSize>() != smGenesisOutputDataClassVTableFunctionOperationHeader)
+        if(Stream->Read<ash::AshSize>() != smGenesisOutputDataClassVirtualFunctionOperationHeader)
         {
             return false;
         }
@@ -64,9 +64,9 @@ namespace genesis::operations
         return Stream->IsOkay() && res;
     }
 
-    bool GenesisOutputDataClassVTableFunctionOperation::Export(ash::AshStream* Stream)
+    bool GenesisOutputDataClassVirtualFunctionOperation::Export(ash::AshStream* Stream)
     {
-        Stream->Write<ash::AshSize>(smGenesisOutputDataClassVTableFunctionOperationHeader);
+        Stream->Write<ash::AshSize>(smGenesisOutputDataClassVirtualFunctionOperationHeader);
 
         ash::objects::AshAsciiString(m_ClassName).Export(Stream);
         ash::objects::AshAsciiString(m_FunctionName).Export(Stream);

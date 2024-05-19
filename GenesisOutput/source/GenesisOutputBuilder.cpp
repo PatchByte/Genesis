@@ -32,9 +32,9 @@ namespace genesis::output
             outputStream << "{" << std::endl;
             outputStream << "public:" << std::endl;
 
-            // VTable
+            // Virtual Functions
 
-            outputStream << "class VTable" << std::endl;
+            outputStream << "class VirtualFunctions" << std::endl;
             outputStream << "{" << std::endl;
             outputStream << "public:" << std::endl;
 
@@ -44,6 +44,19 @@ namespace genesis::output
                              << ";" << std::dec << std::endl;
             }
 
+            outputStream << "};" << std::endl;
+            outputStream << std::endl;
+
+            // Non-Virtual Functions
+
+            outputStream << "class NonVirtualFunctions" << std::endl;
+            outputStream << "{" << std::endl;
+            outputStream << "public:" << std::endl;
+            for (auto currentNonVirtualFunction : currentClass->GetNonVirtualFunctions())
+            {
+                outputStream << "static constexpr unsigned long long " << currentNonVirtualFunction.second.GetName() << " = " << std::hex << "0x" << currentNonVirtualFunction.second.GetOffset() << ";"
+                             << std::dec << std::endl;
+            }
             outputStream << "};" << std::endl;
             outputStream << std::endl;
 
@@ -60,6 +73,7 @@ namespace genesis::output
             }
 
             outputStream << "};" << std::endl;
+            outputStream << std::endl;
 
             outputStream << "};" << std::endl;
             outputStream << std::endl;

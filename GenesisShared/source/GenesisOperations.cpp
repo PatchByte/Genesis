@@ -18,8 +18,10 @@ namespace genesis::operations
             IMPLEMENT_CREATION_DELEGATE(GenesisOperationType::MATH, GenesisMathOperation),
             IMPLEMENT_CREATION_DELEGATE(GenesisOperationType::DEBUG, GenesisDebugOperation),
             IMPLEMENT_CREATION_DELEGATE(GenesisOperationType::GET, GenesisGetOperation),
+            IMPLEMENT_CREATION_DELEGATE(GenesisOperationType::RIP, GenesisRipOperation),
             IMPLEMENT_CREATION_DELEGATE(GenesisOperationType::OUTPUT_DATA_CLASS_MEMBER_VARIABLE, GenesisOutputDataClassMemberVariableOperation),
-            IMPLEMENT_CREATION_DELEGATE(GenesisOperationType::OUTPUT_DATA_CLASS_VTABLE_FUNCTION, GenesisOutputDataClassVTableFunctionOperation)};
+            IMPLEMENT_CREATION_DELEGATE(GenesisOperationType::OUTPUT_DATA_CLASS_VIRTUAL_FUNCTION, GenesisOutputDataClassVirtualFunctionOperation),
+            IMPLEMENT_CREATION_DELEGATE(GenesisOperationType::OUTPUT_DATA_CLASS_NON_VIRTUAL_FUNCTION, GenesisOutputDataClassNonVirtualFunctionOperation)};
 
         if (smDelegates.contains(OperationType))
         {

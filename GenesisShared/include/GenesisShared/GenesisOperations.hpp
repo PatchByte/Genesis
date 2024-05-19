@@ -20,7 +20,9 @@ namespace genesis::operations
         DEBUG = 3,
         GET = 4,
         OUTPUT_DATA_CLASS_MEMBER_VARIABLE = 5,
-        OUTPUT_DATA_CLASS_VTABLE_FUNCTION = 6
+        OUTPUT_DATA_CLASS_VIRTUAL_FUNCTION = 6,
+        OUTPUT_DATA_CLASS_NON_VIRTUAL_FUNCTION = 7,
+        RIP = 8,
     };
 
     class GenesisOperationInformation
@@ -301,6 +303,47 @@ namespace genesis::operations
         ValueKindType m_ValueKind;
     };
 
+    class GenesisRipOperation : public GenesisBaseOperation
+    {
+    public:
+        GenesisRipOperation();
+        GenesisRipOperation(unsigned char Carry);
+
+        std::string GetOperationName()
+        {
+            return "RipOperation";
+        }
+
+        std::string GetHumanReadableName()
+        {
+            return "Rip";
+        }
+
+        GenesisOperationType GetOperationType()
+        {
+            return GenesisOperationType::RIP;
+        }
+
+        GenesisOperationInformation GetOperationInformation();
+        ash::AshResult ProcessOperation(GenesisOperationState* State);
+
+        inline unsigned char GetCarry()
+        {
+            return m_Carry;
+        }
+
+        inline void SetCarry(unsigned char Carry)
+        {
+            m_Carry = Carry;
+        }
+
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+
+    protected:
+        unsigned char m_Carry;
+    };
+
     class GenesisOutputDataClassMemberVariableOperation : public GenesisBaseOperation
     {
     public:
@@ -364,25 +407,77 @@ namespace genesis::operations
         std::string m_TypeDefinition;
     };
 
-    class GenesisOutputDataClassVTableFunctionOperation : public GenesisBaseOperation
+    class GenesisOutputDataClassVirtualFunctionOperation : public GenesisBaseOperation
     {
     public:
-        GenesisOutputDataClassVTableFunctionOperation();
-        GenesisOutputDataClassVTableFunctionOperation(std::string ClassName, std::string MemberName);
+        GenesisOutputDataClassVirtualFunctionOperation();
+        GenesisOutputDataClassVirtualFunctionOperation(std::string ClassName, std::string MemberName);
 
         std::string GetOperationName()
         {
-            return "OutputDataClassVTableFunctionOperation";
+            return "OutputDataClassVirtualFunctionOperation";
         }
 
         std::string GetHumanReadableName()
         {
-            return "Class VTable Function";
+            return "Class Virtual Function";
         }
 
         GenesisOperationType GetOperationType()
         {
-            return GenesisOperationType::OUTPUT_DATA_CLASS_VTABLE_FUNCTION;
+            return GenesisOperationType::OUTPUT_DATA_CLASS_VIRTUAL_FUNCTION;
+        }
+
+        GenesisOperationInformation GetOperationInformation();
+        ash::AshResult ProcessOperation(GenesisOperationState* State);
+
+        inline std::string GetClassName()
+        {
+            return m_ClassName;
+        }
+
+        inline void SetClassName(std::string ClassName)
+        {
+            m_ClassName = ClassName;
+        }
+
+        inline std::string GetFunctionName()
+        {
+            return m_FunctionName;
+        }
+
+        inline void SetFunctionName(std::string FunctionName)
+        {
+            m_FunctionName = FunctionName;
+        }
+
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+
+    protected:
+        std::string m_ClassName;
+        std::string m_FunctionName;
+    };
+
+    class GenesisOutputDataClassNonVirtualFunctionOperation : public GenesisBaseOperation
+    {
+    public:
+        GenesisOutputDataClassNonVirtualFunctionOperation();
+        GenesisOutputDataClassNonVirtualFunctionOperation(std::string ClassName, std::string MemberName);
+
+        std::string GetOperationName()
+        {
+            return "OutputDataClassNonVirtualFunctionOperation";
+        }
+
+        std::string GetHumanReadableName()
+        {
+            return "Class Non Virtual Function";
+        }
+
+        GenesisOperationType GetOperationType()
+        {
+            return GenesisOperationType::OUTPUT_DATA_CLASS_NON_VIRTUAL_FUNCTION;
         }
 
         GenesisOperationInformation GetOperationInformation();

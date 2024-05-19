@@ -4,7 +4,7 @@
 namespace genesis::editor
 {
 
-    void GenesisOperationEditorForNodes::sfRenderOutputDataClassVTableFunctionOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataClassVTableFunctionOperation* Operation,
+    void GenesisOperationEditorForNodes::sfRenderOutputDataClassVirtualFunctionOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataClassVirtualFunctionOperation* Operation,
                                                                                         const operations::GenesisOperationInformation& OperationInformation)
     {
         std::string className = Operation->GetClassName();

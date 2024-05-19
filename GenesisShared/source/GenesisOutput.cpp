@@ -4,7 +4,7 @@
 namespace genesis::output
 {
 
-    ash::AshResult GenesisOutputClass::AddVirtualFunctions(GenesisOutputClassVirtualFunction VirtualFunction)
+    ash::AshResult GenesisOutputClass::AddVirtualFunction(GenesisOutputClassVirtualFunction VirtualFunction)
     {
         if (m_VirtualFunctions.contains(VirtualFunction.GetName()))
         {
@@ -12,6 +12,18 @@ namespace genesis::output
         }
 
         m_VirtualFunctions.emplace(VirtualFunction.GetName(), VirtualFunction);
+
+        return ash::AshResult(true);
+    }
+
+    ash::AshResult GenesisOutputClass::AddNonVirtualFunction(GenesisOutputClassNonVirtualFunction NonVirtualFunction)
+    {
+        if (m_NonVirtualFunctions.contains(NonVirtualFunction.GetName()))
+        {
+            return ash::AshResult(false);
+        }
+
+        m_NonVirtualFunctions.emplace(NonVirtualFunction.GetName(), NonVirtualFunction);
 
         return ash::AshResult(true);
     }
