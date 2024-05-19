@@ -236,8 +236,6 @@ namespace genesis::editor
             {
                 std::string* outputCode = reinterpret_cast<std::string*>(ImGuiFileDialog::Instance()->GetUserDatas());
 
-                printf("%p\n", outputCode);
-
                 if(ImGuiFileDialog::Instance()->IsOk())
                 {
                     std::ofstream outputStream = std::ofstream(ImGuiFileDialog::Instance()->GetFilePathName(), std::ios::trunc);
