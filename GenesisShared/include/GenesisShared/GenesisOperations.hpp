@@ -19,7 +19,8 @@ namespace genesis::operations
         MATH = 2,
         DEBUG = 3,
         GET = 4,
-        OUTPUT_DATA_CLASS_MEMBER_VARIABLE = 5
+        OUTPUT_DATA_CLASS_MEMBER_VARIABLE = 5,
+        OUTPUT_DATA_CLASS_VTABLE_FUNCTION = 6
     };
 
     class GenesisOperationInformation
@@ -361,6 +362,58 @@ namespace genesis::operations
         std::string m_ClassName;
         std::string m_MemberName;
         std::string m_TypeDefinition;
+    };
+
+    class GenesisOutputDataClassVTableFunctionOperation : public GenesisBaseOperation
+    {
+    public:
+        GenesisOutputDataClassVTableFunctionOperation();
+        GenesisOutputDataClassVTableFunctionOperation(std::string ClassName, std::string MemberName);
+
+        std::string GetOperationName()
+        {
+            return "OutputDataClassVTableFunctionOperation";
+        }
+
+        std::string GetHumanReadableName()
+        {
+            return "Class VTable Function";
+        }
+
+        GenesisOperationType GetOperationType()
+        {
+            return GenesisOperationType::OUTPUT_DATA_CLASS_VTABLE_FUNCTION;
+        }
+
+        GenesisOperationInformation GetOperationInformation();
+        ash::AshResult ProcessOperation(GenesisOperationState* State);
+
+        inline std::string GetClassName()
+        {
+            return m_ClassName;
+        }
+
+        inline void SetClassName(std::string ClassName)
+        {
+            m_ClassName = ClassName;
+        }
+
+        inline std::string GetFunctionName()
+        {
+            return m_FunctionName;
+        }
+
+        inline void SetFunctionName(std::string FunctionName)
+        {
+            m_FunctionName = FunctionName;
+        }
+
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+
+    protected:
+        std::string m_ClassName;
+        std::string m_FunctionName;
     };
 
     // Utils

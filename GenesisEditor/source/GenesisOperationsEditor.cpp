@@ -37,6 +37,9 @@ namespace genesis::editor
         case operations::GenesisOperationType::OUTPUT_DATA_CLASS_MEMBER_VARIABLE:
             sfRenderOutputDataClassMemberVariableOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassMemberVariableOperation*>(Operation), operationInformation);
             break;
+        case operations::GenesisOperationType::OUTPUT_DATA_CLASS_VTABLE_FUNCTION:
+            sfRenderOutputDataClassVTableFunctionOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassVTableFunctionOperation*>(Operation), operationInformation);
+            break;
         }
     }
 

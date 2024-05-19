@@ -18,6 +18,7 @@ namespace genesis::output
         outputStream << "#define __GENESISOUTPUT_HPP" << std::endl;
         outputStream << std::endl;
         outputStream << "// This is an automatic generated file, do not change." << std::endl;
+        outputStream << "// This file is not intended to look beautiful, because it is an automatic generated file." << std::endl;
         outputStream << "// Generated at: " << time(nullptr) << std::endl;
         outputStream << std::endl;
         outputStream << "namespace genesis::generated" << std::endl;
@@ -27,7 +28,7 @@ namespace genesis::output
         {
             GenesisOutputClass* currentClass = OutputData->GetOrCreateClass(currentClassName);
 
-            outputStream << "class " << "OffsetProvider" << currentClassName << std::endl;
+            outputStream << "class " << "OffsetProvider_" << currentClassName << std::endl;
             outputStream << "{" << std::endl;
             outputStream << "public:" << std::endl;
 
@@ -38,7 +39,7 @@ namespace genesis::output
             outputStream << "public:" << std::endl;
             for (auto currentMember : currentClass->GetMembers())
             {
-                outputStream << "static constexpr " << currentMember.second.GetName() << " = " << std::hex << "0x" << currentMember.second.GetOffset() << ";" << std::dec << std::endl;
+                outputStream << "static constexpr unsigned long long " << currentMember.second.GetName() << " = " << std::hex << "0x" << currentMember.second.GetOffset() << ";" << std::dec << std::endl;
             }
             outputStream << "};" << std::endl;
 

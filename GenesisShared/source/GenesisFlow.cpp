@@ -267,11 +267,12 @@ namespace genesis
             for(size_t currentOperationIndex = 0; currentOperationIndex < operationsSize; currentOperationIndex++)
             {
                 operations::GenesisOperationId currentOperationId = Stream->Read<operations::GenesisOperationId>();
-                operations::GenesisBaseOperation* currentOperation = operations::GenesisOperationUtils::sfCreateOperationByType(static_cast<operations::GenesisOperationType>(Stream->Read<int>()));
+                int currentOperationTypeUnCast = Stream->Read<int>();
+                operations::GenesisBaseOperation* currentOperation = operations::GenesisOperationUtils::sfCreateOperationByType(static_cast<operations::GenesisOperationType>(currentOperationTypeUnCast));
 
                 if(currentOperation == nullptr)
                 {
-                    std::cout << "Failed. currentOperation is nullptr." << std::endl;
+                    std::cout << "Failed. currentOperation is nullptr. " << currentOperationTypeUnCast << std::endl;
                     std::exit(-1);
                 }
 

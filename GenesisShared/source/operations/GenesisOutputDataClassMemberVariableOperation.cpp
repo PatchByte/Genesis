@@ -21,8 +21,9 @@ namespace genesis::operations
     {
         GenesisOperationInformation operationInformation = GenesisBaseOperation::GetOperationInformation();
 
-        operationInformation.m_IsOutputOperation = true;
         operationInformation.m_HasInputPin = true;
+        operationInformation.m_HasOutputPin = false;
+        operationInformation.m_IsOutputOperation = true;
 
         return operationInformation;
     }
