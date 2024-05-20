@@ -4,6 +4,8 @@
 .xmake
 
 build
-cmake-*
-CMakeLists.txt
-vsxmake2022
+build_mingw
+
+.cache
+.vscode
+bin

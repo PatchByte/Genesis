@@ -1,11 +1,39 @@
-> useful command hexdump -ve '1/1 "%.2x"' GTA5_dump.exe > bytes.txt
+# Genesis
 
-Compile
-```bash
-xmake build genesis-bootstrap
-```
+Genesis is meant to solve the problem of finding outdated and updating functions, class members, pointers etc.
 
-Run
+## GenesisEditor
+
+This is a gui editor for editing a genesis bundle file.
+
+## GenesisRunner (TBA)
+
+This is the command line tool which just runs the whole genesis bundle file and outputs the header file if no errors have occurred.
+
+## Building
+
+The build setup is very easy.
+
+### Requirements
+
+- Vulkan SDK / Libraries
+  - Windows
+    - https://www.lunarg.com/vulkan-sdk/
+  - Linux
+    - Update the necessary dev, header and library packages
+    - On fedora `sudo dnf install vulkan-loader vulkan-headers vulkan-loader-devel`
+- Git SubModules
+  - You can initialize them after clone with `git submodule update --init --recursive`
+
+### Option 1: (VSCode)
+
+Just open this project in VSCode and build with the cmake support.
+
+### Option 2: (CMD)
+
 ```bash
-xmake run genesis-bootstrap path_to_gta_exe path_to_rage_folder
+mkdir build
+cd build
+cmake ..
+cmake --build .
 ```
