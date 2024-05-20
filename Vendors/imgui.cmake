@@ -21,3 +21,8 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PUBLIC glfw)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC IMGUI_DEFINE_MATH_OPERATORS)
+
+if(MSVC OR MINGW)
+    target_include_directories(${PROJECT_NAME} PUBLIC ${Vulkan_INCLUDE_DIR})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${Vulkan_LIBRARIES})
+endif(MSVC OR MINGW)

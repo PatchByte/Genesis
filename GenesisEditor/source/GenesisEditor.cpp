@@ -281,7 +281,7 @@ namespace genesis::editor
     ash::AshResult GenesisEditor::LoadGenesisFileFrom(std::filesystem::path Path)
     {
         ash::AshStreamExpandableExportBuffer expandableStream = ash::AshStreamExpandableExportBuffer();
-        std::string filePathName = Path;
+        std::string filePathName = Path.string();
 
         if (std::filesystem::exists(filePathName))
         {
@@ -322,7 +322,7 @@ namespace genesis::editor
     ash::AshResult GenesisEditor::SaveGenesisFileTo(std::filesystem::path Path)
     {
         ash::AshStreamExpandableExportBuffer expandableStream = ash::AshStreamExpandableExportBuffer();
-        std::string filePathName = Path;
+        std::string filePathName = Path.string();
 
         if (m_TestBundleEditor.Export(&expandableStream))
         {

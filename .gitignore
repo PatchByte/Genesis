@@ -4,6 +4,7 @@
 .xmake
 
 build
+build_mingw
 
 .cache
 .vscode

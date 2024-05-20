@@ -15,9 +15,14 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/in
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
 # Because almost everything that microsoft produces is garbage that is being accepted by society because everyone uses it
-if(MSVC)
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${Vulkan_INCLUDE_DIR})
-endif(MSVC)
+if(MSVC OR MINGW)
+    target_include_directories(${PROJECT_NAME} PUBLIC ${Vulkan_INCLUDE_DIR})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${Vulkan_LIBRARIES})
+endif(MSVC OR MINGW)
+
+if(MINGW)
+    target_link_libraries(${PROJECT_NAME} PRIVATE -static)
+endif(MINGW)
 
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
