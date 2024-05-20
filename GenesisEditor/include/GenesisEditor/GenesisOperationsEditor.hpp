@@ -20,6 +20,8 @@ namespace genesis::editor
         static void sfRenderOutputDataClassMemberVariableOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataClassMemberVariableOperation* Operation, const operations::GenesisOperationInformation& OperationInformation);
         static void sfRenderOutputDataClassVirtualFunctionOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataClassVirtualFunctionOperation* Operation, const operations::GenesisOperationInformation& OperationInformation);
         static void sfRenderOutputDataClassNonVirtualFunctionOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataClassNonVirtualFunctionOperation* Operation, const operations::GenesisOperationInformation& OperationInformation);
+        static void sfRenderOutputDataStaticFunctionOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataStaticFunctionOperation* Operation, const operations::GenesisOperationInformation& OperationInformation);
+        static void sfRenderOutputDataStaticVariableOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataStaticVariableOperation* Operation, const operations::GenesisOperationInformation& OperationInformation);
     };
 
 }

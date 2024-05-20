@@ -59,6 +59,50 @@ namespace genesis::output
         unsigned long long m_Offset;
     };
 
+    class GenesisOutputStaticFunction
+    {
+    public:
+        inline GenesisOutputStaticFunction(std::string Name, unsigned long long Offset) : m_Name(Name), m_Offset(Offset)
+        {
+        }
+
+        inline std::string GetName()
+        {
+            return m_Name;
+        }
+
+        inline unsigned long long GetOffset()
+        {
+            return m_Offset;
+        }
+
+    private:
+        std::string m_Name;
+        unsigned long long m_Offset;
+    };
+
+    class GenesisOutputStaticVariable
+    {
+    public:
+        inline GenesisOutputStaticVariable(std::string Name, unsigned long long Offset) : m_Name(Name), m_Offset(Offset)
+        {
+        }
+
+        inline std::string GetName()
+        {
+            return m_Name;
+        }
+
+        inline unsigned long long GetOffset()
+        {
+            return m_Offset;
+        }
+
+    private:
+        std::string m_Name;
+        unsigned long long m_Offset;
+    };
+
     class GenesisOutputClassMember
 
     {
@@ -96,6 +140,8 @@ namespace genesis::output
 
         ash::AshResult AddVirtualFunction(GenesisOutputClassVirtualFunction VirtualFunction);
         ash::AshResult AddNonVirtualFunction(GenesisOutputClassNonVirtualFunction NonVirtualFunction);
+        ash::AshResult AddStaticFunction(GenesisOutputStaticFunction StaticFunction);
+        ash::AshResult AddStaticVariable(GenesisOutputStaticVariable StaticVariable);
         ash::AshResult AddMember(GenesisOutputClassMember Member);
 
         inline const std::map<std::string, GenesisOutputClassVirtualFunction>& GetVirtualFunctions()
@@ -108,6 +154,16 @@ namespace genesis::output
             return m_NonVirtualFunctions;
         }
 
+        inline const std::map<std::string, GenesisOutputStaticFunction>& GetStaticFunctions()
+        {
+            return m_StaticFunctions;
+        }
+
+        inline const std::map<std::string, GenesisOutputStaticVariable>& GetStaticVariables()
+        {
+            return m_StaticVariables;
+        }
+
         inline const std::map<std::string, GenesisOutputClassMember>& GetMembers()
         {
             return m_Members;
@@ -116,6 +172,8 @@ namespace genesis::output
     private:
         std::map<std::string, GenesisOutputClassVirtualFunction> m_VirtualFunctions;
         std::map<std::string, GenesisOutputClassNonVirtualFunction> m_NonVirtualFunctions;
+        std::map<std::string, GenesisOutputStaticFunction> m_StaticFunctions;
+        std::map<std::string, GenesisOutputStaticVariable> m_StaticVariables;
         std::map<std::string, GenesisOutputClassMember> m_Members;
     };
 
@@ -128,8 +186,14 @@ namespace genesis::output
         GenesisOutputClass* GetOrCreateClass(std::string Name);
         std::vector<std::string> GetAllAvailableClassNames();
 
+        inline GenesisOutputClass* GetGlobalClass()
+        {
+            return &m_GlobalClass;
+        }
+
     private:
         std::map<std::string, GenesisOutputClass*> m_Classes;
+        GenesisOutputClass m_GlobalClass;
     };
 
 } // namespace genesis::output

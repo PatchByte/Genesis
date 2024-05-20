@@ -46,6 +46,12 @@ namespace genesis::editor
         case operations::GenesisOperationType::OUTPUT_DATA_CLASS_NON_VIRTUAL_FUNCTION:
             sfRenderOutputDataClassNonVirtualFunctionOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassNonVirtualFunctionOperation*>(Operation), operationInformation);
             break;
+        case operations::GenesisOperationType::OUTPUT_DATA_STATIC_FUNCTION:
+            sfRenderOutputDataStaticFunctionOperation(Builder, dynamic_cast<operations::GenesisOutputDataStaticFunctionOperation*>(Operation), operationInformation);
+            break;
+        case operations::GenesisOperationType::OUTPUT_DATA_STATIC_VARIABLE:
+            sfRenderOutputDataStaticVariableOperation(Builder, dynamic_cast<operations::GenesisOutputDataStaticVariableOperation*>(Operation), operationInformation);
+            break;
         }
     }
 

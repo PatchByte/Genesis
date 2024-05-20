@@ -1,5 +1,6 @@
 #include "GenesisEditor/GenesisBundleEditor.hpp"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
+#include "GenesisEditor/GenesisWidgets.hpp"
 #include "GenesisShared/GenesisBundle.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "imgui.h"
@@ -10,7 +11,8 @@ namespace genesis::editor
 {
 
     GenesisBundleEditor::GenesisBundleEditor(utils::GenesisLogBox* LogBox)
-        : GenesisBundle(GenesisBundleEditor::sfDefaultFactory), m_DockSpaceHasBeenBuilt(false), m_DockSpaceId(0), m_DockSidebarWindow(0), m_DockContentWindow(0), m_DockLogWindow(0), m_SelectedFlow(), m_LogBox(LogBox)
+        : GenesisBundle(GenesisBundleEditor::sfDefaultFactory), m_DockSpaceHasBeenBuilt(false), m_DockSpaceId(0), m_DockSidebarWindow(0), m_DockContentWindow(0), m_DockLogWindow(0), m_SelectedFlow(),
+          m_LogBox(LogBox), m_SearchBoxName()
     {
         m_ReservedFactoryValue = this;
     }
@@ -24,16 +26,9 @@ namespace genesis::editor
     {
         m_KeyboardFont = KeyboardFont;
 
-        GenesisFlowEditor* flow1 = new GenesisFlowEditor(m_LogBox);
-        GenesisFlowEditor* flow2 = new GenesisFlowEditor(m_LogBox);
-
-        // Debug
-        m_Flows.emplace("Test 1", flow1);
-        m_Flows.emplace("Test 2", flow2);
-
         // Initialization
 
-        for(auto currentIterator : m_Flows)
+        for (auto currentIterator : m_Flows)
         {
             dynamic_cast<GenesisFlowEditor*>(currentIterator.second)->Initialize();
         }
@@ -135,7 +130,7 @@ namespace genesis::editor
 
                     ImGui::SameLine();
 
-                    if(ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
+                    if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
                     {
                         ImGui::CloseCurrentPopup();
                     }
@@ -145,13 +140,12 @@ namespace genesis::editor
 
                 ImGui::PopID();
             }
-
         }
         ImGui::End();
 
         if (ImGui::Begin("Content"))
         {
-            if(auto unCastSelectedFlow = GetFlow(m_SelectedFlow))
+            if (auto unCastSelectedFlow = GetFlow(m_SelectedFlow))
             {
                 GenesisFlowEditor* selectedFlow = dynamic_cast<GenesisFlowEditor*>(unCastSelectedFlow);
 
@@ -162,7 +156,7 @@ namespace genesis::editor
 
         if (ImGui::Begin("Log"))
         {
-            if(m_LogBox)
+            if (m_LogBox)
             {
                 m_LogBox->Render();
             }

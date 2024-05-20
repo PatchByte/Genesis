@@ -12,7 +12,7 @@
 namespace genesis::operations
 {
 
-    enum class GenesisOperationType
+    enum class GenesisOperationType : int
     {
         INVALID = 0,
         FIND_PATTERN = 1,
@@ -23,6 +23,8 @@ namespace genesis::operations
         OUTPUT_DATA_CLASS_VIRTUAL_FUNCTION = 6,
         OUTPUT_DATA_CLASS_NON_VIRTUAL_FUNCTION = 7,
         RIP = 8,
+        OUTPUT_DATA_STATIC_FUNCTION = 9,
+        OUTPUT_DATA_STATIC_VARIABLE = 10,
     };
 
     class GenesisOperationInformation
@@ -509,6 +511,136 @@ namespace genesis::operations
     protected:
         std::string m_ClassName;
         std::string m_FunctionName;
+    };
+
+    class GenesisOutputDataStaticFunctionOperation : public GenesisBaseOperation
+    {
+    public:
+        GenesisOutputDataStaticFunctionOperation();
+        // Static Non-Class
+        GenesisOutputDataStaticFunctionOperation(std::string FunctionName);
+        // Static Class
+        GenesisOutputDataStaticFunctionOperation(std::string ClassName, std::string MemberName);
+
+        std::string GetOperationName()
+        {
+            return "GenesisOutputDataStaticFunctionOperation";
+        }
+
+        std::string GetHumanReadableName()
+        {
+            return "Static Function";
+        }
+
+        GenesisOperationType GetOperationType()
+        {
+            return GenesisOperationType::OUTPUT_DATA_STATIC_FUNCTION;
+        }
+
+        GenesisOperationInformation GetOperationInformation();
+        ash::AshResult ProcessOperation(GenesisOperationState* State);
+
+        inline std::string GetClassName()
+        {
+            return m_ClassName;
+        }
+
+        inline void SetClassName(std::string ClassName)
+        {
+            m_ClassName = ClassName;
+        }
+
+        inline bool IsInClass()
+        {
+            return m_ClassName.empty() == false;
+        }
+
+        inline bool IsGlobal()
+        {
+            return m_ClassName.empty() == true;
+        }
+
+        inline std::string GetFunctionName()
+        {
+            return m_FunctionName;
+        }
+
+        inline void SetFunctionName(std::string FunctionName)
+        {
+            m_FunctionName = FunctionName;
+        }
+
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+
+    protected:
+        std::string m_ClassName;
+        std::string m_FunctionName;
+    };
+
+    class GenesisOutputDataStaticVariableOperation : public GenesisBaseOperation
+    {
+    public:
+        GenesisOutputDataStaticVariableOperation();
+        // Static Non-Class
+        GenesisOutputDataStaticVariableOperation(std::string VariableName);
+        // Static Class
+        GenesisOutputDataStaticVariableOperation(std::string ClassName, std::string VariableName);
+
+        std::string GetOperationName()
+        {
+            return "OutputDataStaticVariableOperation";
+        }
+
+        std::string GetHumanReadableName()
+        {
+            return "Static Variable";
+        }
+
+        GenesisOperationType GetOperationType()
+        {
+            return GenesisOperationType::OUTPUT_DATA_STATIC_VARIABLE;
+        }
+
+        GenesisOperationInformation GetOperationInformation();
+        ash::AshResult ProcessOperation(GenesisOperationState* State);
+
+        inline std::string GetClassName()
+        {
+            return m_ClassName;
+        }
+
+        inline void SetClassName(std::string ClassName)
+        {
+            m_ClassName = ClassName;
+        }
+
+        inline bool IsInClass()
+        {
+            return m_ClassName.empty() == false;
+        }
+
+        inline bool IsGlobal()
+        {
+            return m_ClassName.empty() == true;
+        }
+
+        inline std::string GetVariableName()
+        {
+            return m_VariableName;
+        }
+
+        inline void SetVariableName(std::string VariableName)
+        {
+            m_VariableName = VariableName;
+        }
+
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+
+    protected:
+        std::string m_ClassName;
+        std::string m_VariableName;
     };
 
     // Utils

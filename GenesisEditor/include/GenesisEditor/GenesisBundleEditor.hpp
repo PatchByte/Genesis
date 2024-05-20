@@ -42,6 +42,7 @@ namespace genesis::editor
         utils::GenesisLogBox* m_LogBox;
 
         std::string m_SelectedFlow;
+        std::string m_SearchBoxName;
 
         ImFont* m_KeyboardFont;
     };

@@ -10,6 +10,7 @@ namespace genesis::output
     class GenesisOutputBuilder
     {
     public:
+        static std::string BuildClassInner(GenesisOutputClass* Class);
         static std::string Build(GenesisOutputData* OutputData); 
     };
 

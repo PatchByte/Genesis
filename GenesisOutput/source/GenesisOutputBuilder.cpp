@@ -7,6 +7,81 @@
 namespace genesis::output
 {
 
+    std::string GenesisOutputBuilder::BuildClassInner(GenesisOutputClass* Class)
+    {
+        std::stringstream outputStream = std::stringstream();
+
+        // Virtual Functions
+
+        outputStream << "class VirtualFunctions" << std::endl;
+        outputStream << "{" << std::endl;
+        outputStream << "public:" << std::endl;
+
+        for (auto currentVirtualFunction : Class->GetVirtualFunctions())
+        {
+            outputStream << "static constexpr unsigned long long " << currentVirtualFunction.second.GetName() << " = " << std::hex << "0x" << currentVirtualFunction.second.GetVirtualTableOffset()
+                         << ";" << std::dec << std::endl;
+        }
+
+        outputStream << "};" << std::endl;
+        outputStream << std::endl;
+
+        // Non-Virtual Functions
+
+        outputStream << "class NonVirtualFunctions" << std::endl;
+        outputStream << "{" << std::endl;
+        outputStream << "public:" << std::endl;
+        for (auto currentNonVirtualFunction : Class->GetNonVirtualFunctions())
+        {
+            outputStream << "static constexpr unsigned long long " << currentNonVirtualFunction.second.GetName() << " = " << std::hex << "0x" << currentNonVirtualFunction.second.GetOffset() << ";"
+                         << std::dec << std::endl;
+        }
+        outputStream << "};" << std::endl;
+        outputStream << std::endl;
+
+        // Static Functions
+
+        outputStream << "class StaticFunctions" << std::endl;
+        outputStream << "{" << std::endl;
+        outputStream << "public:" << std::endl;
+        for (auto currentStaticFunction : Class->GetStaticFunctions())
+        {
+            outputStream << "static constexpr unsigned long long " << currentStaticFunction.second.GetName() << " = " << std::hex << "0x" << currentStaticFunction.second.GetOffset() << ";"
+                         << std::dec << std::endl;
+        }
+        outputStream << "};" << std::endl;
+        outputStream << std::endl;
+
+        // Static Functions
+
+        outputStream << "class StaticVariables" << std::endl;
+        outputStream << "{" << std::endl;
+        outputStream << "public:" << std::endl;
+        for (auto currentStaticVariables : Class->GetStaticVariables())
+        {
+            outputStream << "static constexpr unsigned long long " << currentStaticVariables.second.GetName() << " = " << std::hex << "0x" << currentStaticVariables.second.GetOffset() << ";"
+                         << std::dec << std::endl;
+        }
+        outputStream << "};" << std::endl;
+        outputStream << std::endl;
+
+        // Members
+
+        outputStream << "class Members" << std::endl;
+        outputStream << "{" << std::endl;
+        outputStream << "public:" << std::endl;
+
+        for (auto currentMember : Class->GetMembers())
+        {
+            outputStream << "static constexpr unsigned long long " << currentMember.second.GetName() << " = " << std::hex << "0x" << currentMember.second.GetOffset() << ";" << std::dec << std::endl;
+        }
+
+        outputStream << "};" << std::endl;
+        outputStream << std::endl;
+
+        return outputStream.str();
+    }
+
     std::string GenesisOutputBuilder::Build(GenesisOutputData* OutputData)
     {
         // You want indentation?
@@ -32,48 +107,22 @@ namespace genesis::output
             outputStream << "{" << std::endl;
             outputStream << "public:" << std::endl;
 
-            // Virtual Functions
-
-            outputStream << "class VirtualFunctions" << std::endl;
-            outputStream << "{" << std::endl;
-            outputStream << "public:" << std::endl;
-
-            for (auto currentVirtualFunction : currentClass->GetVirtualFunctions())
-            {
-                outputStream << "static constexpr unsigned long long " << currentVirtualFunction.second.GetName() << " = " << std::hex << "0x" << currentVirtualFunction.second.GetVirtualTableOffset()
-                             << ";" << std::dec << std::endl;
-            }
+            outputStream << BuildClassInner(currentClass);
 
             outputStream << "};" << std::endl;
             outputStream << std::endl;
+        }
 
-            // Non-Virtual Functions
+        // Global
 
-            outputStream << "class NonVirtualFunctions" << std::endl;
-            outputStream << "{" << std::endl;
-            outputStream << "public:" << std::endl;
-            for (auto currentNonVirtualFunction : currentClass->GetNonVirtualFunctions())
-            {
-                outputStream << "static constexpr unsigned long long " << currentNonVirtualFunction.second.GetName() << " = " << std::hex << "0x" << currentNonVirtualFunction.second.GetOffset() << ";"
-                             << std::dec << std::endl;
-            }
-            outputStream << "};" << std::endl;
-            outputStream << std::endl;
+        {
+            GenesisOutputClass* globalClass = OutputData->GetGlobalClass();
 
-            // Members
-
-            outputStream << "class Members" << std::endl;
+            outputStream << "class " << "OffsetProviderGlobal" << std::endl;
             outputStream << "{" << std::endl;
             outputStream << "public:" << std::endl;
 
-            for (auto currentMember : currentClass->GetMembers())
-            {
-                outputStream << "static constexpr unsigned long long " << currentMember.second.GetName() << " = " << std::hex << "0x" << currentMember.second.GetOffset() << ";" << std::dec
-                             << std::endl;
-            }
-
-            outputStream << "};" << std::endl;
-            outputStream << std::endl;
+            outputStream << BuildClassInner(globalClass);
 
             outputStream << "};" << std::endl;
             outputStream << std::endl;

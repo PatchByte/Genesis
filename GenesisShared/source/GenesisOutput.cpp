@@ -28,6 +28,30 @@ namespace genesis::output
         return ash::AshResult(true);
     }
 
+    ash::AshResult GenesisOutputClass::AddStaticFunction(GenesisOutputStaticFunction StaticFunction)
+    {
+        if (m_StaticFunctions.contains(StaticFunction.GetName()))
+        {
+            return ash::AshResult(false);
+        }
+
+        m_StaticFunctions.emplace(StaticFunction.GetName(), StaticFunction);
+
+        return ash::AshResult(true);
+    }
+
+    ash::AshResult GenesisOutputClass::AddStaticVariable(GenesisOutputStaticVariable StaticVariable)
+    {
+        if (m_StaticVariables.contains(StaticVariable.GetName()))
+        {
+            return ash::AshResult(false);
+        }
+
+        m_StaticVariables.emplace(StaticVariable.GetName(), StaticVariable);
+
+        return ash::AshResult(true);
+    }
+
     ash::AshResult GenesisOutputClass::AddMember(GenesisOutputClassMember Member)
     {
         if (m_Members.contains(Member.GetName()))
@@ -58,6 +82,11 @@ namespace genesis::output
 
     GenesisOutputClass* GenesisOutputData::GetOrCreateClass(std::string Name)
     {
+        if (Name.empty())
+        {
+            return this->GetGlobalClass();
+        }
+
         if (m_Classes.contains(Name))
         {
             return m_Classes.at(Name);

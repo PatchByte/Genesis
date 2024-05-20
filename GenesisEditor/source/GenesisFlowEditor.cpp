@@ -238,7 +238,9 @@ namespace genesis::editor
                                                                                             {"Rip", operations::GenesisOperationType::RIP},
                                                                                             {"Class Member Variable", operations::GenesisOperationType::OUTPUT_DATA_CLASS_MEMBER_VARIABLE},
                                                                                             {"Class Virtual Function", operations::GenesisOperationType::OUTPUT_DATA_CLASS_VIRTUAL_FUNCTION},
-                                                                                            {"Class Non Virtual Function", operations::GenesisOperationType::OUTPUT_DATA_CLASS_NON_VIRTUAL_FUNCTION}};
+                                                                                            {"Class Non Virtual Function", operations::GenesisOperationType::OUTPUT_DATA_CLASS_NON_VIRTUAL_FUNCTION},
+                                                                                            {"Static Function", operations::GenesisOperationType::OUTPUT_DATA_STATIC_FUNCTION},
+                                                                                            {"Static Variable", operations::GenesisOperationType::OUTPUT_DATA_STATIC_VARIABLE}};
 
                 ImGui::Text("Create new Node");
                 ImGui::Separator();
