@@ -1,6 +1,7 @@
 #ifndef _GENESISBUNDLEEDITOR_HPP
 #define _GENESISBUNDLEEDITOR_HPP
 
+#include "AshLogger/AshLogger.h"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "GenesisEditor/GenesisLogBox.hpp"
 #include "GenesisShared/GenesisBundle.hpp"
@@ -31,7 +32,9 @@ namespace genesis::editor
         }
 
         static GenesisFlow* sfDefaultFactory(void* Reserved);
-
+    protected:
+        ash::AshResult ExtractFlowAndSaveToFile(std::string FlowName, std::filesystem::path Output);
+        ash::AshResult ExtractFlowAndSaveToFileAndApplyLogs(std::string FlowName, std::filesystem::path Output);
     private:
         bool m_DockSpaceHasBeenBuilt;
         ImGuiID m_DockSpaceId;
@@ -40,6 +43,7 @@ namespace genesis::editor
         ImGuiID m_DockLogWindow;
 
         utils::GenesisLogBox* m_LogBox;
+        ash::AshLogger m_Logger;
 
         std::string m_SelectedFlow;
         std::string m_SearchBoxName;

@@ -3,6 +3,7 @@
 #include "GenesisEditor/GenesisWidgets.hpp"
 #include "GenesisShared/GenesisBundle.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
+#include "ImGuiFileDialog.h"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include <cstring>
@@ -12,9 +13,11 @@ namespace genesis::editor
 
     GenesisBundleEditor::GenesisBundleEditor(utils::GenesisLogBox* LogBox)
         : GenesisBundle(GenesisBundleEditor::sfDefaultFactory), m_DockSpaceHasBeenBuilt(false), m_DockSpaceId(0), m_DockSidebarWindow(0), m_DockContentWindow(0), m_DockLogWindow(0), m_SelectedFlow(),
-          m_LogBox(LogBox), m_SearchBoxName()
+          m_LogBox(LogBox), m_Logger("GenesisBundleEditor", {}), m_SearchBoxName()
     {
         m_ReservedFactoryValue = this;
+
+        m_Logger.AddLoggerPassage(m_LogBox->CreatePassage());
     }
 
     GenesisBundleEditor::~GenesisBundleEditor()
@@ -100,6 +103,15 @@ namespace genesis::editor
                         sTriggerRenamePopup |= true;
                     }
 
+                    if (ImGui::MenuItem("Extract"))
+                    {
+                        IGFD::FileDialogConfig config = IGFD::FileDialogConfig();
+
+                        config.userDatas = new std::string(currentIterator.first);
+
+                        ImGuiFileDialog::Instance()->OpenDialog("ExtractFlowDialogKey", "Extract Flow", ".genesis_flow", config);
+                    }
+
                     ImGui::EndPopup();
                 }
 
@@ -140,6 +152,20 @@ namespace genesis::editor
 
                 ImGui::PopID();
             }
+
+            if(ImGuiFileDialog::Instance()->Display("ExtractFlowDialogKey", ImGuiWindowFlags_NoCollapse, { 700, 350 }))
+            {
+                std::string* flowName = reinterpret_cast<std::string*>(ImGuiFileDialog::Instance()->GetUserDatas());
+
+                if(ImGuiFileDialog::Instance()->IsOk())
+                {
+                    this->ExtractFlowAndSaveToFileAndApplyLogs(*flowName, ImGuiFileDialog::Instance()->GetFilePathName());
+                }
+
+                delete flowName;
+
+                ImGuiFileDialog::Instance()->Close();
+            }
         }
         ImGui::End();
 
@@ -162,6 +188,51 @@ namespace genesis::editor
             }
         }
         ImGui::End();
+    }
+
+    ash::AshResult GenesisBundleEditor::ExtractFlowAndSaveToFile(std::string FlowName, std::filesystem::path Output)
+    {
+        if (auto flow = this->GetFlow(FlowName))
+        {
+            ash::AshStreamExpandableExportBuffer exportBufferStream = ash::AshStreamExpandableExportBuffer();
+
+            if (flow->Export(&exportBufferStream))
+            {
+                if (auto exportBuffer = exportBufferStream.MakeCopyOfBuffer())
+                {
+                    exportBuffer->WriteToFile(Output);
+
+                    delete exportBuffer;
+
+                    return ash::AshResult(false, "Successfully exported.");
+                }
+            }
+            else
+            {
+                return ash::AshResult(false, "Failed to export flow.");
+            }
+        }
+        else
+        {
+            return ash::AshResult(false, "Failed to find flow.");
+        }
+
+        // This should not be reached.
+        return ash::AshResult(false);
+    }
+
+    ash::AshResult GenesisBundleEditor::ExtractFlowAndSaveToFileAndApplyLogs(std::string FlowName, std::filesystem::path Output)
+    {
+        if (auto res = this->ExtractFlowAndSaveToFile(FlowName, Output); res.WasSuccessful())
+        {
+            m_Logger.Log("Info", res.GetMessage());
+            return std::move(res);
+        }
+        else
+        {
+            m_Logger.Log("Error", res.GetMessage());
+            return std::move(res);
+        }
     }
 
     GenesisFlow* GenesisBundleEditor::sfDefaultFactory(void* Reserved)

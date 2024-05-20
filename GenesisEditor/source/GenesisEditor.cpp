@@ -113,7 +113,7 @@ namespace genesis::editor
                                 ImGuiFileDialog::Instance()->OpenDialog("SaveBundleDialogKey", "Save File", ".genesis");
                             }
 
-                            if(ImGui::MenuItem("Save", nullptr, false, m_LastSavedAsFile.empty() == false))
+                            if (ImGui::MenuItem("Save", nullptr, false, m_LastSavedAsFile.empty() == false))
                             {
                                 this->SaveGenesisFileToAndApplyLogs(m_LastSavedAsFile);
                             }
@@ -123,9 +123,9 @@ namespace genesis::editor
                                 ImGuiFileDialog::Instance()->OpenDialog("ProcessBundleDialogKey", "Process File", ".exe,.dll");
                             }
 
-                            if(ImGui::MenuItem("Process last file", nullptr, false, m_LastProcessedFile.empty() == false))
+                            if (ImGui::MenuItem("Process last file", nullptr, false, m_LastProcessedFile.empty() == false))
                             {
-                                if(auto res = this->ProcessGenesisFileAndApplyLogs(m_LastProcessedFile); res.WasSuccessful())
+                                if (auto res = this->ProcessGenesisFileAndApplyLogs(m_LastProcessedFile); res.WasSuccessful())
                                 {
                                     IGFD::FileDialogConfig config = IGFD::FileDialogConfig();
                                     config.userDatas = new std::string(res.GetResult());
@@ -200,7 +200,7 @@ namespace genesis::editor
                 ImGui::End();
             }
 
-            if (ImGuiFileDialog::Instance()->Display("OpenBundleDialogKey"))
+            if (ImGuiFileDialog::Instance()->Display("OpenBundleDialogKey", ImGuiWindowFlags_NoCollapse, { 700, 350 }))
             {
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
@@ -211,7 +211,7 @@ namespace genesis::editor
                 ImGuiFileDialog::Instance()->Close();
             }
 
-            if (ImGuiFileDialog::Instance()->Display("SaveBundleDialogKey"))
+            if (ImGuiFileDialog::Instance()->Display("SaveBundleDialogKey", ImGuiWindowFlags_NoCollapse, { 700, 350 }))
             {
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
@@ -222,14 +222,14 @@ namespace genesis::editor
                 ImGuiFileDialog::Instance()->Close();
             }
 
-            if (ImGuiFileDialog::Instance()->Display("ProcessBundleDialogKey"))
+            if (ImGuiFileDialog::Instance()->Display("ProcessBundleDialogKey", ImGuiWindowFlags_NoCollapse, { 700, 350 }))
             {
                 bool openSaveOutputDialog = false;
                 void* openSaveOutputDialogUserData = nullptr;
 
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
-                    if(auto res = this->ProcessGenesisFileAndApplyLogs(ImGuiFileDialog::Instance()->GetFilePathName()); res.WasSuccessful())
+                    if (auto res = this->ProcessGenesisFileAndApplyLogs(ImGuiFileDialog::Instance()->GetFilePathName()); res.WasSuccessful())
                     {
                         openSaveOutputDialog = true;
                         openSaveOutputDialogUserData = new std::string(res.GetResult());
@@ -239,7 +239,7 @@ namespace genesis::editor
                 // close
                 ImGuiFileDialog::Instance()->Close();
 
-                if(openSaveOutputDialog)
+                if (openSaveOutputDialog)
                 {
                     IGFD::FileDialogConfig config = IGFD::FileDialogConfig();
                     config.userDatas = openSaveOutputDialogUserData;
@@ -248,11 +248,11 @@ namespace genesis::editor
                 }
             }
 
-            if(ImGuiFileDialog::Instance()->Display("SaveOutputDialogKey"))
+            if (ImGuiFileDialog::Instance()->Display("SaveOutputDialogKey", ImGuiWindowFlags_NoCollapse, { 700, 350 }))
             {
                 std::string* outputCode = reinterpret_cast<std::string*>(ImGuiFileDialog::Instance()->GetUserDatas());
 
-                if(ImGuiFileDialog::Instance()->IsOk())
+                if (ImGuiFileDialog::Instance()->IsOk())
                 {
                     std::ofstream outputStream = std::ofstream(ImGuiFileDialog::Instance()->GetFilePathName(), std::ios::trunc);
 
