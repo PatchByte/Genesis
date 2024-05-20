@@ -39,6 +39,10 @@ namespace genesis::editor
 
         ImFont* m_DefaultFont;
         ImFont* m_KeyboardFont;
+
+        // QOL
+        std::filesystem::path m_LastProcessedFile;
+        std::filesystem::path m_LastSavedAsFile;
     };
 
 } // namespace genesis::editor

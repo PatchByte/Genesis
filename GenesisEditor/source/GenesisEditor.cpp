@@ -108,14 +108,30 @@ namespace genesis::editor
                                 ImGuiFileDialog::Instance()->OpenDialog("OpenBundleDialogKey", "Open File", ".genesis");
                             }
 
-                            if (ImGui::MenuItem("Save"))
+                            if (ImGui::MenuItem("Save as"))
                             {
                                 ImGuiFileDialog::Instance()->OpenDialog("SaveBundleDialogKey", "Save File", ".genesis");
                             }
 
-                            if (ImGui::MenuItem("Process File"))
+                            if(ImGui::MenuItem("Save", nullptr, false, m_LastSavedAsFile.empty() == false))
+                            {
+                                this->SaveGenesisFileToAndApplyLogs(m_LastSavedAsFile);
+                            }
+
+                            if (ImGui::MenuItem("Process specific file"))
                             {
                                 ImGuiFileDialog::Instance()->OpenDialog("ProcessBundleDialogKey", "Process File", ".exe,.dll");
+                            }
+
+                            if(ImGui::MenuItem("Process last file", nullptr, false, m_LastProcessedFile.empty() == false))
+                            {
+                                if(auto res = this->ProcessGenesisFileAndApplyLogs(m_LastProcessedFile); res.WasSuccessful())
+                                {
+                                    IGFD::FileDialogConfig config = IGFD::FileDialogConfig();
+                                    config.userDatas = new std::string(res.GetResult());
+
+                                    ImGuiFileDialog::Instance()->OpenDialog("SaveOutputDialogKey", "Save Output Header File", ".hpp,.h", config);
+                                }
                             }
 
                             ImGui::EndMenu();
@@ -314,6 +330,7 @@ namespace genesis::editor
             {
                 if (exportBuffer->WriteToFile(filePathName).WasSuccessful())
                 {
+                    m_LastSavedAsFile = filePathName;
                     return ash::AshResult(true, fmt::format("Saved to {}.", filePathName));
                 }
                 else
@@ -355,6 +372,8 @@ namespace genesis::editor
 
             delete outputData;
             delete loadedFile;
+
+            m_LastProcessedFile = Input;
 
             return ash::AshCustomResult<std::string>(true, "Successfully processed.").AttachResult(outputCode);
         }
