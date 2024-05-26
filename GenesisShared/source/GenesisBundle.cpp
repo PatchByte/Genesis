@@ -75,7 +75,7 @@ namespace genesis
     {
         this->Reset();
 
-        size_t flowsSize = Stream->Read<size_t>();
+        size_t flowsSize = Stream->Read<ash::AshSize>();
 
         for (size_t currentIndex = 0; currentIndex < flowsSize; currentIndex++)
         {
@@ -102,7 +102,7 @@ namespace genesis
 
     bool GenesisBundle::Export(ash::AshStream* Stream)
     {
-        Stream->Write<size_t>(m_Flows.size());
+        Stream->Write<ash::AshSize>(m_Flows.size());
 
         for (auto currentIterator : m_Flows)
         {

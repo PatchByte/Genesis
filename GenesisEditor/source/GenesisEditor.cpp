@@ -3,6 +3,9 @@
 #include "Ash/AshResult.h"
 #include "Ash/AshStream.h"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
+#include "GenesisEditor/GenesisUtils.hpp"
+#include "GenesisEditor/GenesisWidgets.hpp"
+#include "GenesisEditor/live/GenesisLive.hpp"
 #include "GenesisOutput/GenesisOutputBuilder.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
@@ -22,7 +25,7 @@ namespace ed = ax::NodeEditor;
 namespace genesis::editor
 {
 
-    GenesisEditor::GenesisEditor() : m_LogBox(), m_Logger("GenesisEditor", {}), m_TestBundleEditor(&m_LogBox), m_ForceDisableRendering(false)
+    GenesisEditor::GenesisEditor() : m_LogBox(), m_Logger("GenesisEditor", {}), m_TestBundleEditor(&m_LogBox), m_ForceDisableRendering(false), m_Live(nullptr)
     {
         m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Editor");
         m_Logger.AddLoggerPassage(m_LogBox.CreatePassage());
@@ -30,18 +33,29 @@ namespace genesis::editor
 
     GenesisEditor::~GenesisEditor()
     {
+        if (m_Live)
+        {
+            delete m_Live;
+            m_Live = nullptr;
+        }
 
         if (m_Renderer)
         {
             delete m_Renderer;
+            m_Renderer = nullptr;
         }
     }
 
     void GenesisEditor::Run(int ArgCount, const char** ArgArray)
     {
+        // Live
+
+        m_Live = new live::GenesisLive(&m_LogBox, utils::GenesisUtils::sfGetUsername());
+
         // Renderer
 
         m_Renderer->Initialize();
+
         m_Renderer->SetDropFileHandler(
             [this](int FilePathCount, const char** FilePathArray) -> void
             {
@@ -97,7 +111,8 @@ namespace genesis::editor
                     ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
                     ImGui::SetWindowPos(ImVec2(0, 0));
 
-                    static bool sTriggerNewPopup = false;
+                    static bool sTriggerFlowNewNodePopup = false;
+                    static bool sTriggerLiveConnectPopup = false;
 
                     if (ImGui::BeginMenuBar())
                     {
@@ -143,7 +158,7 @@ namespace genesis::editor
 
                             if (ImGui::MenuItem("New"))
                             {
-                                sTriggerNewPopup = true;
+                                sTriggerFlowNewNodePopup = true;
                             }
 
                             if (ImGui::MenuItem("Navigate to Content", "PageDown", false, hasFlowSelected))
@@ -164,16 +179,46 @@ namespace genesis::editor
                             ImGui::EndMenu();
                         }
 
+                        if (ImGui::BeginMenu("Live"))
+                        {
+                            bool shouldEnableRequiredWaitingOptions = false;
+
+                            if (m_Live->GetRelayConnection() != nullptr)
+                            {
+                                shouldEnableRequiredWaitingOptions = m_Live->GetRelayConnection()->IsWaiting();
+                            }
+
+                            if (ImGui::MenuItem("Connect"))
+                            {
+                                sTriggerLiveConnectPopup = true;
+                            }
+
+                            if (ImGui::MenuItem("Copy Invite Code", nullptr, false, shouldEnableRequiredWaitingOptions))
+                            {
+                                ImGui::SetClipboardText(m_Live->GetRelayConnection()->GetMyConnectionString().data());
+                            }
+
+                            ImGui::EndMenu();
+                        }
+
                         ImGui::EndMenuBar();
                     }
 
-                    if (sTriggerNewPopup)
+                    // Popup triggers
+
+                    if (sTriggerFlowNewNodePopup)
                     {
-                        ImGui::OpenPopup("NewPopup");
-                        sTriggerNewPopup = false;
+                        ImGui::OpenPopup("FlowNewNodePopup");
+                        sTriggerFlowNewNodePopup = false;
                     }
 
-                    if (ImGui::BeginPopup("NewPopup", ImGuiWindowFlags_AlwaysAutoResize))
+                    if (sTriggerLiveConnectPopup)
+                    {
+                        ImGui::OpenPopup("LiveConnectPopup");
+                        sTriggerLiveConnectPopup = false;
+                    }
+
+                    if (ImGui::BeginPopup("FlowNewNodePopup", ImGuiWindowFlags_AlwaysAutoResize))
                     {
                         static char sNameBuffer[512] = {0};
 
@@ -195,12 +240,38 @@ namespace genesis::editor
                         ImGui::EndPopup();
                     }
 
+                    if (ImGui::BeginPopup("LiveConnectPopup"))
+                    {
+                        static std::string inviteCodeInput = "";
+
+                        widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Invite Code", &inviteCodeInput);
+
+                        if (ImGui::Button("Connect") || ImGui::IsKeyPressed(ImGuiKey_Enter))
+                        {
+                            if (auto res = m_Live->InitializeConnection(inviteCodeInput); res.HasError())
+                            {
+                                m_Logger.Log("Error", "Failed to initialize connection. {}", res.GetMessage());
+                            }
+
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
+                        {
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGui::EndPopup();
+                    }
+
                     m_TestBundleEditor.Render();
                 }
                 ImGui::End();
             }
 
-            if (ImGuiFileDialog::Instance()->Display("OpenBundleDialogKey", ImGuiWindowFlags_NoCollapse, { 700, 350 }))
+            if (ImGuiFileDialog::Instance()->Display("OpenBundleDialogKey", ImGuiWindowFlags_NoCollapse, {700, 350}))
             {
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
@@ -211,7 +282,7 @@ namespace genesis::editor
                 ImGuiFileDialog::Instance()->Close();
             }
 
-            if (ImGuiFileDialog::Instance()->Display("SaveBundleDialogKey", ImGuiWindowFlags_NoCollapse, { 700, 350 }))
+            if (ImGuiFileDialog::Instance()->Display("SaveBundleDialogKey", ImGuiWindowFlags_NoCollapse, {700, 350}))
             {
                 if (ImGuiFileDialog::Instance()->IsOk())
                 {
@@ -222,7 +293,7 @@ namespace genesis::editor
                 ImGuiFileDialog::Instance()->Close();
             }
 
-            if (ImGuiFileDialog::Instance()->Display("ProcessBundleDialogKey", ImGuiWindowFlags_NoCollapse, { 700, 350 }))
+            if (ImGuiFileDialog::Instance()->Display("ProcessBundleDialogKey", ImGuiWindowFlags_NoCollapse, {700, 350}))
             {
                 bool openSaveOutputDialog = false;
                 void* openSaveOutputDialogUserData = nullptr;
@@ -248,7 +319,7 @@ namespace genesis::editor
                 }
             }
 
-            if (ImGuiFileDialog::Instance()->Display("SaveOutputDialogKey", ImGuiWindowFlags_NoCollapse, { 700, 350 }))
+            if (ImGuiFileDialog::Instance()->Display("SaveOutputDialogKey", ImGuiWindowFlags_NoCollapse, {700, 350}))
             {
                 std::string* outputCode = reinterpret_cast<std::string*>(ImGuiFileDialog::Instance()->GetUserDatas());
 

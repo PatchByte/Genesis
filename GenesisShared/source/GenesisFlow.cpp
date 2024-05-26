@@ -1,4 +1,5 @@
 #include "GenesisShared/GenesisFlow.hpp"
+#include "Ash/AshBuffer.h"
 #include "Ash/AshResult.h"
 #include "AshObjects/AshBufferPlug.h"
 #include "AshObjects/AshString.h"
@@ -262,7 +263,7 @@ namespace genesis
         m_CounterLinks = Stream->Read<int>();
 
         {
-            size_t operationsSize = Stream->Read<size_t>();
+            size_t operationsSize = Stream->Read<ash::AshSize>();
 
             for(size_t currentOperationIndex = 0; currentOperationIndex < operationsSize; currentOperationIndex++)
             {
@@ -290,7 +291,7 @@ namespace genesis
         }
 
         {
-            size_t linksSize = Stream->Read<size_t>();
+            size_t linksSize = Stream->Read<ash::AshSize>();
 
             for(size_t currentLinkIndex = 0; currentLinkIndex < linksSize; currentLinkIndex++)
             {
@@ -324,7 +325,7 @@ namespace genesis
         Stream->Write<operations::GenesisOperationId>(m_CounterOperations);
         Stream->Write<int>(m_CounterLinks);
 
-        Stream->Write<size_t>(m_Operations.size());
+        Stream->Write<ash::AshSize>(m_Operations.size());
 
         for(auto currentOperationIterator : m_Operations)
         {
@@ -338,7 +339,7 @@ namespace genesis
             }
         }
 
-        Stream->Write<size_t>(m_Links.size());
+        Stream->Write<ash::AshSize>(m_Links.size());
 
         for(auto currentLinkIterator : m_Links)
         {

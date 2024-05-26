@@ -372,7 +372,7 @@ namespace genesis::editor
 
             if (m_TriggerRestoreStateOfNodes == false)
             {
-                reservedBufferGuiStream.Write<size_t>(m_Operations.size());
+                reservedBufferGuiStream.Write<ash::AshSize>(m_Operations.size());
 
                 for (auto currentIterator : m_Operations)
                 {
@@ -387,7 +387,7 @@ namespace genesis::editor
             }
             else
             {
-                reservedBufferGuiStream.Write<size_t>(m_NodeEditorSavedStates.size());
+                reservedBufferGuiStream.Write<ash::AshSize>(m_NodeEditorSavedStates.size());
 
                 for (auto currentIterator : m_NodeEditorSavedStates)
                 {

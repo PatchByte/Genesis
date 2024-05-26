@@ -6,6 +6,7 @@
 #include "GenesisEditor/GenesisBundleEditor.hpp"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "GenesisEditor/GenesisLogBox.hpp"
+#include "GenesisEditor/live/GenesisLive.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
 #include "imgui.h"
 #include <filesystem>
@@ -44,6 +45,9 @@ namespace genesis::editor
         // QOL
         std::filesystem::path m_LastProcessedFile;
         std::filesystem::path m_LastSavedAsFile;
+
+        // Live
+        live::GenesisLive* m_Live;
     };
 
 } // namespace genesis::editor
