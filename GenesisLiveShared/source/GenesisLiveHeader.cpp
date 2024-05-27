@@ -18,7 +18,7 @@ namespace genesis::live
     {
         ash::AshCRC32 identificationCrc = ash::AshCRC32();
 
-        identificationCrc.UpdateWithTemplateValue('hdr ');
+        identificationCrc.UpdateWithTemplateValue(0x68647220);
         identificationCrc.Update(Identification.data(), Identification.size());
 
         m_Identification = identificationCrc.GetValue();
@@ -28,7 +28,7 @@ namespace genesis::live
     {
         ash::AshCRC32 identificationCrc = ash::AshCRC32();
 
-        identificationCrc.UpdateWithTemplateValue('hdr ');
+        identificationCrc.UpdateWithTemplateValue(0x68647220);
         identificationCrc.Update(Identification.data(), Identification.size());
 
         return m_Identification == identificationCrc.GetValue();

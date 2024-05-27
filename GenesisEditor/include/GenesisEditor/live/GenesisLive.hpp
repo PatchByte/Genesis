@@ -23,7 +23,8 @@ namespace genesis::live
 
         ash::AshResult InitializeConnection(std::string RemoteInviteCode);
         ash::AshResult Reset();
-        ash::AshResult HandleMessage(GenesisLiveConnection* Connection, GenesisLiveRelayPacketBase* Packet);
+        ash::AshResult HandleRelayMessage(GenesisLiveConnection* Connection, GenesisLiveRelayPacketBase* Packet);
+        // ash::AshResult HandleBroadcastMessage(GenesisLiveConnection* Connection)
 
         std::chrono::milliseconds TouchPing();
 

@@ -21,7 +21,8 @@ namespace genesis::live
 
     using namespace std::chrono_literals;
 
-    GenesisLiveRelay::GenesisLiveRelay() : m_AlwaysOpenConnection(nullptr), m_Logger("Relay", {}), m_PeerCounter(), m_ConnectedPeers(), m_TimeoutDuration(GenesisLiveRelayConfig::smTimeoutDuration), m_HasFirstPeerBeenConnected(false)
+    GenesisLiveRelay::GenesisLiveRelay()
+        : m_AlwaysOpenConnection(nullptr), m_Logger("Relay", {}), m_PeerCounter(), m_ConnectedPeers(), m_TimeoutDuration(GenesisLiveRelayConfig::smTimeoutDuration), m_HasFirstPeerBeenConnected(false)
     {
         m_Logger.AddLoggerPassage(
             new ash::AshLoggerFunctionPassage([](ash::AshLoggerDefaultPassage* This, ash::AshLoggerTag Tag, std::string Format, fmt::format_args Args, std::string FormattedString) -> void
@@ -199,7 +200,20 @@ namespace genesis::live
 
             break;
         }
-        case GenesisLiveRelayPacketType::FORWARD_TO:
+        case GenesisLiveRelayPacketType::BROADCAST:
+        {
+            GenesisLiveRelayPacketBroadcast* broadcast = reinterpret_cast<GenesisLiveRelayPacketBroadcast*>(Packet);
+
+            if (broadcast->GetBuffer().IsAllocated() && broadcast->GetBuffer().GetSize() > 0)
+            {
+                // Avoid spoofing
+                broadcast->SetSender(Connection->GetPeerId());
+
+                BroadcastPacketsToPeers(broadcast, {Connection->GetPeerId()});
+            }
+
+            break;
+        }
         default:
             m_Logger.Log("DebugError", "Received unknown packet type from client {}.", Connection->GetPeerId());
             break;

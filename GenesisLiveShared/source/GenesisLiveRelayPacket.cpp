@@ -23,6 +23,8 @@ namespace genesis::live
             return new GenesisLiveRelayPacketConnectionStringHintConnect();
         case GenesisLiveRelayPacketType::CLIENT_LEFT:
             return new GenesisLiveRelayPacketConnectionClientLeft();
+        case genesis::live::GenesisLiveRelayPacketType::BROADCAST:
+            return new GenesisLiveRelayPacketBroadcast();
         default:
             return nullptr;
         }

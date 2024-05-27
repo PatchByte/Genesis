@@ -67,7 +67,7 @@ namespace genesis::live
                     packetDeserialized = res.GetResult();
                 }
 
-                this->HandleMessage(reinterpret_cast<GenesisLiveConnection*>(ConnectionUnCast), packetDeserialized);
+                this->HandleRelayMessage(reinterpret_cast<GenesisLiveConnection*>(ConnectionUnCast), packetDeserialized);
 
                 delete packetDeserialized;
             });
@@ -110,7 +110,7 @@ namespace genesis::live
         return ash::AshResult(true);
     }
 
-    ash::AshResult GenesisLive::HandleMessage(GenesisLiveConnection* Connection, GenesisLiveRelayPacketBase* Packet)
+    ash::AshResult GenesisLive::HandleRelayMessage(GenesisLiveConnection* Connection, GenesisLiveRelayPacketBase* Packet)
     {
         switch (Packet->GetType())
         {
@@ -179,7 +179,10 @@ namespace genesis::live
 
             break;
         }
-        case GenesisLiveRelayPacketType::FORWARD_FROM:
+        case GenesisLiveRelayPacketType::BROADCAST:
+        {
+            break;
+        }
         default:
             break;
         }

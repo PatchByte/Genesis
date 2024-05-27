@@ -6,7 +6,7 @@
 #endif  
 
 #ifdef _WIN32  
-#include<Windows.h>  
+#include <windows.h>  
 #endif  
 
 namespace genesis::utils
@@ -25,12 +25,10 @@ namespace genesis::utils
         const int MAX_LEN = 100;
         char szBuffer[MAX_LEN];
         DWORD len = MAX_LEN;
-        if (GetUserName(szBuffer, &len))
+        if (GetUserNameA(szBuffer, &len))
             return szBuffer;
-
-#else
-        return "";
 #endif
+        return "";
     }
 
 } // namespace genesis::utils

@@ -6,11 +6,13 @@ file(GLOB GENESISEDITOR_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/*.*
     ${CMAKE_CURRENT_SOURCE_DIR}/source/*.*
     ${CMAKE_CURRENT_SOURCE_DIR}/source/*/*.*
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/*/*/*.*
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/*/*/*/*.*
 )
 
 add_executable(${PROJECT_NAME} ${GENESISEDITOR_SOURCE_FILES})
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Ash::Ash AshLogger::AshLogger glfw Vulkan::Vulkan ImGui::ImGui GenesisShared::GenesisShared GenesisRenderer::GenesisRenderer GenesisOutput::GenesisOutput ImGuiNodeEditor::ImGuiNodeEditor ImGuiFileDialog::ImGuiFileDialog LibDataChannel::LibDataChannel GenesisLiveShared::GenesisLiveShared)
+target_link_libraries(${PROJECT_NAME} PUBLIC Ash::Ash AshLogger::AshLogger glfw Vulkan::Vulkan ImGui::ImGui GenesisShared::GenesisShared GenesisRenderer::GenesisRenderer GenesisOutput::GenesisOutput ImGuiNodeEditor::ImGuiNodeEditor ImGuiFileDialog::ImGuiFileDialog LibDataChannel::LibDataChannelStatic GenesisLiveShared::GenesisLiveShared)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 

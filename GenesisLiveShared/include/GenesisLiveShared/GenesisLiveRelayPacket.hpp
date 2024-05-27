@@ -6,6 +6,7 @@
 #include "Ash/AshResult.h"
 #include "Ash/AshStreamableObject.h"
 #include "GenesisLiveShared/GenesisLive.hpp"
+#include <utility>
 
 namespace genesis::live
 {
@@ -19,8 +20,7 @@ namespace genesis::live
         CONNECTION_STRING_UPDATE = 4,
         CONNECTION_STRING_HINT_CONNECT = 5,
         CLIENT_LEFT = 6,
-        FORWARD_TO = 7,
-        FORWARD_FROM = 8,
+        BROADCAST = 7,
     };
 
     class GenesisLiveRelayPacketBase : public ash::AshStreamableObject
@@ -234,6 +234,49 @@ namespace genesis::live
     protected:
         GenesisPeerId m_PeerId;
         std::string m_Reason;
+    };
+
+    class GenesisLiveRelayPacketBroadcast : public GenesisLiveRelayPacketBase
+    {
+    public:
+        // Should be hopefully enough for now
+        static constexpr ash::AshSize smBufferMaxSize = 0xFFFFF;
+
+        GenesisLiveRelayPacketBroadcast();
+        ~GenesisLiveRelayPacketBroadcast() = default;
+
+        GenesisLiveRelayPacketType GetType()
+        {
+            return GenesisLiveRelayPacketType::BROADCAST;
+        }
+
+        inline GenesisPeerId GetSender()
+        {
+            return m_Sender;
+        }
+
+        inline void SetSender(GenesisPeerId Sender)
+        {
+            m_Sender = Sender;
+        }
+
+        inline ash::AshBuffer& GetBuffer()
+        {
+            return m_Buffer;
+        }
+
+        inline void SetBuffer(ash::AshBuffer Buffer)
+        {
+            m_Buffer = Buffer;
+        }
+
+        bool Reset();
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+
+    protected:
+        GenesisPeerId m_Sender;
+        ash::AshBuffer m_Buffer;
     };
 
     // GenesisLiveRelayPacketUtils
