@@ -23,6 +23,7 @@ namespace genesis::live
         
         m_AssignedPeerId = Stream->Read<GenesisPeerId>();
         m_Reason = static_cast<ReasonType>(Stream->Read<int>());
+        m_IsFirstToConnect = Stream->Read<bool>();
 
         return Stream->IsOkay();
     }
@@ -33,6 +34,7 @@ namespace genesis::live
 
         Stream->Write<GenesisPeerId>(m_AssignedPeerId);
         Stream->Write(static_cast<int>(m_Reason));
+        Stream->Write<bool>(m_IsFirstToConnect);
 
         return Stream->IsOkay();
     }

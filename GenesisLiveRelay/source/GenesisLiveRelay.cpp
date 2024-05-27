@@ -154,6 +154,7 @@ namespace genesis::live
                 connectResponse.SetReason(GenesisLiveRelayPacketClientConnectResponse::ReasonType::FORCE_ASSIGN_TO_YOU);
                 connectResponse.SetAssignedPeerId(Connection->GetPeerId());
                 connectResponse.SetAssignedClientName(Connection->GetName());
+                connectResponse.SetIsFirstToConnect(m_ConnectedPeers.size() <= 1);
 
                 Connection->SetState(GenesisLiveRelayPeerConnection::StateType::AUTHED);
 

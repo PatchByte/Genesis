@@ -6,6 +6,7 @@
 #include "AshLogger/AshLogger.h"
 #include "GenesisEditor/GenesisLogBox.hpp"
 #include "GenesisEditor/live/GenesisLiveConnection.hpp"
+#include "GenesisEditor/live/GenesisLivePackets.hpp"
 #include "GenesisLiveShared/GenesisLive.hpp"
 #include "GenesisLiveShared/GenesisLiveRelayConnection.hpp"
 #include <chrono>
@@ -24,12 +25,13 @@ namespace genesis::live
         ash::AshResult InitializeConnection(std::string RemoteInviteCode);
         ash::AshResult Reset();
         ash::AshResult HandleRelayMessage(GenesisLiveConnection* Connection, GenesisLiveRelayPacketBase* Packet);
-        // ash::AshResult HandleBroadcastMessage(GenesisLiveConnection* Connection)
+        ash::AshResult HandleBroadcastMessage(GenesisPeerId Sender, GenesisLiveConnectionPacketBase* Packet);
 
         std::chrono::milliseconds TouchPing();
 
         // Basically hints the relay server to launch a connection to the given remote connection (provided by the RemoteConnectionString)
         ash::AshResult InviteHintConnection(std::string RemoteConnectionString);
+        ash::AshResult BroadcastPacketToPeers(GenesisLiveConnectionPacketBase* Packet);
 
         inline bool HasBeenInitialized()
         {

@@ -129,6 +129,16 @@ namespace genesis::live
             m_Reason = Reason;
         }
 
+        inline bool IsFirstToConnect()
+        {
+            return m_IsFirstToConnect;
+        }
+
+        inline void SetIsFirstToConnect(bool IsFirstToConnect)
+        {
+            m_IsFirstToConnect = IsFirstToConnect;
+        }
+
         bool Import(ash::AshStream* Stream);
         bool Export(ash::AshStream* Stream);
 
@@ -136,6 +146,7 @@ namespace genesis::live
         std::string m_AssignedClientName;
         GenesisPeerId m_AssignedPeerId;
         ReasonType m_Reason;
+        bool m_IsFirstToConnect;
     };
 
     class GenesisLiveRelayPacketPing : public GenesisLiveRelayPacketBase

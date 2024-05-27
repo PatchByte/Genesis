@@ -2,6 +2,7 @@
 #include "Ash/AshResult.h"
 #include "GenesisEditor/GenesisLogBox.hpp"
 #include "GenesisEditor/live/GenesisLiveConnection.hpp"
+#include "GenesisEditor/live/GenesisLivePackets.hpp"
 #include "GenesisLiveShared/GenesisLiveRelayConfig.hpp"
 #include "GenesisLiveShared/GenesisLiveRelayConnection.hpp"
 #include "GenesisLiveShared/GenesisLiveRelayPacket.hpp"
@@ -132,6 +133,14 @@ namespace genesis::live
                 m_Connection->SendPacket(&packet);
 
                 m_Connection->SetAuthed(true);
+
+                if (response->IsFirstToConnect() == false)
+                {
+                    // Ask other peers to provide flow.
+
+                    GenesisLiveConnectionPacketRequestSerializedFile requestSerializedFilePacket = GenesisLiveConnectionPacketRequestSerializedFile();
+                    BroadcastPacketToPeers(&requestSerializedFilePacket);
+                }
             }
             else if (response->GetReason() == GenesisLiveRelayPacketClientConnectResponse::ReasonType::CLIENT_JOINED)
             {
@@ -181,9 +190,45 @@ namespace genesis::live
         }
         case GenesisLiveRelayPacketType::BROADCAST:
         {
+            GenesisLiveRelayPacketBroadcast* broadcast = reinterpret_cast<GenesisLiveRelayPacketBroadcast*>(Packet);
+
+            if (auto res = GenesisLiveConnectionPacketUtils::sfDeserializePacket("GenesisLiveConnectionPacket", &broadcast->GetBuffer()); res.HasError())
+            {
+                m_Logger.Log("Error", "Failed to deserialize packet from peer {}. {}", broadcast->GetSender(), res.GetMessage());
+            }
+            else
+            {
+                GenesisLiveConnectionPacketBase* packet = res.GetResult();
+
+                HandleBroadcastMessage(broadcast->GetSender(), packet);
+
+                delete packet;
+            }
+
             break;
         }
         default:
+            break;
+        }
+
+        return ash::AshResult(true);
+    }
+
+    ash::AshResult GenesisLive::HandleBroadcastMessage(GenesisPeerId Sender, GenesisLiveConnectionPacketBase* Packet)
+    {
+        switch (Packet->GetType())
+        {
+        case GenesisLiveConnectionPacketType::REQUEST_GENESIS_SERIALIZED_FILE:
+        {
+            m_Logger.Log("Info", "Received file request");
+            break;
+        }
+        case GenesisLiveConnectionPacketType::RESPONSE_GENESIS_SERIALIZED_FILE:
+        {
+            break;
+        }
+        default:
+            m_Logger.Log("Error", "Received unknown live connection packet by Peer {}.", Sender);
             break;
         }
 
@@ -202,6 +247,25 @@ namespace genesis::live
         packetHintConnect.SetConnectionString(RemoteConnectionString);
 
         return m_Connection->SendPacket(&packetHintConnect);
+    }
+
+    ash::AshResult GenesisLive::BroadcastPacketToPeers(GenesisLiveConnectionPacketBase* Packet)
+    {
+        if (auto res = GenesisLiveConnectionPacketUtils::sfSerializePacket("GenesisLiveConnectionPacket", Packet); res.HasError())
+        {
+            return ash::AshResult(false, res.GetMessage());
+        }
+        else
+        {
+            GenesisLiveRelayPacketBroadcast packetBroadcast = GenesisLiveRelayPacketBroadcast();
+
+            packetBroadcast.SetSender(m_AssignedPeerId);
+            packetBroadcast.SetBuffer(*res.GetResult());
+
+            return m_Connection->SendPacket(&packetBroadcast);
+        }
+
+        return ash::AshResult(false);
     }
 
     void GenesisLive::sRunnerThreadFunction()
