@@ -21,7 +21,7 @@ namespace genesis::live
 
     using namespace std::chrono_literals;
 
-    GenesisLiveRelay::GenesisLiveRelay() : m_AlwaysOpenConnection(nullptr), m_Logger("Relay", {}), m_PeerCounter(), m_ConnectedPeers(), m_TimeoutDuration(GenesisLiveRelayConfig::smTimeoutDuration)
+    GenesisLiveRelay::GenesisLiveRelay() : m_AlwaysOpenConnection(nullptr), m_Logger("Relay", {}), m_PeerCounter(), m_ConnectedPeers(), m_TimeoutDuration(GenesisLiveRelayConfig::smTimeoutDuration), m_HasFirstPeerBeenConnected(false)
     {
         m_Logger.AddLoggerPassage(
             new ash::AshLoggerFunctionPassage([](ash::AshLoggerDefaultPassage* This, ash::AshLoggerTag Tag, std::string Format, fmt::format_args Args, std::string FormattedString) -> void
@@ -142,6 +142,8 @@ namespace genesis::live
         {
             if (Connection->GetState() == GenesisLiveRelayPeerConnection::StateType::CONNECTING)
             {
+                m_HasFirstPeerBeenConnected = true;
+
                 GenesisLiveRelayPacketClientConnectRequest* connectRequest = reinterpret_cast<GenesisLiveRelayPacketClientConnectRequest*>(Packet);
                 GenesisLiveRelayPacketClientConnectResponse connectResponse = GenesisLiveRelayPacketClientConnectResponse();
 
@@ -239,7 +241,7 @@ namespace genesis::live
 
         // Main Loop
 
-        while (true)
+        while (m_ConnectedPeers.size() > 0 || (m_HasFirstPeerBeenConnected == false))
         {
             std::stack<std::pair<GenesisPeerId, std::string>> forceRemovalOfPeers = {};
 
@@ -247,7 +249,7 @@ namespace genesis::live
             {
                 if (currentIterator.second->HasTimeouted(m_TimeoutDuration))
                 {
-                    forceRemovalOfPeers.push(std::make_pair(currentIterator.first, "Timeout"));
+                    forceRemovalOfPeers.push(std::make_pair(currentIterator.first, "Client has timeouted."));
                     m_Logger.Log("Error", "Removing peer {} because of timeout.", currentIterator.first);
                 }
             }
@@ -265,6 +267,8 @@ namespace genesis::live
             std::this_thread::sleep_for(m_TimeoutDuration * 2.5);
             std::this_thread::yield();
         }
+
+        m_Logger.Log("Exit", "Shutting down because no peers are connected.");
     }
 
 } // namespace genesis::live

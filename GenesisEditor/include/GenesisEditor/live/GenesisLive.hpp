@@ -49,8 +49,25 @@ namespace genesis::live
         {
             return m_RelayConnectionInviteCode;
         }
+
+        inline GenesisPeerId GetAssignedPeerId()
+        {
+            return m_AssignedPeerId;
+        }
+
+        inline std::string GetAssignedUsername()
+        {
+            return m_AssignedUsername;
+        }
+
+        inline const std::map<GenesisPeerId, std::string>& GetConnectedPeers()
+        {
+            return m_ConnectedPeers;
+        }
+
     private:
         void sRunnerThreadFunction();
+
     protected:
         ash::AshLogger m_Logger;
         std::jthread* m_RunnerThread;
@@ -58,10 +75,10 @@ namespace genesis::live
         GenesisLiveConnection* m_Connection;
         std::string m_LocalConnectionInviteCode;
         std::string m_Username;
-        
+
         GenesisPeerId m_AssignedPeerId;
         std::string m_AssignedUsername;
-        
+
         std::chrono::milliseconds m_LastPing;
 
         std::string m_RelayConnectionInviteCode;

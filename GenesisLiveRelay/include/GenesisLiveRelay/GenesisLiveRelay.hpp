@@ -42,6 +42,10 @@ namespace genesis::live
         // Config
 
         std::chrono::milliseconds m_TimeoutDuration;
+
+        // Boilerplate
+
+        bool m_HasFirstPeerBeenConnected;
     };
 
 } // namespace genesis::live

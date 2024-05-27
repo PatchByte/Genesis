@@ -114,6 +114,7 @@ namespace genesis::editor
                     static bool sTriggerFlowNewNodePopup = false;
                     static bool sTriggerLiveConnectPopup = false;
                     static bool sTriggerLiveHintConnectPopup = false;
+                    static bool sTriggerLiveShowPeers = false;
 
                     if (ImGui::BeginMenuBar())
                     {
@@ -191,7 +192,7 @@ namespace genesis::editor
                                 shouldEnableRequiredAuthedOptions = m_Live->GetRelayConnection()->IsAuthed();
                             }
 
-                            if (ImGui::MenuItem("Connect"))
+                            if (ImGui::MenuItem("Connect", nullptr, false, shouldEnableRequiredAuthedOptions == false))
                             {
                                 sTriggerLiveConnectPopup = true;
                             }
@@ -201,9 +202,14 @@ namespace genesis::editor
                                 ImGui::SetClipboardText(m_Live->GetRelayConnection()->GetMyConnectionString().data());
                             }
 
-                            if(ImGui::MenuItem("Invite Other Client", nullptr, false, shouldEnableRequiredAuthedOptions))
+                            if (ImGui::MenuItem("Invite Other Client", nullptr, false, shouldEnableRequiredAuthedOptions))
                             {
                                 sTriggerLiveHintConnectPopup = true;
+                            }
+
+                            if (ImGui::MenuItem("Show Peers", nullptr, false, shouldEnableRequiredAuthedOptions))
+                            {
+                                sTriggerLiveShowPeers = true;
                             }
 
                             ImGui::EndMenu();
@@ -226,10 +232,16 @@ namespace genesis::editor
                         sTriggerLiveConnectPopup = false;
                     }
 
-                    if(sTriggerLiveHintConnectPopup)
+                    if (sTriggerLiveHintConnectPopup)
                     {
                         ImGui::OpenPopup("Invite Other Client");
                         sTriggerLiveHintConnectPopup = false;
+                    }
+
+                    if (sTriggerLiveShowPeers)
+                    {
+                        ImGui::OpenPopup("Connected Peers");
+                        sTriggerLiveShowPeers = false;
                     }
 
                     if (ImGui::BeginPopup("FlowNewNodePopup", ImGuiWindowFlags_AlwaysAutoResize))
@@ -254,7 +266,7 @@ namespace genesis::editor
                         ImGui::EndPopup();
                     }
 
-                    if (ImGui::BeginPopup("LiveConnectPopup"))
+                    if (ImGui::BeginPopup("LiveConnectPopup", ImGuiWindowFlags_AlwaysAutoResize))
                     {
                         static std::string inviteCodeInput = "";
 
@@ -279,14 +291,14 @@ namespace genesis::editor
 
                         ImGui::EndPopup();
                     }
-                    
-                    if(ImGui::BeginPopupModal("Invite Other Client"))
+
+                    if (ImGui::BeginPopupModal("Invite Other Client", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
                     {
                         static std::string inviteCodeInput = "";
 
                         ImGui::Text("Please send him the following invite code.");
-                        
-                        if(ImGui::Button("Copy Invite Code"))
+
+                        if (ImGui::Button("Copy Invite Code"))
                         {
                             ImGui::SetClipboardText(m_Live->GetRelayConnectionInviteCode().data());
                         }
@@ -297,9 +309,9 @@ namespace genesis::editor
 
                         widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Invite Code", &inviteCodeInput);
 
-                        if(ImGui::Button("Invite"))
+                        if (ImGui::Button("Invite"))
                         {
-                            if(auto res = m_Live->InviteHintConnection(inviteCodeInput); res.HasError())
+                            if (auto res = m_Live->InviteHintConnection(inviteCodeInput); res.HasError())
                             {
                                 m_Logger.Log("Error", "Failed to invite (hint) client. {}", res.GetMessage());
                             }
@@ -314,6 +326,46 @@ namespace genesis::editor
                         ImGui::SameLine();
 
                         if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
+                        {
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGui::EndPopup();
+                    }
+
+                    if (ImGui::BeginPopupModal("Connected Peers", nullptr))
+                    {
+                        if (ImGui::BeginTable("##PeersTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_PadOuterX))
+                        {
+                            ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("Peer Id");
+                            ImGui::TableNextColumn();
+                            ImGui::Text("Peer Name");
+
+                            // Yourself
+
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::Text("%lli", m_Live->GetAssignedPeerId());
+                            ImGui::TableNextColumn();
+                            ImGui::Text("%s (You)", m_Live->GetAssignedUsername().data());
+
+                            // Others
+
+                            for (auto currentIterator : m_Live->GetConnectedPeers())
+                            {
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::Text("%lli", currentIterator.first);
+                                ImGui::TableNextColumn();
+                                ImGui::Text("%s", currentIterator.second.data());
+                            }
+
+                            ImGui::EndTable();
+                        }
+
+                        if (ImGui::Button("Close", {-1, 0}) || ImGui::IsKeyPressed(ImGuiKey_Escape))
                         {
                             ImGui::CloseCurrentPopup();
                         }

@@ -11,17 +11,9 @@ namespace genesis::live
 
     bool GenesisLiveRelayPacketConnectionClientLeft::Import(ash::AshStream* Stream)
     {
-        m_PeerId = Stream->Read<GenesisPeerId>();
-        ash::objects::AshAsciiString(m_Reason).Export(Stream);
-
-        return Stream->IsOkay();
-    }
-
-    bool GenesisLiveRelayPacketConnectionClientLeft::Export(ash::AshStream* Stream)
-    {
         ash::objects::AshAsciiString reasonObject = ash::objects::AshAsciiString();
 
-        Stream->Write<GenesisPeerId>(m_PeerId);
+        m_PeerId = Stream->Read<GenesisPeerId>();
 
         if (reasonObject.Import(Stream) == false)
         {
@@ -29,6 +21,14 @@ namespace genesis::live
         }
 
         m_Reason = reasonObject.GetText();
+
+        return Stream->IsOkay();
+    }
+
+    bool GenesisLiveRelayPacketConnectionClientLeft::Export(ash::AshStream* Stream)
+    {
+        Stream->Write<GenesisPeerId>(m_PeerId);
+        ash::objects::AshAsciiString(m_Reason).Export(Stream);
 
         return Stream->IsOkay();
     }
