@@ -17,7 +17,7 @@ namespace genesis::live
         {
             INVALID = 0,
             CONNECTING = 1,
-            AUTHED = 2 
+            AUTHED = 2
         };
 
         GenesisLiveRelayPeerConnection();
@@ -63,10 +63,21 @@ namespace genesis::live
             m_State = State;
         }
 
+        inline std::string GetName()
+        {
+            return m_Name;
+        }
+
+        inline void SetName(std::string Name)
+        {
+            m_Name = Name;
+        }
+
     protected:
         GenesisPeerId m_PeerId;
         std::chrono::milliseconds m_LastPing;
         StateType m_State;
+        std::string m_Name;
     };
 
 } // namespace genesis::live

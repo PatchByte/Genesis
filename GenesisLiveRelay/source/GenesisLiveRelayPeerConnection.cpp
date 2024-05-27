@@ -8,6 +8,7 @@ namespace genesis::live
         m_PeerId(),
         m_LastPing(),
         m_State(StateType::CONNECTING),
+        m_Name(),
         // Relay is always the offerer
         GenesisLiveRelayConnection(InitializationConnectionWayType::OFFERER)
     {}

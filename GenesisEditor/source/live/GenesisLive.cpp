@@ -13,7 +13,7 @@ namespace genesis::live
 {
 
     GenesisLive::GenesisLive(utils::GenesisLogBox* LogBox, std::string Username)
-        : m_Logger("GenesisLive", {}), m_Connection(nullptr), m_ConnectionInviteCode(), m_Username(Username), m_AssignedPeerId(), m_AssignedUsername(), m_RunnerThread(), m_LastPing()
+        : m_Logger("GenesisLive", {}), m_Connection(nullptr), m_LocalConnectionInviteCode(), m_Username(Username), m_AssignedPeerId(), m_AssignedUsername(), m_RunnerThread(), m_LastPing()
     {
         m_Logger.AddLoggerPassage(LogBox->CreatePassage());
 
@@ -22,6 +22,7 @@ namespace genesis::live
 
     GenesisLive::~GenesisLive()
     {
+        this->Reset();
     }
 
     ash::AshResult GenesisLive::InitializeConnection(std::string RemoteInviteCode)
@@ -29,7 +30,7 @@ namespace genesis::live
         this->Reset();
 
         m_Connection = new GenesisLiveConnection();
-        m_Connection->SetGatheredServerReflexiveCandidateCallback([this](GenesisLiveRelayConnection* Connection) -> void { m_ConnectionInviteCode = Connection->GetMyConnectionString(); });
+        m_Connection->SetGatheredServerReflexiveCandidateCallback([this](GenesisLiveRelayConnection* Connection) -> void { m_LocalConnectionInviteCode = Connection->GetMyConnectionString(); });
 
         m_Connection->SetConnectedToRemoteCallback([this](GenesisLiveRelayConnection* Connection) -> void { m_Logger.Log("Info", "Connected to relay"); });
 
@@ -71,24 +72,31 @@ namespace genesis::live
                 delete packetDeserialized;
             });
 
-        if (auto res = m_Connection->InitializeConnection(); res.HasError())
-        {
-            return std::move(res);
-        }
+        m_RunnerThread = new std::jthread(
+            [this, RemoteInviteCode]()
+            {
+                if (auto res = m_Connection->InitializeConnection(); res.HasError())
+                {
+                    m_Logger.Log("Error", "Failed to initialize connection.");
+                    return;
+                }
 
-        m_RunnerThread = new std::jthread([this] () {
-            this->sRunnerThreadFunction();
-        });
+                m_Connection->SetRemoteConnectionString(RemoteInviteCode);
+
+                this->sRunnerThreadFunction();
+            });
 
         m_Logger.Log("Info", "Connecting to relay");
 
-        return m_Connection->SetRemoteConnectionString(RemoteInviteCode);
+        return ash::AshResult(true);
     }
 
     ash::AshResult GenesisLive::Reset()
     {
         if (m_RunnerThread)
         {
+            m_RunnerThread->request_stop();
+
             delete m_RunnerThread;
             m_RunnerThread = nullptr;
         }
@@ -110,24 +118,68 @@ namespace genesis::live
         {
             GenesisLiveRelayPacketClientConnectResponse* response = reinterpret_cast<GenesisLiveRelayPacketClientConnectResponse*>(Packet);
 
-            m_AssignedPeerId = response->GetAssignedPeerId();
-            m_AssignedUsername = response->GetAssignedClientName();
+            if (response->GetReason() == GenesisLiveRelayPacketClientConnectResponse::ReasonType::FORCE_ASSIGN_TO_YOU)
+            {
+                m_AssignedPeerId = response->GetAssignedPeerId();
+                m_AssignedUsername = response->GetAssignedClientName();
 
+                m_Logger.Log("Info", "Negotiation successful. My assigned Peer-Id: {}. My assigned Name: {}", m_AssignedPeerId, m_AssignedUsername);
 
-            m_Logger.Log("Info", "Negotiation successful. My assigned Peer-Id: {}. My assigned Name: {}", m_AssignedPeerId, m_AssignedUsername);
+                GenesisLiveRelayPacketPing packet = GenesisLiveRelayPacketPing();
+                packet.SetChallenge(rand());
 
-            GenesisLiveRelayPacketPing packet = GenesisLiveRelayPacketPing();
-            packet.SetChallenge(rand());
+                // Send first ping packet.
+                m_Connection->SendPacket(&packet);
 
-            m_Connection->SendPacket(&packet);
+                m_Connection->SetAuthed(true);
+            }
+            else if (response->GetReason() == GenesisLiveRelayPacketClientConnectResponse::ReasonType::CLIENT_JOINED)
+            {
+                if (m_ConnectedPeers.contains(response->GetAssignedPeerId()) == false)
+                {
+                    m_ConnectedPeers.emplace(response->GetAssignedPeerId(), response->GetAssignedClientName());
 
-            m_Connection->SetAuthed(true);
+                    m_Logger.Log("Info", "Peer {} joined.", response->GetAssignedClientName());
+                }
+                else
+                {
+                    m_Logger.Log("Error", "Received GenesisLiveRelayPacketClientConnectResponse from an already existing peer.");
+                }
+            }
+
             break;
         }
         case GenesisLiveRelayPacketType::PING:
-        case GenesisLiveRelayPacketType::FORWARD_FROM:
-        case GenesisLiveRelayPacketType::CLIENT_LEFT:
+        {
             break;
+        }
+        case GenesisLiveRelayPacketType::CONNECTION_STRING_UPDATE:
+        {
+            // This receives the connection string (aka Invite Code) of the relay server.
+
+            GenesisLiveRelayPacketConnectionStringUpdate* connectionStringUpdate = reinterpret_cast<GenesisLiveRelayPacketConnectionStringUpdate*>(Packet);
+            m_RelayConnectionInviteCode = connectionStringUpdate->GetConnectionString();
+
+            break;
+        }
+        case GenesisLiveRelayPacketType::CLIENT_LEFT:
+        {
+            GenesisLiveRelayPacketConnectionClientLeft* clientLeft = reinterpret_cast<GenesisLiveRelayPacketConnectionClientLeft*>(Packet);
+
+            if (m_ConnectedPeers.contains(clientLeft->GetPeerId()))
+            {
+                m_Logger.Log("Info", "Peer {} disconnected. {}", m_ConnectedPeers.at(clientLeft->GetPeerId()), clientLeft->GetReason());
+
+                m_ConnectedPeers.erase(clientLeft->GetPeerId());
+            }
+            else
+            {
+                m_Logger.Log("Error", "Server sent client left packet with a non existing peer id.");
+            }
+
+            break;
+        }
+        case GenesisLiveRelayPacketType::FORWARD_FROM:
         default:
             break;
         }
@@ -141,6 +193,14 @@ namespace genesis::live
         return m_LastPing;
     }
 
+    ash::AshResult GenesisLive::InviteHintConnection(std::string RemoteConnectionString)
+    {
+        GenesisLiveRelayPacketConnectionStringHintConnect packetHintConnect = GenesisLiveRelayPacketConnectionStringHintConnect();
+        packetHintConnect.SetConnectionString(RemoteConnectionString);
+
+        return m_Connection->SendPacket(&packetHintConnect);
+    }
+
     void GenesisLive::sRunnerThreadFunction()
     {
         TouchPing();
@@ -149,7 +209,7 @@ namespace genesis::live
         {
             auto lastPingDurations = (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()) - m_LastPing);
 
-            if(lastPingDurations > GenesisLiveRelayConfig::smTimeoutDuration && m_Connection->IsAuthed())
+            if (lastPingDurations > GenesisLiveRelayConfig::smTimeoutDuration && m_Connection->IsAuthed())
             {
                 TouchPing();
 
@@ -157,8 +217,6 @@ namespace genesis::live
                 packet.SetChallenge(rand());
 
                 m_Connection->SendPacket(&packet);
-
-                std::cout << "Sending" << std::endl;
             }
 
             std::this_thread::yield();

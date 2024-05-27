@@ -27,7 +27,7 @@ namespace genesis::live
         ash::AshResult AllocateNewAlwaysOpenConnection();
         ash::AshResult MoveAlwaysOpenConnectionToNextStage();
 
-        ash::AshResult RemovePeer(GenesisPeerId PeerId);
+        ash::AshResult RemovePeer(GenesisPeerId PeerId, std::string Reason = "");
         ash::AshResult HandleMessage(GenesisLiveRelayPeerConnection* Connection, GenesisLiveRelayPacketBase* Packet);
         ash::AshResult ForeachPeer(sdForeachPeerDelegate Function, std::vector<GenesisPeerId> AvoidPeers = {});
         ash::AshResult BroadcastPacketsToPeers(GenesisLiveRelayPacketBase* Packet, std::vector<GenesisPeerId> AvoidPeers = {});

@@ -113,6 +113,7 @@ namespace genesis::editor
 
                     static bool sTriggerFlowNewNodePopup = false;
                     static bool sTriggerLiveConnectPopup = false;
+                    static bool sTriggerLiveHintConnectPopup = false;
 
                     if (ImGui::BeginMenuBar())
                     {
@@ -182,10 +183,12 @@ namespace genesis::editor
                         if (ImGui::BeginMenu("Live"))
                         {
                             bool shouldEnableRequiredWaitingOptions = false;
+                            bool shouldEnableRequiredAuthedOptions = false;
 
                             if (m_Live->GetRelayConnection() != nullptr)
                             {
                                 shouldEnableRequiredWaitingOptions = m_Live->GetRelayConnection()->IsWaiting();
+                                shouldEnableRequiredAuthedOptions = m_Live->GetRelayConnection()->IsAuthed();
                             }
 
                             if (ImGui::MenuItem("Connect"))
@@ -196,6 +199,11 @@ namespace genesis::editor
                             if (ImGui::MenuItem("Copy Invite Code", nullptr, false, shouldEnableRequiredWaitingOptions))
                             {
                                 ImGui::SetClipboardText(m_Live->GetRelayConnection()->GetMyConnectionString().data());
+                            }
+
+                            if(ImGui::MenuItem("Invite Other Client", nullptr, false, shouldEnableRequiredAuthedOptions))
+                            {
+                                sTriggerLiveHintConnectPopup = true;
                             }
 
                             ImGui::EndMenu();
@@ -216,6 +224,12 @@ namespace genesis::editor
                     {
                         ImGui::OpenPopup("LiveConnectPopup");
                         sTriggerLiveConnectPopup = false;
+                    }
+
+                    if(sTriggerLiveHintConnectPopup)
+                    {
+                        ImGui::OpenPopup("Invite Other Client");
+                        sTriggerLiveHintConnectPopup = false;
                     }
 
                     if (ImGui::BeginPopup("FlowNewNodePopup", ImGuiWindowFlags_AlwaysAutoResize))
@@ -251,6 +265,47 @@ namespace genesis::editor
                             if (auto res = m_Live->InitializeConnection(inviteCodeInput); res.HasError())
                             {
                                 m_Logger.Log("Error", "Failed to initialize connection. {}", res.GetMessage());
+                            }
+
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGui::SameLine();
+
+                        if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
+                        {
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGui::EndPopup();
+                    }
+                    
+                    if(ImGui::BeginPopupModal("Invite Other Client"))
+                    {
+                        static std::string inviteCodeInput = "";
+
+                        ImGui::Text("Please send him the following invite code.");
+                        
+                        if(ImGui::Button("Copy Invite Code"))
+                        {
+                            ImGui::SetClipboardText(m_Live->GetRelayConnectionInviteCode().data());
+                        }
+
+                        ImGui::Separator();
+
+                        ImGui::Text("Once done, please paste in his invite code and click invite.");
+
+                        widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Invite Code", &inviteCodeInput);
+
+                        if(ImGui::Button("Invite"))
+                        {
+                            if(auto res = m_Live->InviteHintConnection(inviteCodeInput); res.HasError())
+                            {
+                                m_Logger.Log("Error", "Failed to invite (hint) client. {}", res.GetMessage());
+                            }
+                            else
+                            {
+                                m_Logger.Log("Info", "Invited (hinted) client.");
                             }
 
                             ImGui::CloseCurrentPopup();

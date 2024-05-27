@@ -35,17 +35,28 @@ namespace genesis::live
         m_AlwaysOpenConnection->SetGatheredServerReflexiveCandidateCallback(
             [this](GenesisLiveRelayConnection* Connection) -> void
             {
-                m_Logger.Log("Info", "First Invite Code saved into InviteCode.txt");
+                if (m_ConnectedPeers.size() <= 0)
+                {
+                    m_Logger.Log("Info", "First Invite Code saved into InviteCode.txt");
 
-                std::ofstream outputStream = std::ofstream("InviteCode.txt", std::ios::trunc);
-                outputStream << Connection->GetMyConnectionString();
-                outputStream.close();
+                    std::ofstream outputStream = std::ofstream("InviteCode.txt", std::ios::trunc);
+                    outputStream << Connection->GetMyConnectionString();
+                    outputStream.close();
+                }
+
+                if (m_ConnectedPeers.size() > 0)
+                {
+                    GenesisLiveRelayPacketConnectionStringUpdate packetConnectionStringUpdate = GenesisLiveRelayPacketConnectionStringUpdate();
+                    packetConnectionStringUpdate.SetConnectionString(Connection->GetMyConnectionString());
+
+                    this->BroadcastPacketsToPeers(&packetConnectionStringUpdate);
+                }
             });
 
         m_AlwaysOpenConnection->SetConnectedToRemoteCallback(
             [this](GenesisLiveRelayConnection* Connection) -> void
             {
-                m_Logger.Log("Info", "Client connected: {}", Connection->GetConnection()->remoteAddress()->data());
+                m_Logger.Log("Debug", "Incoming connection: {}", Connection->GetConnection()->remoteAddress()->data());
 
                 this->MoveAlwaysOpenConnectionToNextStage();
             });
@@ -99,7 +110,7 @@ namespace genesis::live
         return ash::AshResult(true);
     }
 
-    ash::AshResult GenesisLiveRelay::RemovePeer(GenesisPeerId PeerId)
+    ash::AshResult GenesisLiveRelay::RemovePeer(GenesisPeerId PeerId, std::string Reason)
     {
         if (m_ConnectedPeers.contains(PeerId) == false)
         {
@@ -112,7 +123,13 @@ namespace genesis::live
         delete peer;
 
         // Add announcing to everybody here
-        // @TODO
+
+        GenesisLiveRelayPacketConnectionClientLeft clientLeft = GenesisLiveRelayPacketConnectionClientLeft();
+
+        clientLeft.SetPeerId(PeerId);
+        clientLeft.SetReason(Reason);
+
+        BroadcastPacketsToPeers(&clientLeft);
 
         return ash::AshResult(true);
     }
@@ -123,34 +140,66 @@ namespace genesis::live
         {
         case GenesisLiveRelayPacketType::CLIENT_CONNECT_REQUEST:
         {
-            GenesisLiveRelayPacketClientConnectRequest* connectRequest = reinterpret_cast<GenesisLiveRelayPacketClientConnectRequest*>(Packet);
-            GenesisLiveRelayPacketClientConnectResponse connectResponse = GenesisLiveRelayPacketClientConnectResponse();
+            if (Connection->GetState() == GenesisLiveRelayPeerConnection::StateType::CONNECTING)
+            {
+                GenesisLiveRelayPacketClientConnectRequest* connectRequest = reinterpret_cast<GenesisLiveRelayPacketClientConnectRequest*>(Packet);
+                GenesisLiveRelayPacketClientConnectResponse connectResponse = GenesisLiveRelayPacketClientConnectResponse();
 
-            m_Logger.Log("Info", "Received connect request with username: {}", connectRequest->GetClientName());
+                Connection->SetName(fmt::format("{} #{}", connectRequest->GetClientName(), Connection->GetPeerId()));
+                m_Logger.Log("Info", "Received connect request with username: {}", Connection->GetName());
 
-            connectResponse.SetReason(GenesisLiveRelayPacketClientConnectResponse::ReasonType::FORCE_ASSIGN_TO_YOU);
-            connectResponse.SetAssignedPeerId(Connection->GetPeerId());
-            connectResponse.SetAssignedClientName(fmt::format("{} #{}", connectRequest->GetClientName(), Connection->GetPeerId()));
+                connectResponse.SetReason(GenesisLiveRelayPacketClientConnectResponse::ReasonType::FORCE_ASSIGN_TO_YOU);
+                connectResponse.SetAssignedPeerId(Connection->GetPeerId());
+                connectResponse.SetAssignedClientName(Connection->GetName());
 
-            Connection->SetState(GenesisLiveRelayPeerConnection::StateType::AUTHED);
+                Connection->SetState(GenesisLiveRelayPeerConnection::StateType::AUTHED);
 
-            Connection->SendPacket(&connectResponse);
+                Connection->SendPacket(&connectResponse);
 
-            // Broadcast to others
+                // Notify him of other peers
 
-            connectResponse.SetReason(GenesisLiveRelayPacketClientConnectResponse::ReasonType::CLIENT_JOINED);
+                ForeachPeer(
+                    [this, Connection](GenesisPeerId PeerId, GenesisLiveRelayPeerConnection* Peer) -> void
+                    {
+                        GenesisLiveRelayPacketClientConnectResponse dummyConnectResponse = GenesisLiveRelayPacketClientConnectResponse();
 
-            BroadcastPacketsToPeers(&connectResponse, {Connection->GetPeerId()});
+                        dummyConnectResponse.SetAssignedPeerId(Peer->GetPeerId());
+                        dummyConnectResponse.SetAssignedClientName(Peer->GetName());
+                        dummyConnectResponse.SetReason(GenesisLiveRelayPacketClientConnectResponse::ReasonType::CLIENT_JOINED);
+
+                        Connection->SendPacket(&dummyConnectResponse);
+                    },
+                    {Connection->GetPeerId()});
+
+                // Broadcast to others
+
+                connectResponse.SetReason(GenesisLiveRelayPacketClientConnectResponse::ReasonType::CLIENT_JOINED);
+
+                BroadcastPacketsToPeers(&connectResponse, {Connection->GetPeerId()});
+            }
 
             break;
         }
         case GenesisLiveRelayPacketType::PING:
         {
             Connection->TouchPing();
+            // Resend Ping Packet
+            Connection->SendPacket(Packet);
+
+            break;
+        }
+        case GenesisLiveRelayPacketType::CONNECTION_STRING_HINT_CONNECT:
+        {
+            GenesisLiveRelayPacketConnectionStringHintConnect* hintConnect = reinterpret_cast<GenesisLiveRelayPacketConnectionStringHintConnect*>(Packet);
+            m_AlwaysOpenConnection->SetRemoteConnectionString(hintConnect->GetConnectionString());
+
+            m_Logger.Log("Debug", "Received connection hint: {}", hintConnect->GetConnectionString());
+
             break;
         }
         case GenesisLiveRelayPacketType::FORWARD_TO:
         default:
+            m_Logger.Log("DebugError", "Received unknown packet type from client {}.", Connection->GetPeerId());
             break;
         }
 
@@ -179,6 +228,8 @@ namespace genesis::live
     {
         AllocateNewAlwaysOpenConnection();
 
+        // First Connection Initialization
+
         std::string connectionString = "";
 
         m_Logger.Log("Info", "Please paste in your invite code: ");
@@ -186,25 +237,29 @@ namespace genesis::live
 
         m_AlwaysOpenConnection->SetRemoteConnectionString(connectionString);
 
-        while (1)
+        // Main Loop
+
+        while (true)
         {
-            std::stack<GenesisPeerId> forceRemovalOfPeers = {};
+            std::stack<std::pair<GenesisPeerId, std::string>> forceRemovalOfPeers = {};
 
             for (auto currentIterator : m_ConnectedPeers)
             {
                 if (currentIterator.second->HasTimeouted(m_TimeoutDuration))
                 {
-                    forceRemovalOfPeers.push(currentIterator.first);
+                    forceRemovalOfPeers.push(std::make_pair(currentIterator.first, "Timeout"));
                     m_Logger.Log("Error", "Removing peer {} because of timeout.", currentIterator.first);
                 }
             }
 
             while (forceRemovalOfPeers.empty() == false)
             {
-                GenesisPeerId currentRemovalPeerId = forceRemovalOfPeers.top();
+                GenesisPeerId currentRemovalPeerId = forceRemovalOfPeers.top().first;
+                std::string currentRemovalReason = forceRemovalOfPeers.top().second;
+
                 forceRemovalOfPeers.pop();
 
-                this->RemovePeer(currentRemovalPeerId);
+                this->RemovePeer(currentRemovalPeerId, currentRemovalReason);
             }
 
             std::this_thread::sleep_for(m_TimeoutDuration * 2.5);

@@ -9,6 +9,7 @@
 #include "GenesisLiveShared/GenesisLive.hpp"
 #include "GenesisLiveShared/GenesisLiveRelayConnection.hpp"
 #include <chrono>
+#include <map>
 #include <thread>
 
 namespace genesis::live
@@ -26,6 +27,9 @@ namespace genesis::live
 
         std::chrono::milliseconds TouchPing();
 
+        // Basically hints the relay server to launch a connection to the given remote connection (provided by the RemoteConnectionString)
+        ash::AshResult InviteHintConnection(std::string RemoteConnectionString);
+
         inline bool HasBeenInitialized()
         {
             return m_Connection != nullptr;
@@ -36,9 +40,14 @@ namespace genesis::live
             return m_Connection;
         }
 
-        inline std::string GetConnectionInviteCode()
+        inline std::string GetLocalConnectionInviteCode()
         {
-            return m_ConnectionInviteCode;
+            return m_LocalConnectionInviteCode;
+        }
+
+        inline std::string GetRelayConnectionInviteCode()
+        {
+            return m_RelayConnectionInviteCode;
         }
     private:
         void sRunnerThreadFunction();
@@ -47,13 +56,17 @@ namespace genesis::live
         std::jthread* m_RunnerThread;
 
         GenesisLiveConnection* m_Connection;
-        std::string m_ConnectionInviteCode;
+        std::string m_LocalConnectionInviteCode;
         std::string m_Username;
         
         GenesisPeerId m_AssignedPeerId;
         std::string m_AssignedUsername;
         
         std::chrono::milliseconds m_LastPing;
+
+        std::string m_RelayConnectionInviteCode;
+
+        std::map<GenesisPeerId, std::string> m_ConnectedPeers;
     };
 
 } // namespace genesis::live

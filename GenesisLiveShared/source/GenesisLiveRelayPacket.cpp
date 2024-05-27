@@ -17,6 +17,12 @@ namespace genesis::live
             return new GenesisLiveRelayPacketClientConnectResponse();
         case GenesisLiveRelayPacketType::PING:
             return new GenesisLiveRelayPacketPing();
+        case GenesisLiveRelayPacketType::CONNECTION_STRING_UPDATE:
+            return new GenesisLiveRelayPacketConnectionStringUpdate();
+        case GenesisLiveRelayPacketType::CONNECTION_STRING_HINT_CONNECT:
+            return new GenesisLiveRelayPacketConnectionStringHintConnect();
+        case GenesisLiveRelayPacketType::CLIENT_LEFT:
+            return new GenesisLiveRelayPacketConnectionClientLeft();
         default:
             return nullptr;
         }
@@ -27,12 +33,12 @@ namespace genesis::live
         ash::AshStreamExpandableExportBuffer bufferStream = ash::AshStreamExpandableExportBuffer();
         GenesisLivePacketHeader packetHeader = GenesisLivePacketHeader(Identification, static_cast<unsigned int>(Packet->GetType()));
 
-        if(packetHeader.Export(&bufferStream) == false)
+        if (packetHeader.Export(&bufferStream) == false)
         {
             return ash::AshCustomResult<ash::AshBuffer*>(false, "Failed to export packet header.");
         }
 
-        if(Packet->Export(&bufferStream) == false)
+        if (Packet->Export(&bufferStream) == false)
         {
             return ash::AshCustomResult<ash::AshBuffer*>(false, "Failed to export packet");
         }
@@ -45,24 +51,24 @@ namespace genesis::live
         ash::AshStreamStaticBuffer stream = ash::AshStreamStaticBuffer(Buffer, ash::AshStreamMode::READ);
         GenesisLivePacketHeader packetHeader = GenesisLivePacketHeader(Identification);
 
-        if(packetHeader.Import(&stream) == false)
+        if (packetHeader.Import(&stream) == false)
         {
             return ash::AshCustomResult<GenesisLiveRelayPacketBase*>(false, "Failed to import header.");
         }
 
-        if(packetHeader.IsIdentification(Identification) == false)
+        if (packetHeader.IsIdentification(Identification) == false)
         {
             return ash::AshCustomResult<GenesisLiveRelayPacketBase*>(false, "Packet header identification does not match.");
         }
 
         GenesisLiveRelayPacketBase* packet = sfCreateRelayPacketByType(packetHeader.GetTypeAs<GenesisLiveRelayPacketType>());
 
-        if(packet == nullptr)
+        if (packet == nullptr)
         {
             return ash::AshCustomResult<GenesisLiveRelayPacketBase*>(false, "Failed to create packet by type.");
         }
 
-        if(packet->Import(&stream) == false)
+        if (packet->Import(&stream) == false)
         {
             return ash::AshCustomResult<GenesisLiveRelayPacketBase*>(false, "Failed to deserialize packet.");
         }

@@ -16,9 +16,11 @@ namespace genesis::live
         CLIENT_CONNECT_REQUEST = 1,
         CLIENT_CONNECT_RESPONSE = 2,
         PING = 3,
-        FORWARD_TO = 4,
-        FORWARD_FROM = 5,
-        CLIENT_LEFT = 6
+        CONNECTION_STRING_UPDATE = 4,
+        CONNECTION_STRING_HINT_CONNECT = 5,
+        CLIENT_LEFT = 6,
+        FORWARD_TO = 7,
+        FORWARD_FROM = 8,
     };
 
     class GenesisLiveRelayPacketBase : public ash::AshStreamableObject
@@ -152,9 +154,86 @@ namespace genesis::live
 
         bool Import(ash::AshStream* Stream);
         bool Export(ash::AshStream* Stream);
+
     protected:
         ash::AshCRC32Value m_Challenge;
         ash::AshCRC32Value m_Answer;
+    };
+
+    class GenesisLiveRelayPacketConnectionStringUpdate : public GenesisLiveRelayPacketBase
+    {
+    public:
+        GenesisLiveRelayPacketConnectionStringUpdate();
+        ~GenesisLiveRelayPacketConnectionStringUpdate() = default;
+
+        GenesisLiveRelayPacketType GetType()
+        {
+            return GenesisLiveRelayPacketType::CONNECTION_STRING_UPDATE;
+        }
+
+        inline std::string GetConnectionString()
+        {
+            return m_ConnectionString;
+        }
+
+        inline void SetConnectionString(std::string ConnectionString)
+        {
+            m_ConnectionString = ConnectionString;
+        }
+
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+
+    protected:
+        std::string m_ConnectionString;
+    };
+
+    class GenesisLiveRelayPacketConnectionStringHintConnect : public GenesisLiveRelayPacketConnectionStringUpdate
+    {
+    public:
+        GenesisLiveRelayPacketType GetType()
+        {
+            return GenesisLiveRelayPacketType::CONNECTION_STRING_HINT_CONNECT;
+        }
+    };
+
+    class GenesisLiveRelayPacketConnectionClientLeft : public GenesisLiveRelayPacketBase
+    {
+    public:
+        GenesisLiveRelayPacketConnectionClientLeft();
+        ~GenesisLiveRelayPacketConnectionClientLeft() = default;
+
+        GenesisLiveRelayPacketType GetType()
+        {
+            return GenesisLiveRelayPacketType::CLIENT_LEFT;
+        }
+
+        inline GenesisPeerId GetPeerId()
+        {
+            return m_PeerId;
+        }
+
+        inline void SetPeerId(GenesisPeerId PeerId)
+        {
+            m_PeerId = PeerId;
+        }
+
+        inline std::string GetReason()
+        {
+            return m_Reason;
+        }
+
+        inline void SetReason(std::string Reason)
+        {
+            m_Reason = Reason;
+        }
+
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+
+    protected:
+        GenesisPeerId m_PeerId;
+        std::string m_Reason;
     };
 
     // GenesisLiveRelayPacketUtils
