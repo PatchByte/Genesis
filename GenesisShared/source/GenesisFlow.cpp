@@ -315,7 +315,6 @@ namespace genesis
         if(auto res = reservedBufferGuiPlug.GetBuffer(); res)
         {
             m_ReservedBufferGui.CopyAshBufferFromPointer(res);
-            delete res;
         }
         return Stream->IsOkay();
     }

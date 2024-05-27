@@ -16,7 +16,6 @@ namespace genesis::live
         if (assignedClientNameObject.Import(Stream) == false)
         {
             return false;
-            return false;
         }
 
         m_AssignedClientName = assignedClientNameObject.GetText();

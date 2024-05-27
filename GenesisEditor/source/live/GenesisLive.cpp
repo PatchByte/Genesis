@@ -1,11 +1,15 @@
 #include "GenesisEditor/live/GenesisLive.hpp"
 #include "Ash/AshResult.h"
+#include "Ash/AshStream.h"
 #include "GenesisEditor/GenesisLogBox.hpp"
 #include "GenesisEditor/live/GenesisLiveConnection.hpp"
 #include "GenesisEditor/live/GenesisLivePackets.hpp"
+#include "GenesisLiveShared/GenesisLive.hpp"
 #include "GenesisLiveShared/GenesisLiveRelayConfig.hpp"
 #include "GenesisLiveShared/GenesisLiveRelayConnection.hpp"
 #include "GenesisLiveShared/GenesisLiveRelayPacket.hpp"
+#include "GenesisShared/GenesisBundle.hpp"
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <thread>
@@ -220,11 +224,48 @@ namespace genesis::live
         {
         case GenesisLiveConnectionPacketType::REQUEST_GENESIS_SERIALIZED_FILE:
         {
-            m_Logger.Log("Info", "Received file request");
+            if (this->IsMyselfHost())
+            {
+                GenesisBundle* mainBundle = m_ProvideMainBundleCallback();
+                GenesisLiveConnectionPacketResponseSerializedFile responsePacket = GenesisLiveConnectionPacketResponseSerializedFile();
+                ash::AshStreamExpandableExportBuffer serializedFileResponseStream = ash::AshStreamExpandableExportBuffer();
+                
+                if(mainBundle->Export(&serializedFileResponseStream) == false)
+                {
+                    m_Logger.Log("Error", "Failed to serialize bundle.");
+                }
+                else
+                {
+                    if(auto buffer = serializedFileResponseStream.MakeCopyOfBuffer())
+                    {
+                        responsePacket.SetSerializedFile(*buffer);
+                        BroadcastPacketToPeers(&responsePacket),
+
+                        delete buffer;
+                    }
+                }
+            }
+
             break;
         }
         case GenesisLiveConnectionPacketType::RESPONSE_GENESIS_SERIALIZED_FILE:
         {
+            if (this->GetHostPeerId() == Sender)
+            {
+                GenesisLiveConnectionPacketResponseSerializedFile* serializedFileResponse = reinterpret_cast<GenesisLiveConnectionPacketResponseSerializedFile*>(Packet);
+                GenesisBundle* mainBundle = m_ProvideMainBundleCallback();
+
+                ash::AshStreamStaticBuffer serializedFileResponseStream = ash::AshStreamStaticBuffer(&serializedFileResponse->GetSerializedFile(), ash::AshStreamMode::READ);
+
+                if (mainBundle->Import(&serializedFileResponseStream) == false)
+                {
+                    m_Logger.Log("Error", "Failed to deserialize received bundle.");
+                }
+                else
+                {
+                    m_Logger.Log("Info", "Applied received bundle.");
+                }
+            }
             break;
         }
         default:
@@ -233,12 +274,6 @@ namespace genesis::live
         }
 
         return ash::AshResult(true);
-    }
-
-    std::chrono::milliseconds GenesisLive::TouchPing()
-    {
-        m_LastPing = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-        return m_LastPing;
     }
 
     ash::AshResult GenesisLive::InviteHintConnection(std::string RemoteConnectionString)
@@ -266,6 +301,29 @@ namespace genesis::live
         }
 
         return ash::AshResult(false);
+    }
+
+    std::chrono::milliseconds GenesisLive::TouchPing()
+    {
+        m_LastPing = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+        return m_LastPing;
+    }
+
+    GenesisPeerId GenesisLive::GetHostPeerId()
+    {
+        GenesisPeerId hostPeerId = m_AssignedPeerId;
+
+        for (auto currentIterator : m_ConnectedPeers)
+        {
+            hostPeerId = std::min(hostPeerId, currentIterator.first);
+        }
+
+        return hostPeerId;
+    }
+
+    bool GenesisLive::IsMyselfHost()
+    {
+        return GetHostPeerId() == m_AssignedPeerId;
     }
 
     void GenesisLive::sRunnerThreadFunction()

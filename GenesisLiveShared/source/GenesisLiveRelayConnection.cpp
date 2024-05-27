@@ -200,7 +200,11 @@ namespace genesis::live
             return ash::AshResult(false, "Data channel has not been opened yet");
         }
 
-        return ash::AshResult(m_DataChannel->send(reinterpret_cast<std::byte*>(Buffer->GetBytes()), Buffer->GetSize()));
+        try {
+            return ash::AshResult(m_DataChannel->send(reinterpret_cast<std::byte*>(Buffer->GetBytes()), Buffer->GetSize()));
+        } catch (...) {
+            return ash::AshResult(false, "Failed to send.");
+        }
     }
 
     ash::AshResult GenesisLiveRelayConnection::SendPacket(GenesisLiveRelayPacketBase* Packet)

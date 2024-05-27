@@ -2,14 +2,14 @@
 #define _GENESISLIVE_HPP
 
 #include "Ash/AshResult.h"
-#include "Ash/AshStepTimer.h"
 #include "AshLogger/AshLogger.h"
 #include "GenesisEditor/GenesisLogBox.hpp"
 #include "GenesisEditor/live/GenesisLiveConnection.hpp"
 #include "GenesisEditor/live/GenesisLivePackets.hpp"
 #include "GenesisLiveShared/GenesisLive.hpp"
-#include "GenesisLiveShared/GenesisLiveRelayConnection.hpp"
+#include "GenesisShared/GenesisBundle.hpp"
 #include <chrono>
+#include <functional>
 #include <map>
 #include <thread>
 
@@ -19,6 +19,8 @@ namespace genesis::live
     class GenesisLive
     {
     public:
+        using sdProvideMainBundleCallback = std::function<GenesisBundle*()>;
+
         GenesisLive(utils::GenesisLogBox* LogBox, std::string Username);
         ~GenesisLive();
 
@@ -27,11 +29,13 @@ namespace genesis::live
         ash::AshResult HandleRelayMessage(GenesisLiveConnection* Connection, GenesisLiveRelayPacketBase* Packet);
         ash::AshResult HandleBroadcastMessage(GenesisPeerId Sender, GenesisLiveConnectionPacketBase* Packet);
 
-        std::chrono::milliseconds TouchPing();
-
         // Basically hints the relay server to launch a connection to the given remote connection (provided by the RemoteConnectionString)
         ash::AshResult InviteHintConnection(std::string RemoteConnectionString);
         ash::AshResult BroadcastPacketToPeers(GenesisLiveConnectionPacketBase* Packet);
+
+        std::chrono::milliseconds TouchPing();
+        GenesisPeerId GetHostPeerId();
+        bool IsMyselfHost();
 
         inline bool HasBeenInitialized()
         {
@@ -68,6 +72,13 @@ namespace genesis::live
             return m_ConnectedPeers;
         }
 
+        // Callbacks
+
+        inline void SetProvideMainBundleCallback(sdProvideMainBundleCallback ProvideMainBundleCallback)
+        {
+            m_ProvideMainBundleCallback = std::move(ProvideMainBundleCallback);
+        }
+
     private:
         void sRunnerThreadFunction();
 
@@ -87,6 +98,10 @@ namespace genesis::live
         std::string m_RelayConnectionInviteCode;
 
         std::map<GenesisPeerId, std::string> m_ConnectedPeers;
+
+        // Callbacks
+
+        sdProvideMainBundleCallback m_ProvideMainBundleCallback;
     };
 
 } // namespace genesis::live
