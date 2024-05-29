@@ -6,6 +6,7 @@
 #include "GenesisEditor/GenesisBundleEditor.hpp"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "GenesisEditor/GenesisLogBox.hpp"
+#include "GenesisEditor/live/GenesisLive.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
 #include "imgui.h"
 #include <filesystem>
@@ -29,13 +30,14 @@ namespace genesis::editor
         ash::AshResult LoadGenesisFileFromAndApplyLogs(std::filesystem::path Path);
         ash::AshResult SaveGenesisFileToAndApplyLogs(std::filesystem::path Path);
         ash::AshCustomResult<std::string> ProcessGenesisFileAndApplyLogs(std::filesystem::path Input);
+
     private:
         utils::GenesisLogBox m_LogBox;
         ash::AshLogger m_Logger;
         bool m_ForceDisableRendering;
 
         renderer::GenesisRendererBase* m_Renderer;
-        GenesisBundleEditor m_TestBundleEditor;
+        GenesisBundleEditor m_BundleEditor;
 
         ImFont* m_DefaultFont;
         ImFont* m_KeyboardFont;
@@ -43,6 +45,9 @@ namespace genesis::editor
         // QOL
         std::filesystem::path m_LastProcessedFile;
         std::filesystem::path m_LastSavedAsFile;
+
+        // Live
+        live::GenesisLive* m_Live;
     };
 
 } // namespace genesis::editor

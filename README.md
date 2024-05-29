@@ -15,10 +15,11 @@ This is the command line tool which just runs the whole genesis bundle file and 
 The build setup is very easy.
 
 ### Requirements
-
 - Vulkan SDK / Libraries
   - Windows
     - https://www.lunarg.com/vulkan-sdk/
+    - CLion | CLang | GCC
+      - or anything other that builds with something else than MSVC because it has a compiler bug, we are not sure what it is causing it
   - Linux
     - Update the necessary dev, header and library packages
     - On fedora `sudo dnf install vulkan-loader vulkan-headers vulkan-loader-devel`

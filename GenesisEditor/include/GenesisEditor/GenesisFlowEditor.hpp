@@ -1,9 +1,12 @@
 #ifndef _GENESISFLOWEDITOR_HPP
 #define _GENESISFLOWEDITOR_HPP
 
+#include "Ash/AshResult.h"
 #include "AshLogger/AshLogger.h"
 #include "GenesisEditor/GenesisLogBox.hpp"
 #include "GenesisEditor/GenesisNodeBuilder.hpp"
+#include "GenesisEditor/live/GenesisLive.hpp"
+#include "GenesisEditor/live/GenesisLivePackets.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
 
@@ -11,6 +14,7 @@
 #include "imgui_canvas.h"
 #include "imgui_node_editor.h"
 #include <map>
+#include <sys/types.h>
 #include <utility>
 
 namespace genesis::editor
@@ -37,11 +41,52 @@ namespace genesis::editor
 
         GenesisOperationState* CreateOperationState(common::GenesisLoadedFile* LoadedFile) override;
 
+        // Override
+
         void Reset() override;
         bool Import(ash::AshStream* Stream) override;
         bool Export(ash::AshStream* Stream) override;
 
+        std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> CreateOperationInFlowFromType(operations::GenesisOperationType OperationType);
+        std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> CreateOperationInFlowFromType(operations::GenesisOperationType OperationType, bool BroadcastLiveAction);
+        std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> CreateOperationInFlowFromTypeWithPosition(operations::GenesisOperationType OperationType, ImVec2 Position, bool BroadcastLiveAction);
+        bool RemoveOperationFromFlow(operations::GenesisOperationId OperationId);
+        bool RemoveOperationFromFlow(operations::GenesisOperationId OperationId, bool BroadcastLiveAction);
+
+        // Utilities
+
         void DoAction(ActionType Action, void* Reserved);
+        void CreateLink(uintptr_t FromLinkId, uintptr_t ToLinkId, bool BroadcastLiveAction = true);
+        void RemoveLink(uintptr_t LinkId, bool BroadcastLiveAction = true);
+        void SetNodePosition(uintptr_t NodeId, ImVec2 Position, bool BroadcastLiveAction = true);
+
+        // Live
+
+        ash::AshResult HandleLiveFlowAction(live::GenesisLiveConnectionPacketFlowAction* Action);
+        inline ash::AshResult SendLiveFlowAction(live::GenesisLiveConnectionPacketFlowAction Action) { return SendLiveFlowAction(&Action); }
+        ash::AshResult SendLiveFlowAction(live::GenesisLiveConnectionPacketFlowAction* Action);
+
+        // Getter and Setter
+
+        inline live::GenesisLive* GetLive()
+        {
+            return m_Live;
+        }
+
+        inline void SetLive(live::GenesisLive* Live)
+        {
+            m_Live = Live;
+        }
+
+        inline std::string GetLiveFlowName()
+        {
+            return m_LiveFlowName;
+        }
+
+        inline void SetLiveFlowName(std::string LiveFlowName)
+        {
+            m_LiveFlowName = LiveFlowName;
+        }
 
     private:
         ash::AshLogger m_Logger;
@@ -49,11 +94,14 @@ namespace genesis::editor
 
         ax::NodeEditor::EditorContext* m_NodeEditorContext;
 
-        std::map<uintptr_t, std::pair<float, float>> m_NodeEditorSavedStates;
+        std::map<uintptr_t, std::pair<float, float>> m_UninitializedSavedPositionsOfNodes;
 
         bool m_TriggerCheck;
         bool m_TriggerActionFocusFirstNode;
         bool m_TriggerRestoreStateOfNodes;
+
+        live::GenesisLive* m_Live;
+        std::string m_LiveFlowName;
     };
 
 } // namespace genesis::editor

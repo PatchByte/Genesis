@@ -1,9 +1,12 @@
 #include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "Ash/AshBuffer.h"
+#include "Ash/AshResult.h"
 #include "Ash/AshStream.h"
 #include "AshObjects/AshString.h"
 #include "GenesisEditor/GenesisNodeBuilder.hpp"
 #include "GenesisEditor/GenesisOperationsEditor.hpp"
+#include "GenesisEditor/live/GenesisLiveConnection.hpp"
+#include "GenesisEditor/live/GenesisLivePackets.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "GenesisShared/GenesisOperations.hpp"
 #include "GenesisShared/GenesisPinTracker.hpp"
@@ -20,11 +23,12 @@ namespace genesis::editor
 {
 
     GenesisFlowEditor::GenesisFlowEditor(utils::GenesisLogBox* LogBox)
-        : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(LogBox), m_TriggerCheck(false), m_TriggerActionFocusFirstNode(false), m_TriggerRestoreStateOfNodes(false)
+        : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(LogBox), m_NodeEditorContext(nullptr), m_TriggerCheck(false), m_TriggerActionFocusFirstNode(false), m_TriggerRestoreStateOfNodes(false),
+          m_Live(nullptr), m_LiveFlowName()
     {
-        AddOperationToFlow(new operations::GenesisFindPatternOperation("E8 ? ? ? ? 90"));
-        AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 6));
-        AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 2));
+        CreateOperationInFlowFromType(operations::GenesisOperationType::FIND_PATTERN);
+        // AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 6));
+        // AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 2));
 
         if (m_LogBox)
         {
@@ -43,6 +47,21 @@ namespace genesis::editor
 
         nodeEditorConfig.EnableSmoothZoom = false;
         nodeEditorConfig.UserPointer = this;
+        nodeEditorConfig.SaveNodeSettings = [](ed::NodeId nodeId, const char* data, size_t size, ed::SaveReasonFlags reason, void* userPointer) -> bool
+        {
+            GenesisFlowEditor* flowEditor = reinterpret_cast<GenesisFlowEditor*>(userPointer);
+
+            if (static_cast<unsigned int>(reason) & static_cast<unsigned int>(ed::SaveReasonFlags::Position))
+            {
+                ImVec2 position = ed::GetNodePosition(nodeId);
+
+                live::GenesisLiveConnectionPacketFlowAction packetFlowAction = live::GenesisLiveConnectionPacketFlowAction();
+                packetFlowAction.SetAsActionSetPositionNode({.m_NodeId = nodeId.Get(), .m_X = position.x, .m_Y = position.y});
+                flowEditor->SendLiveFlowAction(packetFlowAction);
+            }
+
+            return false;
+        };
 
         m_NodeEditorContext = ed::CreateEditor(&nodeEditorConfig);
     }
@@ -121,28 +140,10 @@ namespace genesis::editor
                 ed::PinId startPinId, endPinId;
                 if (ed::QueryNewLink(&startPinId, &endPinId))
                 {
-                    utils::GenesisPinValue startPinParsed = startPinId.Get();
-                    utils::GenesisPinValue endPinParsed = endPinId.Get();
-
-                    if (startPinParsed.m_NodePinType == utils::GenesisPinType::INPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT)
+                    if (ed::AcceptNewItem())
                     {
-                        ed::PinId carry = startPinId;
-                        startPinId = endPinId;
-                        endPinId = carry;
-
-                        startPinParsed = startPinId.Get();
-                        endPinParsed = endPinId.Get();
-                    }
-
-                    if (startPinId && endPinId && startPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::INPUT)
-                    {
-                        if (ed::AcceptNewItem())
-                        {
-                            ax::NodeEditor::LinkId linkId = ++m_CounterLinks;
-
-                            m_Links.emplace(linkId, std::make_pair(startPinId.Get(), endPinId.Get()));
-                            m_TriggerCheck = true;
-                        }
+                        CreateLink(startPinId.Get(), endPinId.Get());
+                        m_TriggerCheck = true;
                     }
                 }
             }
@@ -156,15 +157,7 @@ namespace genesis::editor
                 {
                     if (ed::AcceptDeletedItem())
                     {
-                        if (m_Links.contains(deletedLinkId.Get()))
-                        {
-                            m_Links.erase(deletedLinkId.Get());
-                        }
-                        else
-                        {
-                            printf("Destroying failed: %li\n", deletedLinkId.Get());
-                        }
-
+                        RemoveLink(deletedLinkId.Get());
                         m_TriggerCheck = true;
                     }
                 }
@@ -175,21 +168,21 @@ namespace genesis::editor
 
                 bool actionDelete = ImGui::IsKeyPressed(ImGuiKey_Delete);
 
-                if (auto numSelectedLinks = ed::GetSelectedLinks(nullptr, 0); numSelectedLinks > 0)
-                {
-                    ed::LinkId* selectedLinks = new ed::LinkId[numSelectedLinks];
-                    ed::GetSelectedLinks(selectedLinks, numSelectedLinks);
+                // if (auto numSelectedLinks = ed::GetSelectedLinks(nullptr, 0); numSelectedLinks > 0)
+                //{
+                //     ed::LinkId* selectedLinks = new ed::LinkId[numSelectedLinks];
+                //     ed::GetSelectedLinks(selectedLinks, numSelectedLinks);
 
-                    for (int currentSelectedLinkIndex = 0; currentSelectedLinkIndex < numSelectedLinks; currentSelectedLinkIndex++)
-                    {
-                        ed::LinkId selectedLink = selectedLinks[currentSelectedLinkIndex];
+                //    for (int currentSelectedLinkIndex = 0; currentSelectedLinkIndex < numSelectedLinks; currentSelectedLinkIndex++)
+                //    {
+                //        ed::LinkId selectedLink = selectedLinks[currentSelectedLinkIndex];
 
-                        if (actionDelete)
-                        {
-                            // m_Links.erase(selectedLink.Get());
-                        }
-                    }
-                }
+                //        if (actionDelete)
+                //        {
+                //            // m_Links.erase(selectedLink.Get());
+                //        }
+                //    }
+                //}
 
                 if (auto numSelectedNodes = ed::GetSelectedNodes(nullptr, 0); numSelectedNodes > 0)
                 {
@@ -249,8 +242,7 @@ namespace genesis::editor
                 {
                     if (ImGui::MenuItem(currentIterator.first.data()))
                     {
-                        operations::GenesisOperationId newOperationId = AddOperationToFlow(operations::GenesisOperationUtils::sfCreateOperationByType(currentIterator.second));
-                        ed::SetNodePosition(newOperationId, ed::ScreenToCanvas(ImGui::GetMousePos()));
+                        CreateOperationInFlowFromTypeWithPosition(currentIterator.second, ed::ScreenToCanvas(ImGui::GetMousePos()), true);
                     }
                 }
 
@@ -263,7 +255,7 @@ namespace genesis::editor
             {
                 m_TriggerRestoreStateOfNodes = false;
 
-                for (auto currentIterator : m_NodeEditorSavedStates)
+                for (auto currentIterator : m_UninitializedSavedPositionsOfNodes)
                 {
                     ed::RestoreNodeState(currentIterator.first);
                     ed::SetNodeZPosition(currentIterator.first, 2.f);
@@ -334,7 +326,7 @@ namespace genesis::editor
 
     void GenesisFlowEditor::Reset()
     {
-        m_NodeEditorSavedStates.clear();
+        m_UninitializedSavedPositionsOfNodes.clear();
 
         GenesisFlow::Reset();
     }
@@ -356,7 +348,7 @@ namespace genesis::editor
                 uintptr_t currentNodeStateId = reservedBufferGuiStream.Read<uintptr_t>();
                 reservedBufferGuiStream.ReadRawIntoPointer(&pos, sizeof(pos));
 
-                m_NodeEditorSavedStates.emplace(currentNodeStateId, std::make_pair(pos.x, pos.y));
+                m_UninitializedSavedPositionsOfNodes.emplace(currentNodeStateId, std::make_pair(pos.x, pos.y));
             }
         }
 
@@ -372,7 +364,7 @@ namespace genesis::editor
 
             if (m_TriggerRestoreStateOfNodes == false)
             {
-                reservedBufferGuiStream.Write<size_t>(m_Operations.size());
+                reservedBufferGuiStream.Write<ash::AshSize>(m_Operations.size());
 
                 for (auto currentIterator : m_Operations)
                 {
@@ -387,9 +379,9 @@ namespace genesis::editor
             }
             else
             {
-                reservedBufferGuiStream.Write<size_t>(m_NodeEditorSavedStates.size());
+                reservedBufferGuiStream.Write<ash::AshSize>(m_UninitializedSavedPositionsOfNodes.size());
 
-                for (auto currentIterator : m_NodeEditorSavedStates)
+                for (auto currentIterator : m_UninitializedSavedPositionsOfNodes)
                 {
                     ImVec2 pos = {currentIterator.second.first, currentIterator.second.second};
 
@@ -408,15 +400,209 @@ namespace genesis::editor
         return GenesisFlow::Export(Stream);
     }
 
+    std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> GenesisFlowEditor::CreateOperationInFlowFromType(operations::GenesisOperationType OperationType)
+    {
+        return CreateOperationInFlowFromType(OperationType, true);
+    }
+
+    std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> GenesisFlowEditor::CreateOperationInFlowFromType(operations::GenesisOperationType OperationType,
+                                                                                                                                  bool BroadcastLiveAction)
+    {
+        auto res = GenesisFlow::CreateOperationInFlowFromType(OperationType);
+
+        if (res.first != nullptr && BroadcastLiveAction)
+        {
+            live::GenesisLiveConnectionPacketFlowAction packetFlowAction = live::GenesisLiveConnectionPacketFlowAction();
+            packetFlowAction.SetAsActionNodeCreated({.m_OperationType = OperationType, .m_ExpectedNodeIdResult = res.second, .m_X = 0.f, .m_Y = 0.f});
+            SendLiveFlowAction(packetFlowAction);
+        }
+
+        return std::move(res);
+    }
+
+    std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> GenesisFlowEditor::CreateOperationInFlowFromTypeWithPosition(operations::GenesisOperationType OperationType,
+                                                                                                                                              ImVec2 Position, bool BroadcastLiveAction)
+    {
+        auto res = GenesisFlow::CreateOperationInFlowFromType(OperationType);
+
+        if (res.first != nullptr && BroadcastLiveAction)
+        {
+            live::GenesisLiveConnectionPacketFlowAction packetFlowAction = live::GenesisLiveConnectionPacketFlowAction();
+            packetFlowAction.SetAsActionNodeCreated({.m_OperationType = OperationType, .m_ExpectedNodeIdResult = res.second, .m_X = Position.x, .m_Y = Position.y});
+            SendLiveFlowAction(packetFlowAction);
+        }
+
+        ed::EditorContext* contextBefore = ed::GetCurrentEditor();
+        ed::SetCurrentEditor(m_NodeEditorContext);
+        ed::SetNodePosition(res.second, Position);
+        ed::SetCurrentEditor(contextBefore);
+
+        return std::move(res);
+    }
+
+    bool GenesisFlowEditor::RemoveOperationFromFlow(operations::GenesisOperationId OperationId)
+    {
+        return this->RemoveOperationFromFlow(OperationId, true);
+    }
+
+    bool GenesisFlowEditor::RemoveOperationFromFlow(operations::GenesisOperationId OperationId, bool BroadcastLiveAction)
+    {
+        if (GenesisFlow::RemoveOperationFromFlow(OperationId))
+        {
+            if (BroadcastLiveAction)
+            {
+                live::GenesisLiveConnectionPacketFlowAction packetFlowAction = live::GenesisLiveConnectionPacketFlowAction();
+                packetFlowAction.SetAsActionNodeDeleted(live::GenesisLiveConnectionPacketFlowAction::ActionNodeDeleted{.m_NodeId = OperationId});
+                SendLiveFlowAction(packetFlowAction);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     void GenesisFlowEditor::DoAction(ActionType Action, void* Reserved)
     {
         switch (Action)
         {
-
         case ActionType::NAVIGATE_TO_CONTENT:
             m_TriggerActionFocusFirstNode = true;
             break;
         }
+    }
+
+    void GenesisFlowEditor::CreateLink(uintptr_t FromLinkId, uintptr_t ToLinkId, bool BroadcastLiveAction)
+    {
+        utils::GenesisPinValue startPinParsed = FromLinkId;
+        utils::GenesisPinValue endPinParsed = ToLinkId;
+
+        if (startPinParsed.m_NodePinType == utils::GenesisPinType::INPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT)
+        {
+            uintptr_t carry = FromLinkId;
+            FromLinkId = ToLinkId;
+            ToLinkId = carry;
+
+            startPinParsed = FromLinkId;
+            endPinParsed = ToLinkId;
+        }
+
+        if (FromLinkId && ToLinkId && startPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::INPUT)
+        {
+            ax::NodeEditor::LinkId linkId = ++m_CounterLinks;
+
+            m_Links.emplace(linkId, std::make_pair(FromLinkId, ToLinkId));
+        }
+
+        if (BroadcastLiveAction)
+        {
+            live::GenesisLiveConnectionPacketFlowAction packetFlowAction = live::GenesisLiveConnectionPacketFlowAction();
+            packetFlowAction.SetAsActionLinkCreated(live::GenesisLiveConnectionPacketFlowAction::ActionLinkCreated{.m_FromLinkId = FromLinkId, .m_ToLinkId = ToLinkId});
+            SendLiveFlowAction(packetFlowAction);
+        }
+    }
+
+    void GenesisFlowEditor::RemoveLink(uintptr_t LinkId, bool BroadcastLiveAction)
+    {
+        if (m_Links.contains(LinkId))
+        {
+            m_Links.erase(LinkId);
+
+            if (BroadcastLiveAction)
+            {
+                live::GenesisLiveConnectionPacketFlowAction packetFlowAction = live::GenesisLiveConnectionPacketFlowAction();
+                packetFlowAction.SetAsActionLinkDeleted(live::GenesisLiveConnectionPacketFlowAction::ActionLinkDeleted{.m_LinkId = LinkId});
+                SendLiveFlowAction(packetFlowAction);
+            }
+        }
+        else
+        {
+            m_Logger.Log("Error", "Failed to delete link id {} because it is not existing.", LinkId);
+        }
+    }
+
+    void GenesisFlowEditor::SetNodePosition(uintptr_t NodeId, ImVec2 Position, bool BroadcastLiveAction)
+    {
+        if (m_Operations.contains(NodeId))
+        {
+            if (m_TriggerRestoreStateOfNodes)
+            {
+                if (m_UninitializedSavedPositionsOfNodes.contains(NodeId))
+                {
+                    m_UninitializedSavedPositionsOfNodes.erase(NodeId);
+                }
+
+                m_UninitializedSavedPositionsOfNodes.emplace(NodeId, std::make_pair(Position.x, Position.y));
+            }
+            else
+            {
+                ed::EditorContext* contextBefore = ed::GetCurrentEditor();
+                ed::SetCurrentEditor(m_NodeEditorContext);
+                ed::SetNodePosition(NodeId, Position);
+                ed::SetCurrentEditor(contextBefore);
+            }
+        }
+
+        if (BroadcastLiveAction)
+        {
+            live::GenesisLiveConnectionPacketFlowAction packetFlowAction = live::GenesisLiveConnectionPacketFlowAction();
+            packetFlowAction.SetAsActionSetPositionNode({.m_NodeId = NodeId, .m_X = Position.x, .m_Y = Position.y});
+            SendLiveFlowAction(packetFlowAction);
+        }
+    }
+
+    ash::AshResult GenesisFlowEditor::HandleLiveFlowAction(live::GenesisLiveConnectionPacketFlowAction* Action)
+    {
+        switch (Action->GetActionType())
+        {
+        case live::GenesisLiveConnectionPacketFlowAction::ActionType::LINK_CREATED:
+        {
+            CreateLink(Action->GetAsActionLinkCreated().m_FromLinkId, Action->GetAsActionLinkCreated().m_ToLinkId, false);
+            break;
+        }
+        case live::GenesisLiveConnectionPacketFlowAction::ActionType::LINK_DELETED:
+        {
+            RemoveLink(Action->GetAsActionLinkDeleted().m_LinkId, false);
+            break;
+        }
+        case live::GenesisLiveConnectionPacketFlowAction::ActionType::SET_POSITION_NODE:
+        {
+            SetNodePosition(Action->GetAsActionSetPositionNode().m_NodeId, {Action->GetAsActionSetPositionNode().m_X, Action->GetAsActionSetPositionNode().m_Y}, false);
+            break;
+        }
+        case live::GenesisLiveConnectionPacketFlowAction::ActionType::NODE_CREATED:
+        {
+            auto res = CreateOperationInFlowFromTypeWithPosition(Action->GetAsActionNodeCreated().m_OperationType, {Action->GetAsActionNodeCreated().m_X, Action->GetAsActionNodeCreated().m_Y}, false);
+
+            if(res.second != Action->GetAsActionNodeCreated().m_ExpectedNodeIdResult)
+            {
+                return ash::AshResult(false, "Unexpected node id.");
+            }
+
+            break;
+        }
+        case live::GenesisLiveConnectionPacketFlowAction::ActionType::NODE_DELETED:
+        {
+            RemoveOperationFromFlow(Action->GetAsActionNodeDeleted().m_NodeId, false);
+            break;
+        }
+        default:
+            return ash::AshResult(false, "Action is not implemented.");
+        }
+
+        return ash::AshResult(true);
+    }
+
+    ash::AshResult GenesisFlowEditor::SendLiveFlowAction(live::GenesisLiveConnectionPacketFlowAction* Action)
+    {
+        if (m_Live != nullptr && m_LiveFlowName.empty() == false)
+        {
+            Action->SetFlowTargetName(m_LiveFlowName);
+            return m_Live->BroadcastPacketToPeers(Action);
+        }
+
+        // Ignore if live is not present.
+        return ash::AshResult(m_Live == nullptr, m_LiveFlowName.empty() ? "Live Flow Name not assigned" : "");
     }
 
 } // namespace genesis::editor

@@ -25,7 +25,9 @@ namespace genesis
             return ash::AshResult(false, "Already containing a flow with this name");
         }
 
-        m_Flows.emplace(FlowName, m_FlowFactory(m_ReservedFactoryValue));
+        GenesisFlow* flow = m_FlowFactory(m_ReservedFactoryValue);
+        m_Flows.emplace(FlowName, flow);
+
         return ash::AshResult(true);
     }
 
@@ -50,9 +52,9 @@ namespace genesis
 
     ash::AshResult GenesisBundle::ProcessBundle(output::GenesisOutputData* OutputData, common::GenesisLoadedFile* LoadedFile)
     {
-        for(auto currentIterator : m_Flows)
+        for (auto currentIterator : m_Flows)
         {
-            if(auto res = currentIterator.second->ProcessFlow(OutputData, LoadedFile); res.HasError())
+            if (auto res = currentIterator.second->ProcessFlow(OutputData, LoadedFile); res.HasError())
             {
                 return ash::AshResult(false, fmt::format("Flow {} failed. {}", currentIterator.first, res.GetMessage()));
             }
@@ -75,7 +77,7 @@ namespace genesis
     {
         this->Reset();
 
-        size_t flowsSize = Stream->Read<size_t>();
+        size_t flowsSize = Stream->Read<ash::AshSize>();
 
         for (size_t currentIndex = 0; currentIndex < flowsSize; currentIndex++)
         {
@@ -102,7 +104,7 @@ namespace genesis
 
     bool GenesisBundle::Export(ash::AshStream* Stream)
     {
-        Stream->Write<size_t>(m_Flows.size());
+        Stream->Write<ash::AshSize>(m_Flows.size());
 
         for (auto currentIterator : m_Flows)
         {
