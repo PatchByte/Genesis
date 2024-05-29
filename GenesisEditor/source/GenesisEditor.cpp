@@ -2,10 +2,12 @@
 #include "Ash/AshBuffer.h"
 #include "Ash/AshResult.h"
 #include "Ash/AshStream.h"
+#include "GenesisEditor/GenesisBundleEditor.hpp"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "GenesisEditor/GenesisUtils.hpp"
 #include "GenesisEditor/GenesisWidgets.hpp"
 #include "GenesisEditor/live/GenesisLive.hpp"
+#include "GenesisEditor/live/GenesisLivePackets.hpp"
 #include "GenesisOutput/GenesisOutputBuilder.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
@@ -25,7 +27,7 @@ namespace ed = ax::NodeEditor;
 namespace genesis::editor
 {
 
-    GenesisEditor::GenesisEditor() : m_LogBox(), m_Logger("GenesisEditor", {}), m_TestBundleEditor(&m_LogBox), m_ForceDisableRendering(false), m_Live(nullptr)
+    GenesisEditor::GenesisEditor() : m_LogBox(), m_Logger("GenesisEditor", {}), m_BundleEditor(&m_LogBox), m_ForceDisableRendering(false), m_Live(nullptr)
     {
         m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Editor");
         m_Logger.AddLoggerPassage(m_LogBox.CreatePassage());
@@ -86,14 +88,32 @@ namespace genesis::editor
 
         ImGui::GetIO().FontDefault = m_DefaultFont;
 
-        // Initialization
+        // Editor Initialization
 
-        m_TestBundleEditor.Initialize(m_KeyboardFont);
+        m_BundleEditor.Initialize(m_KeyboardFont);
+        m_BundleEditor.SetLiveInstance(m_Live);
 
         if (ArgCount > 1)
         {
             LoadGenesisFileFromAndApplyLogs(ArgArray[1]);
         }
+
+        // Live Initialization
+
+        m_Live->SetProvideMainBundleCallback([this]() -> GenesisBundle* { return &m_BundleEditor; });
+        m_Live->SetBundleActionCallback([this](live::GenesisLiveConnectionPacketBundleAction* Action) -> void { this->m_BundleEditor.HandleLiveAction(Action); });
+        m_Live->SetFlowActionCallback(
+            [this](live::GenesisLiveConnectionPacketFlowAction* Action) -> void
+            {
+                if (this->m_BundleEditor.HasFlow(Action->GetFlowTargetName()))
+                {
+                    dynamic_cast<GenesisFlowEditor*>(this->m_BundleEditor.GetFlow(Action->GetFlowTargetName()))->HandleLiveFlowAction(Action);
+                }
+                else
+                {
+                    m_Logger.Log("Error", "Received flow action but with an unknown flow name.");
+                }
+            });
 
         // Stylization
 
@@ -156,7 +176,7 @@ namespace genesis::editor
 
                         if (ImGui::BeginMenu("Flow"))
                         {
-                            bool hasFlowSelected = m_TestBundleEditor.HasFlowSelected();
+                            bool hasFlowSelected = m_BundleEditor.HasFlowSelected();
 
                             if (ImGui::MenuItem("New"))
                             {
@@ -165,7 +185,7 @@ namespace genesis::editor
 
                             if (ImGui::MenuItem("Navigate to Content", "PageDown", false, hasFlowSelected))
                             {
-                                m_TestBundleEditor.GetSelectedFlow()->DoAction(GenesisFlowEditor::ActionType::NAVIGATE_TO_CONTENT, nullptr);
+                                m_BundleEditor.GetSelectedFlow()->DoAction(GenesisFlowEditor::ActionType::NAVIGATE_TO_CONTENT, nullptr);
                             }
 
                             ImGui::EndMenu();
@@ -252,7 +272,9 @@ namespace genesis::editor
                         ImGui::SameLine();
                         if (ImGui::Button("Ok") || ImGui::IsKeyPressed(ImGuiKey_Enter))
                         {
-                            m_TestBundleEditor.CreateFlow(sNameBuffer);
+                            m_BundleEditor.CreateFlow(sNameBuffer);
+                            m_BundleEditor.SendLiveAction(live::GenesisLiveConnectionPacketBundleAction(live::GenesisLiveConnectionPacketBundleAction::ActionType::CREATE_FLOW, sNameBuffer, ""));
+
                             ImGui::CloseCurrentPopup();
                         }
 
@@ -373,7 +395,7 @@ namespace genesis::editor
                         ImGui::EndPopup();
                     }
 
-                    m_TestBundleEditor.Render();
+                    m_BundleEditor.Render();
                 }
                 ImGui::End();
             }
@@ -451,7 +473,7 @@ namespace genesis::editor
             std::this_thread::yield();
         }
 
-        m_TestBundleEditor.Shutdown();
+        m_BundleEditor.Shutdown();
 
         m_Renderer->Shutdown();
     }
@@ -471,7 +493,7 @@ namespace genesis::editor
             {
                 ash::AshStreamStaticBuffer fileBufferStream = ash::AshStreamStaticBuffer(&fileBuffer, ash::AshStreamMode::READ);
 
-                if (m_TestBundleEditor.Import(&fileBufferStream))
+                if (m_BundleEditor.Import(&fileBufferStream))
                 {
                     m_ForceDisableRendering = false;
                     return ash::AshResult(true, fmt::format("Loaded file {}.", filePathName));
@@ -502,7 +524,7 @@ namespace genesis::editor
         ash::AshStreamExpandableExportBuffer expandableStream = ash::AshStreamExpandableExportBuffer();
         std::string filePathName = Path.string();
 
-        if (m_TestBundleEditor.Export(&expandableStream))
+        if (m_BundleEditor.Export(&expandableStream))
         {
             if (auto exportBuffer = expandableStream.MakeCopyOfBuffer())
             {
@@ -541,7 +563,7 @@ namespace genesis::editor
 
             output::GenesisOutputData* outputData = new output::GenesisOutputData();
 
-            if (auto res = m_TestBundleEditor.ProcessBundle(outputData, loadedFile); res.HasError())
+            if (auto res = m_BundleEditor.ProcessBundle(outputData, loadedFile); res.HasError())
             {
                 return ash::AshCustomResult<std::string>(false, fmt::format("Failed processing bundle. {}", res.GetMessage()));
             }

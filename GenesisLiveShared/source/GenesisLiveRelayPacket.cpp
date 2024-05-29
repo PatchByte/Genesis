@@ -15,6 +15,8 @@ namespace genesis::live
             return new GenesisLiveRelayPacketClientConnectRequest();
         case GenesisLiveRelayPacketType::CLIENT_CONNECT_RESPONSE:
             return new GenesisLiveRelayPacketClientConnectResponse();
+        case GenesisLiveRelayPacketType::CLIENT_CONNECT_DONE:
+            return new GenesisLiveRelayPacketConnectDone();
         case GenesisLiveRelayPacketType::PING:
             return new GenesisLiveRelayPacketPing();
         case GenesisLiveRelayPacketType::CONNECTION_STRING_UPDATE:

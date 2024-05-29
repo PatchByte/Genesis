@@ -33,7 +33,7 @@ namespace genesis
         ash::AshResult ProcessFlow(output::GenesisOutputData* OutputData, common::GenesisLoadedFile* LoadedFile);
 
         operations::GenesisOperationId FindFreeOperationId();
-        operations::GenesisOperationId AddOperationToFlow(operations::GenesisBaseOperation* Operation);
+        std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> CreateOperationInFlowFromType(operations::GenesisOperationType OperationType);
         bool RemoveOperationFromFlow(operations::GenesisOperationId OperationId);
 
         sdOperationIdsVector CollectAllNodeLinkIdsToOtherNodesFromNode(operations::GenesisOperationId OperationId);

@@ -180,6 +180,11 @@ namespace genesis::live
                 connectResponse.SetReason(GenesisLiveRelayPacketClientConnectResponse::ReasonType::CLIENT_JOINED);
 
                 BroadcastPacketsToPeers(&connectResponse, {Connection->GetPeerId()});
+
+                // Inform client connection connect is done
+
+                GenesisLiveRelayPacketConnectDone packetConnectDone = GenesisLiveRelayPacketConnectDone();
+                Connection->SendPacket(&packetConnectDone);
             }
 
             break;

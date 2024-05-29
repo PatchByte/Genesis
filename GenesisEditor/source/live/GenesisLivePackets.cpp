@@ -12,6 +12,10 @@ namespace genesis::live
             return new GenesisLiveConnectionPacketRequestSerializedFile();
         case GenesisLiveConnectionPacketType::RESPONSE_GENESIS_SERIALIZED_FILE:
             return new GenesisLiveConnectionPacketResponseSerializedFile();
+        case GenesisLiveConnectionPacketType::BUNDLE_ACTION:
+            return new GenesisLiveConnectionPacketBundleAction();
+        case GenesisLiveConnectionPacketType::FLOW_ACTION:
+            return new GenesisLiveConnectionPacketFlowAction();
         default:
             return nullptr;
         }

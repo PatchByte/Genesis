@@ -37,7 +37,7 @@ namespace genesis::editor
         bool m_ForceDisableRendering;
 
         renderer::GenesisRendererBase* m_Renderer;
-        GenesisBundleEditor m_TestBundleEditor;
+        GenesisBundleEditor m_BundleEditor;
 
         ImFont* m_DefaultFont;
         ImFont* m_KeyboardFont;

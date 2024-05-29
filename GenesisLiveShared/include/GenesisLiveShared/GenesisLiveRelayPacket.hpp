@@ -16,11 +16,12 @@ namespace genesis::live
         INVALID = 0,
         CLIENT_CONNECT_REQUEST = 1,
         CLIENT_CONNECT_RESPONSE = 2,
-        PING = 3,
-        CONNECTION_STRING_UPDATE = 4,
-        CONNECTION_STRING_HINT_CONNECT = 5,
-        CLIENT_LEFT = 6,
-        BROADCAST = 7,
+        CLIENT_CONNECT_DONE = 3,
+        PING = 4,
+        CONNECTION_STRING_UPDATE = 5,
+        CONNECTION_STRING_HINT_CONNECT = 6,
+        CLIENT_LEFT = 7,
+        BROADCAST = 8,
     };
 
     class GenesisLiveRelayPacketBase : public ash::AshStreamableObject
@@ -147,6 +148,25 @@ namespace genesis::live
         GenesisPeerId m_AssignedPeerId;
         ReasonType m_Reason;
         bool m_IsFirstToConnect;
+    };
+
+    class GenesisLiveRelayPacketConnectDone : public GenesisLiveRelayPacketBase
+    {
+    public:
+        GenesisLiveRelayPacketType GetType()
+        {
+            return GenesisLiveRelayPacketType::CLIENT_CONNECT_DONE;
+        }
+
+        bool Import(ash::AshStream* Stream)
+        {
+            return true;
+        }
+
+        bool Export(ash::AshStream* Stream)
+        {
+            return true;
+        }
     };
 
     class GenesisLiveRelayPacketPing : public GenesisLiveRelayPacketBase

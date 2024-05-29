@@ -25,7 +25,9 @@ namespace genesis
             return ash::AshResult(false, "Already containing a flow with this name");
         }
 
-        m_Flows.emplace(FlowName, m_FlowFactory(m_ReservedFactoryValue));
+        GenesisFlow* flow = m_FlowFactory(m_ReservedFactoryValue);
+        m_Flows.emplace(FlowName, flow);
+
         return ash::AshResult(true);
     }
 
@@ -50,9 +52,9 @@ namespace genesis
 
     ash::AshResult GenesisBundle::ProcessBundle(output::GenesisOutputData* OutputData, common::GenesisLoadedFile* LoadedFile)
     {
-        for(auto currentIterator : m_Flows)
+        for (auto currentIterator : m_Flows)
         {
-            if(auto res = currentIterator.second->ProcessFlow(OutputData, LoadedFile); res.HasError())
+            if (auto res = currentIterator.second->ProcessFlow(OutputData, LoadedFile); res.HasError())
             {
                 return ash::AshResult(false, fmt::format("Flow {} failed. {}", currentIterator.first, res.GetMessage()));
             }

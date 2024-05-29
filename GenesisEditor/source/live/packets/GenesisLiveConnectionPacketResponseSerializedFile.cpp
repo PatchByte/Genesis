@@ -4,29 +4,23 @@
 namespace genesis::live
 {
 
-    GenesisLiveConnectionPacketResponseSerializedFile::GenesisLiveConnectionPacketResponseSerializedFile():
-        m_SerializedFile()
-    {}
+    GenesisLiveConnectionPacketResponseSerializedFile::GenesisLiveConnectionPacketResponseSerializedFile() : m_SerializedFile()
+    {
+    }
 
     bool GenesisLiveConnectionPacketResponseSerializedFile::Import(ash::AshStream* Stream)
     {
-        Stream->Write<ash::AshSize>(m_SerializedFile.GetSize());
-        Stream->WriteRawFromPointer(m_SerializedFile.GetPointer(), m_SerializedFile.GetSize());
-
-        return Stream->IsOkay();
-    }
-
-    bool GenesisLiveConnectionPacketResponseSerializedFile::Export(ash::AshStream* Stream)
-    {
         ash::AshSize serializedFileSize = Stream->Read<ash::AshSize>();
 
-        if(serializedFileSize > GenesisLiveConnectionPacketResponseSerializedFile::smBufferMaxSize)
+        if (serializedFileSize > GenesisLiveConnectionPacketResponseSerializedFile::smBufferMaxSize)
         {
+            printf("serializedFileSize is too big\n");
             return false;
         }
 
-        if(m_SerializedFile.AllocateSize(serializedFileSize) == false)
+        if (m_SerializedFile.AllocateSize(serializedFileSize) == false)
         {
+            printf("failed to allocate size.\n");
             return false;
         }
 
@@ -35,4 +29,12 @@ namespace genesis::live
         return Stream->IsOkay();
     }
 
-}
+    bool GenesisLiveConnectionPacketResponseSerializedFile::Export(ash::AshStream* Stream)
+    {
+        Stream->Write<ash::AshSize>(m_SerializedFile.GetSize());
+        Stream->WriteRawFromPointer(m_SerializedFile.GetPointer(), m_SerializedFile.GetSize());
+
+        return Stream->IsOkay();
+    }
+
+} // namespace genesis::live

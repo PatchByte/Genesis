@@ -20,6 +20,8 @@ namespace genesis::live
     {
     public:
         using sdProvideMainBundleCallback = std::function<GenesisBundle*()>;
+        using sdBundleActionCallback = std::function<void(GenesisLiveConnectionPacketBundleAction* Action)>;
+        using sdFlowActionCallback = std::function<void(GenesisLiveConnectionPacketFlowAction* Action)>;
 
         GenesisLive(utils::GenesisLogBox* LogBox, std::string Username);
         ~GenesisLive();
@@ -79,6 +81,16 @@ namespace genesis::live
             m_ProvideMainBundleCallback = std::move(ProvideMainBundleCallback);
         }
 
+        inline void SetBundleActionCallback(sdBundleActionCallback BundleActionCallback)
+        {
+            m_BundleActionCallback = std::move(BundleActionCallback);
+        }
+
+        inline void SetFlowActionCallback(sdFlowActionCallback FlowActionCallback)
+        {
+            m_FlowActionCallback = std::move(FlowActionCallback);
+        }
+
     private:
         void sRunnerThreadFunction();
 
@@ -95,6 +107,7 @@ namespace genesis::live
 
         std::chrono::milliseconds m_LastPing;
 
+        bool m_RelayIsFirstToConnect;
         std::string m_RelayConnectionInviteCode;
 
         std::map<GenesisPeerId, std::string> m_ConnectedPeers;
@@ -102,6 +115,8 @@ namespace genesis::live
         // Callbacks
 
         sdProvideMainBundleCallback m_ProvideMainBundleCallback;
+        sdBundleActionCallback m_BundleActionCallback;
+        sdFlowActionCallback m_FlowActionCallback;
     };
 
 } // namespace genesis::live

@@ -1,6 +1,8 @@
 #include "GenesisEditor/GenesisBundleEditor.hpp"
+#include "Ash/AshResult.h"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "GenesisEditor/GenesisWidgets.hpp"
+#include "GenesisEditor/live/GenesisLivePackets.hpp"
 #include "GenesisShared/GenesisBundle.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "ImGuiFileDialog.h"
@@ -11,9 +13,9 @@
 namespace genesis::editor
 {
 
-    GenesisBundleEditor::GenesisBundleEditor(utils::GenesisLogBox* LogBox)
+    GenesisBundleEditor::GenesisBundleEditor(utils::GenesisLogBox* LogBox, live::GenesisLive* Live)
         : GenesisBundle(GenesisBundleEditor::sfDefaultFactory), m_DockSpaceHasBeenBuilt(false), m_DockSpaceId(0), m_DockSidebarWindow(0), m_DockContentWindow(0), m_DockLogWindow(0), m_SelectedFlow(),
-          m_LogBox(LogBox), m_Logger("GenesisBundleEditor", {}), m_SearchBoxName()
+          m_LogBox(LogBox), m_Logger("GenesisBundleEditor", {}), m_SearchBoxName(), m_Live(Live)
     {
         m_ReservedFactoryValue = this;
 
@@ -23,6 +25,36 @@ namespace genesis::editor
     GenesisBundleEditor::~GenesisBundleEditor()
     {
         this->Shutdown();
+    }
+
+    ash::AshResult GenesisBundleEditor::CreateFlow(std::string FlowName)
+    {
+        if (auto res = GenesisBundle::CreateFlow(FlowName); res.WasSuccessful())
+        {
+            dynamic_cast<GenesisFlowEditor*>(m_Flows.at(FlowName))->SetLiveFlowName(FlowName);
+
+            return res;
+        }
+        else
+        {
+            return res;
+        }
+    }
+
+    bool GenesisBundleEditor::Import(ash::AshStream* Stream)
+    {
+        if (GenesisBundle::Import(Stream))
+        {
+            for (auto currentFlow : m_Flows)
+            {
+                // Hack
+                dynamic_cast<GenesisFlowEditor*>(currentFlow.second)->SetLiveFlowName(currentFlow.first);
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     void GenesisBundleEditor::Initialize(ImFont* KeyboardFont)
@@ -96,6 +128,7 @@ namespace genesis::editor
                     if (ImGui::MenuItem("Delete"))
                     {
                         this->RemoveFlow(currentIterator.first);
+                        this->SendLiveAction(live::GenesisLiveConnectionPacketBundleAction(live::GenesisLiveConnectionPacketBundleAction::ActionType::DELETE_FLOW, currentIterator.first, ""));
                     }
 
                     if (ImGui::MenuItem("Rename"))
@@ -134,10 +167,24 @@ namespace genesis::editor
                     ImGui::SameLine();
                     if (ImGui::Button("Ok") || ImGui::IsKeyPressed(ImGuiKey_Enter))
                     {
-                        GenesisFlow* renameTarget = m_Flows.at(currentIterator.first);
-                        m_Flows.erase(currentIterator.first);
-                        m_Flows.emplace(sNameBuffer, renameTarget);
-                        ImGui::CloseCurrentPopup();
+                        if (m_Flows.contains(sNameBuffer) == false)
+                        {
+                            GenesisFlowEditor* renameTarget = dynamic_cast<GenesisFlowEditor*>(m_Flows.at(currentIterator.first));
+
+                            m_Flows.erase(currentIterator.first);
+                            m_Flows.emplace(sNameBuffer, renameTarget);
+
+                            renameTarget->SetLiveFlowName(sNameBuffer);
+
+                            ImGui::CloseCurrentPopup();
+
+                            this->SendLiveAction(
+                                live::GenesisLiveConnectionPacketBundleAction(live::GenesisLiveConnectionPacketBundleAction::ActionType::RENAME_FLOW, currentIterator.first, sNameBuffer));
+                        }
+                        else
+                        {
+                            m_Logger.Log("Error", "Flow with the name already exists.");
+                        }
                     }
 
                     ImGui::SameLine();
@@ -153,11 +200,11 @@ namespace genesis::editor
                 ImGui::PopID();
             }
 
-            if(ImGuiFileDialog::Instance()->Display("ExtractFlowDialogKey", ImGuiWindowFlags_NoCollapse, { 700, 350 }))
+            if (ImGuiFileDialog::Instance()->Display("ExtractFlowDialogKey", ImGuiWindowFlags_NoCollapse, {700, 350}))
             {
                 std::string* flowName = reinterpret_cast<std::string*>(ImGuiFileDialog::Instance()->GetUserDatas());
 
-                if(ImGuiFileDialog::Instance()->IsOk())
+                if (ImGuiFileDialog::Instance()->IsOk())
                 {
                     this->ExtractFlowAndSaveToFileAndApplyLogs(*flowName, ImGuiFileDialog::Instance()->GetFilePathName());
                 }
@@ -188,6 +235,67 @@ namespace genesis::editor
             }
         }
         ImGui::End();
+    }
+
+    ash::AshResult GenesisBundleEditor::SendLiveAction(live::GenesisLiveConnectionPacketBundleAction* Action)
+    {
+        if (m_Live)
+        {
+            return m_Live->BroadcastPacketToPeers(Action);
+        }
+
+        // We just ignore this
+        return ash::AshResult(true);
+    }
+
+    ash::AshResult GenesisBundleEditor::HandleLiveAction(live::GenesisLiveConnectionPacketBundleAction* Action)
+    {
+        switch (Action->GetActionType())
+        {
+        case live::GenesisLiveConnectionPacketBundleAction::ActionType::CREATE_FLOW:
+        {
+            if (Action->GetExtensibleName1().empty() == false)
+            {
+                return CreateFlow(Action->GetExtensibleName1());
+            }
+
+            break;
+        }
+        case live::GenesisLiveConnectionPacketBundleAction::ActionType::DELETE_FLOW:
+        {
+            if (Action->GetExtensibleName1().empty() == false)
+            {
+                return RemoveFlow(Action->GetExtensibleName1());
+            }
+
+            break;
+        }
+        case live::GenesisLiveConnectionPacketBundleAction::ActionType::RENAME_FLOW:
+        {
+            if (Action->GetExtensibleName1().empty() == false && Action->GetExtensibleName2().empty() == false)
+            {
+                if (m_Flows.contains(Action->GetExtensibleName1()) == true && m_Flows.contains(Action->GetExtensibleName2()) == false)
+                {
+                    GenesisFlowEditor* renameTarget = dynamic_cast<GenesisFlowEditor*>(m_Flows.at(Action->GetExtensibleName1()));
+
+                    m_Flows.erase(Action->GetExtensibleName1());
+                    m_Flows.emplace(Action->GetExtensibleName2(), renameTarget);
+
+                    renameTarget->SetLiveFlowName(Action->GetExtensibleName2());
+                }
+                else
+                {
+                    return ash::AshResult(false, "Rename target does not exist.");
+                }
+            }
+
+            break;
+        }
+        default:
+            return ash::AshResult(false, "Unimplemented action type.");
+        }
+
+        return ash::AshResult(true);
     }
 
     ash::AshResult GenesisBundleEditor::ExtractFlowAndSaveToFile(std::string FlowName, std::filesystem::path Output)
@@ -241,6 +349,7 @@ namespace genesis::editor
         GenesisFlowEditor* flowEditor = new GenesisFlowEditor(bundleEditor->m_LogBox);
 
         flowEditor->Initialize();
+        flowEditor->SetLive(bundleEditor->m_Live);
 
         return flowEditor;
     }

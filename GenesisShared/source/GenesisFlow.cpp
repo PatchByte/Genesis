@@ -19,13 +19,9 @@
 namespace genesis
 {
 
-    GenesisFlow::GenesisFlow():
-        m_Operations(),
-        m_CounterLinks(0),
-        m_CounterOperations(1),
-        m_Links(),
-        m_ReservedBufferGui()
-    {}
+    GenesisFlow::GenesisFlow() : m_Operations(), m_CounterLinks(0), m_CounterOperations(1), m_Links(), m_ReservedBufferGui()
+    {
+    }
 
     GenesisFlow::~GenesisFlow()
     {
@@ -34,60 +30,64 @@ namespace genesis
 
     operations::GenesisOperationId GenesisFlow::FindFreeOperationId()
     {
-        while (m_Operations.contains(m_CounterOperations)) {
+        while (m_Operations.contains(m_CounterOperations))
+        {
             m_CounterOperations++;
         }
 
         return m_CounterOperations;
     }
 
-    operations::GenesisOperationId GenesisFlow::AddOperationToFlow(operations::GenesisBaseOperation* Operation)
+    std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> GenesisFlow::CreateOperationInFlowFromType(operations::GenesisOperationType OperationType)
     {
         operations::GenesisOperationId operationId = FindFreeOperationId();
+        operations::GenesisBaseOperation* operation = operations::GenesisOperationUtils::sfCreateOperationByType(OperationType);
 
-        Operation->SetOperationId(operationId);
-        m_Operations.emplace(operationId, Operation);
+        operation->SetOperationId(operationId);
+        m_Operations.emplace(operationId, operation);
 
-        return operationId;
+        return std::make_pair(operation, operationId);
     }
 
     bool GenesisFlow::RemoveOperationFromFlow(operations::GenesisOperationId OperationId)
     {
-        while(true)
+        while (true)
         {
-            auto it = std::find_if(m_Links.begin(), m_Links.end(), [&OperationId](std::pair<uintptr_t, std::pair<uintptr_t, uintptr_t>> Iterator) -> bool {
-                std::pair<uintptr_t, uintptr_t> Value = Iterator.second;
+            auto it = std::find_if(m_Links.begin(), m_Links.end(),
+                                   [&OperationId](std::pair<uintptr_t, std::pair<uintptr_t, uintptr_t>> Iterator) -> bool
+                                   {
+                                       std::pair<uintptr_t, uintptr_t> Value = Iterator.second;
 
-                if(utils::GenesisPinValue(Value.first).m_NodeParentId == OperationId || utils::GenesisPinValue(Value.second).m_NodeParentId == OperationId)
-                {
-                    // printf("Removing Link %lx:%lx\n", Value.first, Value.second);
-                    return true;
-                }
+                                       if (utils::GenesisPinValue(Value.first).m_NodeParentId == OperationId || utils::GenesisPinValue(Value.second).m_NodeParentId == OperationId)
+                                       {
+                                           // printf("Removing Link %lx:%lx\n", Value.first, Value.second);
+                                           return true;
+                                       }
 
-                return false;
-            });
+                                       return false;
+                                   });
 
-            if(it == m_Links.end()) break;
+            if (it == m_Links.end())
+                break;
 
             m_Links.erase(it);
         }
 
         m_Operations.erase(OperationId);
 
-        return false;
+        return true;
     }
 
     GenesisFlow::sdOperationIdsVector GenesisFlow::CollectAllNodeLinkIdsToOtherNodesFromNode(operations::GenesisOperationId OperationId)
     {
         GenesisFlow::sdOperationIdsVector result = {};
 
-        for(auto currentIterator : m_Links)
+        for (auto currentIterator : m_Links)
         {
 
             std::pair<uintptr_t, uintptr_t> value = currentIterator.second;
 
-
-            if(utils::GenesisPinValue(value.first).m_NodeParentId == OperationId && utils::GenesisPinValue(value.second).m_NodeParentId != OperationId)
+            if (utils::GenesisPinValue(value.first).m_NodeParentId == OperationId && utils::GenesisPinValue(value.second).m_NodeParentId != OperationId)
             {
                 result.push_back(utils::GenesisPinValue(value.second).m_NodeParentId);
             }
@@ -100,22 +100,22 @@ namespace genesis
     {
         sdOperationsVector result = {};
 
-        for(auto currentIterator : m_Operations)
+        for (auto currentIterator : m_Operations)
         {
             const operations::GenesisOperationInformation information = currentIterator.second->GetOperationInformation();
 
-            if(information.m_IsFlowStartNode)
+            if (information.m_IsFlowStartNode)
             {
-                if(information.m_IsConditionalFlowStartNode)
+                if (information.m_IsConditionalFlowStartNode)
                 {
-                    if(IncludeConditionalNodes)
+                    if (IncludeConditionalNodes)
                     {
                         result.push_back(currentIterator.second);
                         continue;
                     }
                 }
 
-                if(IncludeNonConditionalNodes)
+                if (IncludeNonConditionalNodes)
                 {
                     result.push_back(currentIterator.second);
                     continue;
@@ -131,12 +131,12 @@ namespace genesis
         // Checking if any loop is present
 
         std::vector<operations::GenesisBaseOperation*> flowStartNodes = CollectAllFlowStarterNodes(true, true);
-        
+
         std::function<ash::AshResult(operations::GenesisBaseOperation*, std::vector<operations::GenesisOperationId>)> traverseNode;
-    
-        traverseNode = [this, &traverseNode] (operations::GenesisBaseOperation* Operation, std::vector<operations::GenesisOperationId> PreviousVisitedOperationsIds) -> ash::AshResult 
+
+        traverseNode = [this, &traverseNode](operations::GenesisBaseOperation* Operation, std::vector<operations::GenesisOperationId> PreviousVisitedOperationsIds) -> ash::AshResult
         {
-            if(std::find(PreviousVisitedOperationsIds.begin(), PreviousVisitedOperationsIds.end(), Operation->GetOperationId()) != PreviousVisitedOperationsIds.end())
+            if (std::find(PreviousVisitedOperationsIds.begin(), PreviousVisitedOperationsIds.end(), Operation->GetOperationId()) != PreviousVisitedOperationsIds.end())
             {
                 return ash::AshResult(false, fmt::format("Node {} has already been visited. Loop detected ;)", Operation->GetOperationId()));
             }
@@ -145,9 +145,9 @@ namespace genesis
 
             auto linksVector = CollectAllNodeLinkIdsToOtherNodesFromNode(Operation->GetOperationId());
 
-            for(operations::GenesisOperationId nextLinkNode : linksVector)
+            for (operations::GenesisOperationId nextLinkNode : linksVector)
             {
-                if(auto res = traverseNode(m_Operations.at(nextLinkNode), PreviousVisitedOperationsIds); res.HasError())
+                if (auto res = traverseNode(m_Operations.at(nextLinkNode), PreviousVisitedOperationsIds); res.HasError())
                 {
                     return res;
                 }
@@ -156,9 +156,9 @@ namespace genesis
             return ash::AshResult(true);
         };
 
-        for(operations::GenesisBaseOperation* currentFlowStartNode : flowStartNodes)
+        for (operations::GenesisBaseOperation* currentFlowStartNode : flowStartNodes)
         {
-            if(auto res = traverseNode(currentFlowStartNode, {}); res.HasError())
+            if (auto res = traverseNode(currentFlowStartNode, {}); res.HasError())
             {
                 return res;
             }
@@ -178,15 +178,16 @@ namespace genesis
         // Traversing setup
 
         std::vector<operations::GenesisBaseOperation*> flowStartNodes = CollectAllFlowStarterNodes(true, true);
-        std::function<ash::AshResult(operations::GenesisBaseOperation*, std::vector<operations::GenesisOperationId>, GenesisOperationState* CurrentOperationState)> traverseNode;
-        
+        std::function<ash::AshResult(operations::GenesisBaseOperation*, std::vector<operations::GenesisOperationId>, GenesisOperationState * CurrentOperationState)> traverseNode;
+
         // Traversing function
 
-        traverseNode = [this, &traverseNode] (operations::GenesisBaseOperation* Operation, std::vector<operations::GenesisOperationId> PreviousVisitedOperationsIds, GenesisOperationState* CurrentOperationState) -> ash::AshResult 
+        traverseNode = [this, &traverseNode](operations::GenesisBaseOperation* Operation, std::vector<operations::GenesisOperationId> PreviousVisitedOperationsIds,
+                                             GenesisOperationState* CurrentOperationState) -> ash::AshResult
         {
             // Check
 
-            if(std::find(PreviousVisitedOperationsIds.begin(), PreviousVisitedOperationsIds.end(), Operation->GetOperationId()) != PreviousVisitedOperationsIds.end())
+            if (std::find(PreviousVisitedOperationsIds.begin(), PreviousVisitedOperationsIds.end(), Operation->GetOperationId()) != PreviousVisitedOperationsIds.end())
             {
                 return ash::AshResult(false, fmt::format("Node {} has already been visited. Loop detected ;)", Operation->GetOperationId()));
             }
@@ -195,7 +196,7 @@ namespace genesis
 
             // Node Processing
 
-            if(auto res = Operation->ProcessOperation(CurrentOperationState); res.HasError())
+            if (auto res = Operation->ProcessOperation(CurrentOperationState); res.HasError())
             {
                 return ash::AshResult(false, fmt::format("Node {} failed. {}", Operation->GetOperationId(), res.GetMessage()));
             }
@@ -204,11 +205,11 @@ namespace genesis
 
             auto linksVector = CollectAllNodeLinkIdsToOtherNodesFromNode(Operation->GetOperationId());
 
-            for(operations::GenesisOperationId nextLinkNode : linksVector)
+            for (operations::GenesisOperationId nextLinkNode : linksVector)
             {
                 GenesisOperationState* nextOperationState = new GenesisOperationState(*CurrentOperationState);
 
-                if(auto res = traverseNode(m_Operations.at(nextLinkNode), PreviousVisitedOperationsIds, nextOperationState); res.HasError())
+                if (auto res = traverseNode(m_Operations.at(nextLinkNode), PreviousVisitedOperationsIds, nextOperationState); res.HasError())
                 {
                     return res;
                 }
@@ -219,23 +220,22 @@ namespace genesis
             return ash::AshResult(true);
         };
 
-        for(operations::GenesisBaseOperation* currentFlowStartNode : flowStartNodes)
+        for (operations::GenesisBaseOperation* currentFlowStartNode : flowStartNodes)
         {
             GenesisOperationState* currentFlowStartNodeOperationState = this->CreateOperationState(LoadedFile);
             currentFlowStartNodeOperationState->SetOutputData(OutputData);
 
             auto res = traverseNode(currentFlowStartNode, {}, currentFlowStartNodeOperationState);
-            
+
             // Do not need that anymore.
             delete currentFlowStartNodeOperationState;
 
-            if(res.HasError())
+            if (res.HasError())
             {
                 return ash::AshResult(false, fmt::format("(Start node: {}) {}", currentFlowStartNode->GetOperationId(), res.GetMessage()));
             }
-
         }
-        
+
         return ash::AshResult(true);
     }
 
@@ -244,7 +244,7 @@ namespace genesis
         m_CounterOperations = 1;
         m_CounterLinks = 0;
 
-        for(auto currentIterator : m_Operations)
+        for (auto currentIterator : m_Operations)
         {
             delete currentIterator.second;
         }
@@ -256,7 +256,7 @@ namespace genesis
     }
 
     bool GenesisFlow::Import(ash::AshStream* Stream)
-    {   
+    {
         this->Reset();
 
         m_CounterOperations = Stream->Read<operations::GenesisOperationId>();
@@ -265,19 +265,20 @@ namespace genesis
         {
             size_t operationsSize = Stream->Read<ash::AshSize>();
 
-            for(size_t currentOperationIndex = 0; currentOperationIndex < operationsSize; currentOperationIndex++)
+            for (size_t currentOperationIndex = 0; currentOperationIndex < operationsSize; currentOperationIndex++)
             {
                 operations::GenesisOperationId currentOperationId = Stream->Read<operations::GenesisOperationId>();
                 int currentOperationTypeUnCast = Stream->Read<int>();
-                operations::GenesisBaseOperation* currentOperation = operations::GenesisOperationUtils::sfCreateOperationByType(static_cast<operations::GenesisOperationType>(currentOperationTypeUnCast));
+                operations::GenesisBaseOperation* currentOperation =
+                    operations::GenesisOperationUtils::sfCreateOperationByType(static_cast<operations::GenesisOperationType>(currentOperationTypeUnCast));
 
-                if(currentOperation == nullptr)
+                if (currentOperation == nullptr)
                 {
                     std::cout << "Failed. currentOperation is nullptr. " << currentOperationTypeUnCast << std::endl;
                     std::exit(-1);
                 }
 
-                if(currentOperation->Import(Stream) == false)
+                if (currentOperation->Import(Stream) == false)
                 {
                     std::cout << "Failed to import currentOperation" << std::endl;
                     std::exit(-1);
@@ -293,7 +294,7 @@ namespace genesis
         {
             size_t linksSize = Stream->Read<ash::AshSize>();
 
-            for(size_t currentLinkIndex = 0; currentLinkIndex < linksSize; currentLinkIndex++)
+            for (size_t currentLinkIndex = 0; currentLinkIndex < linksSize; currentLinkIndex++)
             {
                 uintptr_t currentLinkKey = Stream->Read<uintptr_t>();
 
@@ -306,13 +307,13 @@ namespace genesis
 
         ash::objects::AshDataBufferPlug reservedBufferGuiPlug = ash::objects::AshDataBufferPlug();
 
-        if(reservedBufferGuiPlug.Import(Stream) == false)
+        if (reservedBufferGuiPlug.Import(Stream) == false)
         {
             std::cout << "Failed to import reservedBufferGuiPlug." << std::endl;
             return false;
         }
 
-        if(auto res = reservedBufferGuiPlug.GetBuffer(); res)
+        if (auto res = reservedBufferGuiPlug.GetBuffer(); res)
         {
             m_ReservedBufferGui.CopyAshBufferFromPointer(res);
         }
@@ -326,12 +327,12 @@ namespace genesis
 
         Stream->Write<ash::AshSize>(m_Operations.size());
 
-        for(auto currentOperationIterator : m_Operations)
+        for (auto currentOperationIterator : m_Operations)
         {
             Stream->Write<operations::GenesisOperationId>(currentOperationIterator.first);
             Stream->Write<int>(static_cast<int>(currentOperationIterator.second->GetOperationType()));
 
-            if(currentOperationIterator.second->Export(Stream) == false)
+            if (currentOperationIterator.second->Export(Stream) == false)
             {
                 std::cout << "Failed to export currentOperationIterator." << std::endl;
                 return false;
@@ -340,7 +341,7 @@ namespace genesis
 
         Stream->Write<ash::AshSize>(m_Links.size());
 
-        for(auto currentLinkIterator : m_Links)
+        for (auto currentLinkIterator : m_Links)
         {
             Stream->Write<uintptr_t>(currentLinkIterator.first);
             Stream->Write<uintptr_t>(currentLinkIterator.second.first);
@@ -352,4 +353,4 @@ namespace genesis
         return Stream->IsOkay();
     }
 
-}
+} // namespace genesis
