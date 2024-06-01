@@ -4,7 +4,6 @@
 #include "Ash/AshStepTimer.h"
 #include "GenesisLiveShared/GenesisLive.hpp"
 #include "GenesisLiveShared/GenesisLiveRelayConnection.hpp"
-#include <bits/chrono.h>
 #include <chrono>
 
 namespace genesis::live
