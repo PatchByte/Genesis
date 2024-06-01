@@ -36,7 +36,8 @@ jobs:
     - name: Clone Vectors
       run: |
         git submodule update --init --recursive
-
+    - name: Install zip
+      uses: montudor/action-zip@v1
     - name: Install Vulkan SDK
       uses: jakoch/install-vulkan-sdk-action@v1.0.0
       with:
@@ -68,7 +69,7 @@ jobs:
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
     - name: Zip it up
-      run: zip -r Output.zip ${{ steps.strings.outputs.build-output-dir }}
+      run: zip -r Output.zip ${{ github.workspace }}/bin
     
     - uses: actions/upload-artifact@v4
       with:
