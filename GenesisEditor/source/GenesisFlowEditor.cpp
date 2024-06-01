@@ -474,8 +474,8 @@ namespace genesis::editor
 
     void GenesisFlowEditor::CreateLink(uintptr_t FromLinkId, uintptr_t ToLinkId, bool BroadcastLiveAction)
     {
-        utils::GenesisPinValue startPinParsed = FromLinkId;
-        utils::GenesisPinValue endPinParsed = ToLinkId;
+        utils::GenesisPinValue startPinParsed = utils::GenesisPinValue::Unpack(FromLinkId);
+        utils::GenesisPinValue endPinParsed = utils::GenesisPinValue::Unpack(ToLinkId);
 
         if (startPinParsed.m_NodePinType == utils::GenesisPinType::INPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT)
         {
@@ -483,8 +483,8 @@ namespace genesis::editor
             FromLinkId = ToLinkId;
             ToLinkId = carry;
 
-            startPinParsed = FromLinkId;
-            endPinParsed = ToLinkId;
+            startPinParsed = utils::GenesisPinValue::Unpack(FromLinkId);
+            endPinParsed = utils::GenesisPinValue::Unpack(ToLinkId);
         }
 
         if (FromLinkId && ToLinkId && startPinParsed.m_NodePinType == utils::GenesisPinType::OUTPUT && endPinParsed.m_NodePinType == utils::GenesisPinType::INPUT)

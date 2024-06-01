@@ -25,7 +25,7 @@ namespace genesis::operations
 
         information.m_IsFlowStartNode = true;
         information.m_DiscardsPreviousValue = true;
-        information.m_OutputPinId = utils::GenesisPinValue(m_OperationId, 1, utils::GenesisPinType::OUTPUT).Get();
+        information.m_OutputPinId = utils::GenesisPinValue::Build(m_OperationId, 1, utils::GenesisPinType::OUTPUT).Get();
 
         return std::move(information);
     }

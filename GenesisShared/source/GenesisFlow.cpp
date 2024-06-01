@@ -58,7 +58,7 @@ namespace genesis
                                    {
                                        std::pair<uintptr_t, uintptr_t> Value = Iterator.second;
 
-                                       if (utils::GenesisPinValue(Value.first).m_NodeParentId == OperationId || utils::GenesisPinValue(Value.second).m_NodeParentId == OperationId)
+                                       if (utils::GenesisPinValue::Unpack(Value.first).m_NodeParentId == OperationId || utils::GenesisPinValue::Unpack(Value.second).m_NodeParentId == OperationId)
                                        {
                                            // printf("Removing Link %lx:%lx\n", Value.first, Value.second);
                                            return true;
@@ -87,9 +87,9 @@ namespace genesis
 
             std::pair<uintptr_t, uintptr_t> value = currentIterator.second;
 
-            if (utils::GenesisPinValue(value.first).m_NodeParentId == OperationId && utils::GenesisPinValue(value.second).m_NodeParentId != OperationId)
+            if (utils::GenesisPinValue::Unpack(value.first).m_NodeParentId == OperationId && utils::GenesisPinValue::Unpack(value.second).m_NodeParentId != OperationId)
             {
-                result.push_back(utils::GenesisPinValue(value.second).m_NodeParentId);
+                result.push_back(utils::GenesisPinValue::Unpack(value.second).m_NodeParentId);
             }
         }
 

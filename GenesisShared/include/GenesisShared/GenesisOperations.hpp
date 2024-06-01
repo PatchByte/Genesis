@@ -93,8 +93,8 @@ namespace genesis::operations
         {
             GenesisOperationInformation operationInformation = {};
 
-            operationInformation.m_InputPinId = utils::GenesisPinValue(m_OperationId, 1, utils::GenesisPinType::INPUT).Get();
-            operationInformation.m_OutputPinId = utils::GenesisPinValue(m_OperationId, 2, utils::GenesisPinType::OUTPUT).Get();
+            operationInformation.m_InputPinId = utils::GenesisPinValue::Build(m_OperationId, 1, utils::GenesisPinType::INPUT).Get();
+            operationInformation.m_OutputPinId = utils::GenesisPinValue::Build(m_OperationId, 2, utils::GenesisPinType::OUTPUT).Get();
 
             return std::move(operationInformation);
         }

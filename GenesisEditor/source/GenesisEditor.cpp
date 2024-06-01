@@ -22,12 +22,12 @@
 #include <fstream>
 #include <thread>
 
-namespace ed = ax::NodeEditor;
-
 namespace genesis::editor
 {
 
-    GenesisEditor::GenesisEditor() : m_LogBox(), m_Logger("GenesisEditor", {}), m_BundleEditor(&m_LogBox), m_ForceDisableRendering(false), m_Live(nullptr)
+    GenesisEditor::GenesisEditor()
+        : m_LogBox(), m_Logger("GenesisEditor", {}), m_BundleEditor(&m_LogBox), m_ForceDisableRendering(false), m_Live(nullptr), m_DefaultFont(nullptr), m_KeyboardFont(nullptr), m_Renderer(nullptr),
+          m_LastProcessedInputFile(), m_LastUsedFile(), m_LastProcessedOutputFile()
     {
         m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Editor");
         m_Logger.AddLoggerPassage(m_LogBox.CreatePassage());
@@ -150,9 +150,9 @@ namespace genesis::editor
                                 ImGuiFileDialog::Instance()->OpenDialog("SaveBundleDialogKey", "Save File", ".genesis");
                             }
 
-                            if (ImGui::MenuItem("Save", nullptr, false, m_LastSavedAsFile.empty() == false))
+                            if (ImGui::MenuItem("Save", nullptr, false, m_LastUsedFile.empty() == false))
                             {
-                                this->SaveGenesisFileToAndApplyLogs(m_LastSavedAsFile);
+                                this->SaveGenesisFileToAndApplyLogs(m_LastUsedFile);
                             }
 
                             if (ImGui::MenuItem("Process specific file"))
@@ -160,9 +160,9 @@ namespace genesis::editor
                                 ImGuiFileDialog::Instance()->OpenDialog("ProcessBundleDialogKey", "Process File", ".exe,.dll");
                             }
 
-                            if (ImGui::MenuItem("Process last file", nullptr, false, m_LastProcessedFile.empty() == false))
+                            if (ImGui::MenuItem("Process last file", nullptr, false, m_LastProcessedInputFile.empty() == false))
                             {
-                                if (auto res = this->ProcessGenesisFileAndApplyLogs(m_LastProcessedFile); res.WasSuccessful())
+                                if (auto res = this->ProcessGenesisFileAndApplyLogs(m_LastProcessedInputFile); res.WasSuccessful())
                                 {
                                     IGFD::FileDialogConfig config = IGFD::FileDialogConfig();
                                     config.userDatas = new std::string(res.GetResult());
@@ -460,6 +460,8 @@ namespace genesis::editor
 
                     outputStream.flush();
                     outputStream.close();
+
+                    m_LastProcessedOutputFile = ImGuiFileDialog::Instance()->GetFilePathName();
                 }
 
                 delete outputCode;
@@ -496,6 +498,7 @@ namespace genesis::editor
                 if (m_BundleEditor.Import(&fileBufferStream))
                 {
                     m_ForceDisableRendering = false;
+                    m_LastUsedFile = filePathName;
                     return ash::AshResult(true, fmt::format("Loaded file {}.", filePathName));
                 }
                 else
@@ -530,7 +533,7 @@ namespace genesis::editor
             {
                 if (exportBuffer->WriteToFile(filePathName).WasSuccessful())
                 {
-                    m_LastSavedAsFile = filePathName;
+                    m_LastUsedFile = filePathName;
                     return ash::AshResult(true, fmt::format("Saved to {}.", filePathName));
                 }
                 else
@@ -573,7 +576,7 @@ namespace genesis::editor
             delete outputData;
             delete loadedFile;
 
-            m_LastProcessedFile = Input;
+            m_LastProcessedInputFile = Input;
 
             return ash::AshCustomResult<std::string>(true, "Successfully processed.").AttachResult(outputCode);
         }

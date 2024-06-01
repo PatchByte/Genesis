@@ -14,16 +14,27 @@ namespace genesis::utils
     union GenesisPinValue
     {
     public:
-        GenesisPinValue(uintptr_t PinRawValue)
+        GenesisPinValue()
         {
-            m_PinRawValue = PinRawValue;
+            m_PinRawValue = 0;
         }
 
-        GenesisPinValue(unsigned int NodeParentId, unsigned int NodePinId, GenesisPinType Type)
+        static GenesisPinValue Unpack(uintptr_t PinRawValue)
         {
-            m_NodeParentId = NodeParentId;
-            m_NodePinId = NodePinId;
-            m_NodePinType = Type;
+            GenesisPinValue v;
+            v.m_PinRawValue = PinRawValue;
+            return v;
+        }
+
+        static GenesisPinValue Build(unsigned int NodeParentId, unsigned int NodePinId, GenesisPinType Type)
+        {
+            GenesisPinValue v;
+
+            v.m_NodeParentId = NodeParentId;
+            v.m_NodePinId = NodePinId;
+            v.m_NodePinType = Type;
+        
+            return v;
         }
 
         inline uintptr_t Get()

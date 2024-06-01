@@ -43,7 +43,7 @@ namespace genesis::renderer
     {
         if (Error == 0)
             return;
-        printf("[CheckVkResultImplemented] Error occurred in %s at line %i\n", Function.data(), Line);
+        printf("[CheckVkResultImplemented] Error occurred in %s at line %i (%i)\n", Function.data(), Line, Error);
         if (Error < 0)
             std::abort();
     }

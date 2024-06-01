@@ -43,8 +43,10 @@ namespace genesis::editor
         ImFont* m_KeyboardFont;
 
         // QOL
-        std::filesystem::path m_LastProcessedFile;
-        std::filesystem::path m_LastSavedAsFile;
+        std::filesystem::path m_LastProcessedInputFile;
+        std::filesystem::path m_LastProcessedOutputFile;
+
+        std::filesystem::path m_LastUsedFile;
 
         // Live
         live::GenesisLive* m_Live;

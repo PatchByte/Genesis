@@ -22,10 +22,6 @@ if(MSVC OR MINGW)
     target_link_libraries(${PROJECT_NAME} PUBLIC ${Vulkan_LIBRARIES})
 endif(MSVC OR MINGW)
 
-if(MINGW)
-    target_link_libraries(${PROJECT_NAME} PRIVATE -static)
-endif(MINGW)
-
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
