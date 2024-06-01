@@ -36,8 +36,7 @@ jobs:
     - name: Clone Vectors
       run: |
         git submodule update --init --recursive
-    - name: Install zip
-      uses: montudor/action-zip@v1
+    
     - name: Install Vulkan SDK
       uses: jakoch/install-vulkan-sdk-action@v1.0.0
       with:
@@ -67,13 +66,10 @@ jobs:
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
-
-    - name: Zip it up
-      run: zip -r Output.zip ${{ github.workspace }}/bin
     
     - uses: actions/upload-artifact@v4
       with:
         # Name of the artifact to upload.
         # Optional. Default is 'artifact'
         name: Genesis-Windows
-        path: Output.zip
+        path: ${{ github.workspace }}/bin
