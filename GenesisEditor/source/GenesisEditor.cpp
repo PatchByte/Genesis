@@ -169,7 +169,7 @@ namespace genesis::editor
                     {
                         if (ImGui::BeginMenu("File"))
                         {
-                            if (ImGui::MenuItem("Open"))
+                            if (ImGui::MenuItem("Open", "Ctrl + O"))
                             {
                                 m_TriggerLoadFile = true;
                             }
