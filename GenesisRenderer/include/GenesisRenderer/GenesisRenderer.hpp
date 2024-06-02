@@ -11,6 +11,7 @@ namespace genesis::renderer
     {
     public:
         using sdDropFileHandler = std::function<void(int FilePathCount, const char** FilePathArray)>;
+        using sdKeyHandler = std::function<void(bool IsCtrl, bool IsShift, bool IsAlt, int KeyCode, bool IsRelease, bool IsDown)>;
 
         GenesisRendererBase();
         virtual ~GenesisRendererBase() = default;
@@ -50,8 +51,19 @@ namespace genesis::renderer
             m_DropFileHandler = DropFileHandler;
         }
 
+        virtual sdKeyHandler GetKeyHandler()
+        {
+            return m_KeyHandler;
+        }
+
+        virtual void SetKeyHandler(sdKeyHandler KeyHandler)
+        {
+            m_KeyHandler = KeyHandler;
+        }
+
     protected:
         sdDropFileHandler m_DropFileHandler;
+        sdKeyHandler m_KeyHandler;
     };
 
     class GenesisRendererProvider

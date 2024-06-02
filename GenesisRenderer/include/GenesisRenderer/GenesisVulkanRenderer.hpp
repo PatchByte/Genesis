@@ -74,6 +74,7 @@ namespace genesis::renderer
         ImGui_ImplVulkanH_Window m_WindowData;
 
         GLFWdropfun m_OriginalDropFunction;
+        GLFWkeyfun m_OriginalKeyFunction;
     };
 
 } // namespace genesis::renderer

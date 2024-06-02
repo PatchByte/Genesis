@@ -345,7 +345,8 @@ namespace genesis::renderer
 
     GenesisVulkanImplementation::GenesisVulkanImplementation(unsigned Width, unsigned Height, std::string Title)
         : GenesisRendererBase(), m_Width(Width), m_Height(Height), m_Title(Title), m_SwapChainRebuild(false), m_VkAllocator(nullptr), m_VkInstance(VK_NULL_HANDLE), m_VkPhysicalDevice(VK_NULL_HANDLE),
-          m_VkDevice(VK_NULL_HANDLE), m_VkQueueFamily(-1), m_VkQueue(VK_NULL_HANDLE), m_VkDebugReport(VK_NULL_HANDLE), m_VkPipelineCache(VK_NULL_HANDLE), m_VkDescriptorPool(VK_NULL_HANDLE)
+          m_VkDevice(VK_NULL_HANDLE), m_VkQueueFamily(-1), m_VkQueue(VK_NULL_HANDLE), m_VkDebugReport(VK_NULL_HANDLE), m_VkPipelineCache(VK_NULL_HANDLE), m_VkDescriptorPool(VK_NULL_HANDLE),
+          m_GlfwWindow(nullptr), m_OriginalDropFunction(nullptr), m_OriginalKeyFunction(nullptr)
     {
     }
 
@@ -428,6 +429,19 @@ namespace genesis::renderer
                                                              vulkanImplementation->m_OriginalDropFunction(Window, FilePathCount, FilePathArray);
                                                          }
                                                      });
+
+        m_OriginalKeyFunction = glfwSetKeyCallback(m_GlfwWindow,
+                                                   [](GLFWwindow* Window, int Key, int ScanCode, int Action, int Mods) -> void
+                                                   {
+                                                       GenesisVulkanImplementation* vulkanImplementation = reinterpret_cast<GenesisVulkanImplementation*>(glfwGetWindowUserPointer(Window));
+
+                                                       vulkanImplementation->m_KeyHandler(Mods & GLFW_MOD_CONTROL, Mods & GLFW_MOD_SHIFT, Mods & GLFW_MOD_ALT, Key, Action == GLFW_RELEASE, Action == GLFW_PRESS);
+
+                                                       if (vulkanImplementation->m_OriginalKeyFunction)
+                                                       {
+                                                           vulkanImplementation->m_OriginalKeyFunction(Window, Key, ScanCode, Action, Mods);
+                                                       }
+                                                   });
 
         m_Running = true;
 

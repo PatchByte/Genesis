@@ -2,6 +2,7 @@
 #include "Ash/AshBuffer.h"
 #include "Ash/AshResult.h"
 #include "Ash/AshStream.h"
+#include "GLFW/glfw3.h"
 #include "GenesisEditor/GenesisBundleEditor.hpp"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "GenesisEditor/GenesisUtils.hpp"
@@ -27,7 +28,7 @@ namespace genesis::editor
 
     GenesisEditor::GenesisEditor()
         : m_LogBox(), m_Logger("GenesisEditor", {}), m_BundleEditor(&m_LogBox), m_ForceDisableRendering(false), m_Live(nullptr), m_DefaultFont(nullptr), m_KeyboardFont(nullptr), m_Renderer(nullptr),
-          m_LastProcessedInputFile(), m_LastUsedFile(), m_LastProcessedOutputFile()
+          m_LastProcessedInputFile(), m_LastUsedFile(), m_LastProcessedOutputFile(), m_TriggerSaveLastUsedFile(false), m_TriggerSaveAsNewFile(false), m_TriggerLoadFile(false)
     {
         m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Editor");
         m_Logger.AddLoggerPassage(m_LogBox.CreatePassage());
@@ -77,6 +78,34 @@ namespace genesis::editor
                         {
                             m_Logger.Log("Error", "Unknown file {}.", FilePathArray[currentFilePathIndex]);
                         }
+                    }
+                }
+            });
+
+        m_Renderer->SetKeyHandler(
+            [this](bool IsCtrl, bool IsShift, bool IsAlt, int KeyCode, bool IsRelease, bool IsDown) -> void
+            {
+                if (IsRelease == false)
+                {
+                    return;
+                }
+
+                if (IsCtrl)
+                {
+                    if (KeyCode == GLFW_KEY_S)
+                    {
+                        if (IsShift)
+                        {
+                            m_TriggerSaveAsNewFile = true;
+                        }
+                        else
+                        {
+                            m_TriggerSaveLastUsedFile = true;
+                        }
+                    }
+                    if (KeyCode == GLFW_KEY_O)
+                    {
+                        m_TriggerLoadFile = true;
                     }
                 }
             });
@@ -142,17 +171,17 @@ namespace genesis::editor
                         {
                             if (ImGui::MenuItem("Open"))
                             {
-                                ImGuiFileDialog::Instance()->OpenDialog("OpenBundleDialogKey", "Open File", ".genesis");
+                                m_TriggerLoadFile = true;
                             }
 
-                            if (ImGui::MenuItem("Save as"))
+                            if (ImGui::MenuItem("Save as", "Ctrl + Shift + S"))
                             {
-                                ImGuiFileDialog::Instance()->OpenDialog("SaveBundleDialogKey", "Save File", ".genesis");
+                                m_TriggerSaveAsNewFile = true;
                             }
 
-                            if (ImGui::MenuItem("Save", nullptr, false, m_LastUsedFile.empty() == false))
+                            if (ImGui::MenuItem("Save", "Ctrl + S", false, m_LastUsedFile.empty() == false))
                             {
-                                this->SaveGenesisFileToAndApplyLogs(m_LastUsedFile);
+                                m_TriggerSaveLastUsedFile = true;
                             }
 
                             if (ImGui::MenuItem("Process specific file"))
@@ -396,6 +425,26 @@ namespace genesis::editor
                     }
 
                     m_BundleEditor.Render();
+
+                    // Post Editor Actions
+
+                    if (m_TriggerSaveAsNewFile)
+                    {
+                        m_TriggerSaveAsNewFile = false;
+                        ImGuiFileDialog::Instance()->OpenDialog("SaveBundleDialogKey", "Save File", ".genesis");
+                    }
+
+                    if (m_TriggerSaveLastUsedFile && m_LastUsedFile.empty() == false)
+                    {
+                        m_TriggerSaveLastUsedFile = false;
+                        this->SaveGenesisFileToAndApplyLogs(m_LastUsedFile);
+                    }
+
+                    if (m_TriggerLoadFile)
+                    {
+                        m_TriggerLoadFile = false;
+                        ImGuiFileDialog::Instance()->OpenDialog("OpenBundleDialogKey", "Open File", ".genesis");
+                    }
                 }
                 ImGui::End();
             }

@@ -50,6 +50,12 @@ namespace genesis::editor
 
         // Live
         live::GenesisLive* m_Live;
+
+        // Shortcuts
+
+        bool m_TriggerSaveLastUsedFile;
+        bool m_TriggerSaveAsNewFile;
+        bool m_TriggerLoadFile;
     };
 
 } // namespace genesis::editor
