@@ -28,7 +28,8 @@ namespace genesis::editor
 
     GenesisEditor::GenesisEditor()
         : m_LogBox(), m_Logger("GenesisEditor", {}), m_BundleEditor(&m_LogBox), m_ForceDisableRendering(false), m_Live(nullptr), m_DefaultFont(nullptr), m_KeyboardFont(nullptr), m_Renderer(nullptr),
-          m_LastProcessedInputFile(), m_LastUsedFile(), m_LastProcessedOutputFile(), m_TriggerSaveLastUsedFile(false), m_TriggerSaveAsNewFile(false), m_TriggerLoadFile(false)
+          m_LastProcessedInputFile(), m_LastUsedFile(), m_LastProcessedOutputFile(), m_TriggerSaveLastUsedFile(false), m_TriggerSaveAsNewFile(false), m_TriggerLoadFile(false),
+          m_TriggerProcessLastFileAndOutputLastFile(false)
     {
         m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Editor");
         m_Logger.AddLoggerPassage(m_LogBox.CreatePassage());
@@ -107,6 +108,10 @@ namespace genesis::editor
                     {
                         m_TriggerLoadFile = true;
                     }
+                    if(KeyCode == GLFW_KEY_R)
+                    {
+                        m_TriggerProcessLastFileAndOutputLastFile = true;
+                    }
                 }
             });
 
@@ -184,12 +189,12 @@ namespace genesis::editor
                                 m_TriggerSaveLastUsedFile = true;
                             }
 
-                            if (ImGui::MenuItem("Process specific file"))
+                            if (ImGui::MenuItem("Process specific file and save as"))
                             {
                                 ImGuiFileDialog::Instance()->OpenDialog("ProcessBundleDialogKey", "Process File", ".exe,.dll");
                             }
 
-                            if (ImGui::MenuItem("Process last file", nullptr, false, m_LastProcessedInputFile.empty() == false))
+                            if (ImGui::MenuItem("Process last file file and save as", nullptr, false, m_LastProcessedInputFile.empty() == false))
                             {
                                 if (auto res = this->ProcessGenesisFileAndApplyLogs(m_LastProcessedInputFile); res.WasSuccessful())
                                 {
@@ -198,6 +203,11 @@ namespace genesis::editor
 
                                     ImGuiFileDialog::Instance()->OpenDialog("SaveOutputDialogKey", "Save Output Header File", ".hpp,.h", config);
                                 }
+                            }
+
+                            if (ImGui::MenuItem("Process last file and save as last file", "Ctrl + R", false, (m_LastProcessedInputFile.empty() || m_LastProcessedOutputFile.empty()) == false))
+                            {
+                                m_TriggerProcessLastFileAndOutputLastFile = true;
                             }
 
                             ImGui::EndMenu();
@@ -444,6 +454,20 @@ namespace genesis::editor
                     {
                         m_TriggerLoadFile = false;
                         ImGuiFileDialog::Instance()->OpenDialog("OpenBundleDialogKey", "Open File", ".genesis");
+                    }
+
+                    if(m_TriggerProcessLastFileAndOutputLastFile)
+                    {
+                        m_TriggerProcessLastFileAndOutputLastFile = false;
+                        if(auto res = this->ProcessGenesisFileAndApplyLogs(m_LastProcessedInputFile); res.WasSuccessful())
+                        {
+                            std::ofstream outputStream = std::ofstream(ImGuiFileDialog::Instance()->GetFilePathName(), std::ios::trunc);
+
+                            outputStream << res.GetResult() << std::endl;
+
+                            outputStream.flush();
+                            outputStream.close();
+                        }
                     }
                 }
                 ImGui::End();

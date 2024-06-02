@@ -56,6 +56,7 @@ namespace genesis::editor
         bool m_TriggerSaveLastUsedFile;
         bool m_TriggerSaveAsNewFile;
         bool m_TriggerLoadFile;
+        bool m_TriggerProcessLastFileAndOutputLastFile;
     };
 
 } // namespace genesis::editor
