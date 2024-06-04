@@ -15,6 +15,7 @@ namespace genesis::live
         RESPONSE_GENESIS_SERIALIZED_FILE = 2,
         BUNDLE_ACTION = 3,
         FLOW_ACTION = 4,
+        OPERATION_UPDATE = 5,
     };
 
     class GenesisLiveConnectionPacketBase : public ash::AshStreamableObject
@@ -227,7 +228,7 @@ namespace genesis::live
         }
 
         // Action Link Created
-        
+
         inline void SetAsActionLinkCreated(ActionLinkCreated LinkCreated)
         {
             m_ActionType = ActionType::LINK_CREATED;
@@ -270,7 +271,7 @@ namespace genesis::live
         inline const ActionNodeCreated& GetAsActionNodeCreated()
         {
             return m_Action.m_NodeCreated;
-        } 
+        }
 
         inline void SetAsActionNodeCreated(ActionNodeCreated NodeCreated)
         {
@@ -307,6 +308,43 @@ namespace genesis::live
             ActionNodeDeleted m_NodeDeleted;
             uintptr_t m_RawValue;
         } m_Action;
+    };
+
+    class GenesisLiveConnectionPacketOperationUpdate : public GenesisLiveConnectionPacketBase
+    {
+    public:
+        enum class ActionType : unsigned int
+        {
+            INVALID = 0,
+            CREATE_FLOW = 1,
+            DELETE_FLOW = 2,
+            RENAME_FLOW = 3
+        };
+
+        GenesisLiveConnectionPacketOperationUpdate();
+        GenesisLiveConnectionPacketOperationUpdate(std::string FlowName, operations::GenesisOperationId OperationId, ash::AshBuffer Buffer);
+        ~GenesisLiveConnectionPacketOperationUpdate() = default;
+
+        GenesisLiveConnectionPacketType GetType()
+        {
+            return GenesisLiveConnectionPacketType::OPERATION_UPDATE;
+        }
+
+        inline ash::AshBuffer GetBuffer()
+        {
+            return m_Buffer;
+        }
+
+        inline void SetBuffer(ash::AshBuffer Buffer)
+        {
+            m_Buffer = Buffer;
+        }
+
+        bool Import(ash::AshStream* Stream);
+        bool Export(ash::AshStream* Stream);
+
+    protected:
+        ash::AshBuffer m_Buffer;
     };
 
     // GenesisLiveRelayPacketUtils

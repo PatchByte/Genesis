@@ -89,21 +89,20 @@ namespace genesis::output
 
         std::stringstream outputStream = std::stringstream();
 
-        outputStream << "#ifndef __GENESISOUTPUT_HPP" << std::endl;
-        outputStream << "#define __GENESISOUTPUT_HPP" << std::endl;
+        outputStream << "#pragma once" << std::endl;
         outputStream << std::endl;
         outputStream << "// This is an automatic generated file, do not change." << std::endl;
         outputStream << "// This file is not intended to look beautiful, because it is an automatic generated file." << std::endl;
         outputStream << "// Generated at: " << time(nullptr) << std::endl;
         outputStream << std::endl;
-        outputStream << "namespace genesis::generated" << std::endl;
+        outputStream << "namespace offsets" << std::endl;
         outputStream << "{" << std::endl;
 
         for (std::string currentClassName : OutputData->GetAllAvailableClassNames())
         {
             GenesisOutputClass* currentClass = OutputData->GetOrCreateClass(currentClassName);
 
-            outputStream << "class " << "OffsetProvider_" << currentClassName << std::endl;
+            outputStream << "class " << "Gen_" << currentClassName << std::endl;
             outputStream << "{" << std::endl;
             outputStream << "public:" << std::endl;
 
@@ -129,8 +128,7 @@ namespace genesis::output
         }
 
         outputStream << "}" << std::endl;
-        outputStream << "#endif // !__GENESISOUTPUT_HPP" << std::endl;
-
+        
         return outputStream.str();
     }
 
