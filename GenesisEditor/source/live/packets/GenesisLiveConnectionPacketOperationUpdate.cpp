@@ -18,12 +18,12 @@ namespace genesis::live
 
     bool GenesisLiveConnectionPacketOperationUpdate::Import(ash::AshStream* Stream)
     {
-
+        return false;
     }
     
     bool GenesisLiveConnectionPacketOperationUpdate::Export(ash::AshStream* Stream)
     {
-
+        return false;
     }
     
 
