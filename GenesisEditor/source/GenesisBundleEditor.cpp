@@ -139,6 +139,7 @@ namespace genesis::editor
                     if (ImGui::MenuItem("Extract"))
                     {
                         IGFD::FileDialogConfig config = IGFD::FileDialogConfig();
+                        config.path = ".";
 
                         config.userDatas = new std::string(currentIterator.first);
 

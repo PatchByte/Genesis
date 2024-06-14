@@ -313,14 +313,6 @@ namespace genesis::live
     class GenesisLiveConnectionPacketOperationUpdate : public GenesisLiveConnectionPacketBase
     {
     public:
-        enum class ActionType : unsigned int
-        {
-            INVALID = 0,
-            CREATE_FLOW = 1,
-            DELETE_FLOW = 2,
-            RENAME_FLOW = 3
-        };
-
         GenesisLiveConnectionPacketOperationUpdate();
         GenesisLiveConnectionPacketOperationUpdate(std::string FlowName, operations::GenesisOperationId OperationId, ash::AshBuffer Buffer);
         ~GenesisLiveConnectionPacketOperationUpdate() = default;
@@ -328,6 +320,26 @@ namespace genesis::live
         GenesisLiveConnectionPacketType GetType()
         {
             return GenesisLiveConnectionPacketType::OPERATION_UPDATE;
+        }
+
+        inline std::string GetFlowName()
+        {
+            return m_FlowName;
+        }
+
+        inline void SetFlowName(std::string FlowName)
+        {
+            m_FlowName = FlowName;
+        }
+
+        inline operations::GenesisOperationId GetOperationId()
+        {
+            return m_OperationId;
+        }
+
+        inline void SetOperationId(operations::GenesisOperationId OperationId)
+        {
+            m_OperationId = OperationId;
         }
 
         inline ash::AshBuffer GetBuffer()
@@ -344,6 +356,8 @@ namespace genesis::live
         bool Export(ash::AshStream* Stream);
 
     protected:
+        std::string m_FlowName;
+        operations::GenesisOperationId m_OperationId;
         ash::AshBuffer m_Buffer;
     };
 

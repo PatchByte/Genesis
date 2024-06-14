@@ -191,7 +191,10 @@ namespace genesis::editor
 
                             if (ImGui::MenuItem("Process specific file and save as"))
                             {
-                                ImGuiFileDialog::Instance()->OpenDialog("ProcessBundleDialogKey", "Process File", ".exe,.dll");
+                                IGFD::FileDialogConfig config = IGFD::FileDialogConfig();
+                                config.path = ".";
+
+                                ImGuiFileDialog::Instance()->OpenDialog("ProcessBundleDialogKey", "Process File", ".exe,.dll", config);
                             }
 
                             if (ImGui::MenuItem("Process last file file and save as", nullptr, false, m_LastProcessedInputFile.empty() == false))
@@ -199,6 +202,7 @@ namespace genesis::editor
                                 if (auto res = this->ProcessGenesisFileAndApplyLogs(m_LastProcessedInputFile); res.WasSuccessful())
                                 {
                                     IGFD::FileDialogConfig config = IGFD::FileDialogConfig();
+                                    config.path = ".";
                                     config.userDatas = new std::string(res.GetResult());
 
                                     ImGuiFileDialog::Instance()->OpenDialog("SaveOutputDialogKey", "Save Output Header File", ".hpp,.h", config);
@@ -441,7 +445,10 @@ namespace genesis::editor
                     if (m_TriggerSaveAsNewFile)
                     {
                         m_TriggerSaveAsNewFile = false;
-                        ImGuiFileDialog::Instance()->OpenDialog("SaveBundleDialogKey", "Save File", ".genesis");
+
+                        IGFD::FileDialogConfig config = IGFD::FileDialogConfig();
+                        config.path = ".";
+                        ImGuiFileDialog::Instance()->OpenDialog("SaveBundleDialogKey", "Save File", ".genesis", config);
                     }
 
                     if (m_TriggerSaveLastUsedFile && m_LastUsedFile.empty() == false)
@@ -453,7 +460,10 @@ namespace genesis::editor
                     if (m_TriggerLoadFile)
                     {
                         m_TriggerLoadFile = false;
-                        ImGuiFileDialog::Instance()->OpenDialog("OpenBundleDialogKey", "Open File", ".genesis");
+
+                        IGFD::FileDialogConfig config = IGFD::FileDialogConfig();
+                        config.path = ".";
+                        ImGuiFileDialog::Instance()->OpenDialog("OpenBundleDialogKey", "Open File", ".genesis", config);
                     }
 
                     if(m_TriggerProcessLastFileAndOutputLastFile)
@@ -515,6 +525,7 @@ namespace genesis::editor
                 if (openSaveOutputDialog)
                 {
                     IGFD::FileDialogConfig config = IGFD::FileDialogConfig();
+                    config.path = ".";
                     config.userDatas = openSaveOutputDialogUserData;
 
                     ImGuiFileDialog::Instance()->OpenDialog("SaveOutputDialogKey", "Save Output Header File", ".hpp,.h", config);
