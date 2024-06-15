@@ -22,6 +22,7 @@ namespace genesis::live
         using sdProvideMainBundleCallback = std::function<GenesisBundle*()>;
         using sdBundleActionCallback = std::function<void(GenesisLiveConnectionPacketBundleAction* Action)>;
         using sdFlowActionCallback = std::function<void(GenesisLiveConnectionPacketFlowAction* Action)>;
+        using sdOperationUpdateCallback = std::function<void(GenesisLiveConnectionPacketOperationUpdate* Action)>;
 
         GenesisLive(utils::GenesisLogBox* LogBox, std::string Username);
         ~GenesisLive();
@@ -91,6 +92,11 @@ namespace genesis::live
             m_FlowActionCallback = std::move(FlowActionCallback);
         }
 
+        inline void SetOperationUpdateCallback(sdOperationUpdateCallback OperationUpdateCallback)
+        {
+            m_OperationUpdateCallback = std::move(OperationUpdateCallback);
+        }
+
     private:
         void sRunnerThreadFunction();
 
@@ -117,6 +123,7 @@ namespace genesis::live
         sdProvideMainBundleCallback m_ProvideMainBundleCallback;
         sdBundleActionCallback m_BundleActionCallback;
         sdFlowActionCallback m_FlowActionCallback;
+        sdOperationUpdateCallback m_OperationUpdateCallback;
     };
 
 } // namespace genesis::live

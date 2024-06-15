@@ -108,7 +108,7 @@ namespace genesis::editor
                     {
                         m_TriggerLoadFile = true;
                     }
-                    if(KeyCode == GLFW_KEY_R)
+                    if (KeyCode == GLFW_KEY_R)
                     {
                         m_TriggerProcessLastFileAndOutputLastFile = true;
                     }
@@ -142,6 +142,18 @@ namespace genesis::editor
                 if (this->m_BundleEditor.HasFlow(Action->GetFlowTargetName()))
                 {
                     dynamic_cast<GenesisFlowEditor*>(this->m_BundleEditor.GetFlow(Action->GetFlowTargetName()))->HandleLiveFlowAction(Action);
+                }
+                else
+                {
+                    m_Logger.Log("Error", "Received flow action but with an unknown flow name.");
+                }
+            });
+        m_Live->SetOperationUpdateCallback(
+            [this](live::GenesisLiveConnectionPacketOperationUpdate* Action) -> void
+            {
+                if (this->m_BundleEditor.HasFlow(Action->GetFlowName()))
+                {
+                    dynamic_cast<GenesisFlowEditor*>(this->m_BundleEditor.GetFlow(Action->GetFlowName()))->HandleOperationUpdate(Action);
                 }
                 else
                 {
@@ -258,6 +270,21 @@ namespace genesis::editor
                             if (ImGui::MenuItem("Connect", nullptr, false, shouldEnableRequiredAuthedOptions == false))
                             {
                                 sTriggerLiveConnectPopup = true;
+                            }
+
+                            if (ImGui::MenuItem("Connect to \"InviteCode.txt\"", nullptr, false, shouldEnableRequiredAuthedOptions == false && std::filesystem::exists("InviteCode.txt")))
+                            {
+                                ash::AshBuffer inviteCodeBuffer = ash::AshBuffer();
+
+                                if(auto res = inviteCodeBuffer.ReadFromFile("InviteCode.txt"); res.HasError())
+                                {
+                                    m_Logger.Log("Error", "Failed to read \"InviteCode.txt\". {}", res.GetMessage());
+                                }
+
+                                if (auto res = m_Live->InitializeConnection(std::string(inviteCodeBuffer.GetBuffer<char>())); res.HasError())
+                                {
+                                    m_Logger.Log("Error", "Failed to initialize connection. {}", res.GetMessage());
+                                }
                             }
 
                             if (ImGui::MenuItem("Copy Invite Code", nullptr, false, shouldEnableRequiredWaitingOptions))
@@ -466,10 +493,10 @@ namespace genesis::editor
                         ImGuiFileDialog::Instance()->OpenDialog("OpenBundleDialogKey", "Open File", ".genesis", config);
                     }
 
-                    if(m_TriggerProcessLastFileAndOutputLastFile)
+                    if (m_TriggerProcessLastFileAndOutputLastFile)
                     {
                         m_TriggerProcessLastFileAndOutputLastFile = false;
-                        if(auto res = this->ProcessGenesisFileAndApplyLogs(m_LastProcessedInputFile); res.WasSuccessful())
+                        if (auto res = this->ProcessGenesisFileAndApplyLogs(m_LastProcessedInputFile); res.WasSuccessful())
                         {
                             std::ofstream outputStream = std::ofstream(ImGuiFileDialog::Instance()->GetFilePathName(), std::ios::trunc);
 

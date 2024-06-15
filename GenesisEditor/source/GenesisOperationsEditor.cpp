@@ -12,7 +12,7 @@ namespace genesis::editor
         return smNodeMaxTakenWidth;
     }
 
-    void GenesisOperationEditorForNodes::sfRenderOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation)
+    bool GenesisOperationEditorForNodes::sfRenderOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation)
     {
         operations::GenesisOperationInformation operationInformation = Operation->GetOperationInformation();
 
@@ -21,37 +21,27 @@ namespace genesis::editor
         default:
         case operations::GenesisOperationType::INVALID:
             Builder.End();
-            return;
+            return false;
         case operations::GenesisOperationType::FIND_PATTERN:
-            sfRenderFindPatternOperation(Builder, dynamic_cast<operations::GenesisFindPatternOperation*>(Operation), operationInformation);
-            return;
+            return sfRenderFindPatternOperation(Builder, dynamic_cast<operations::GenesisFindPatternOperation*>(Operation), operationInformation);
         case operations::GenesisOperationType::MATH:
-            sfRenderMathOperation(Builder, dynamic_cast<operations::GenesisMathOperation*>(Operation), operationInformation);
-            break;
+            return sfRenderMathOperation(Builder, dynamic_cast<operations::GenesisMathOperation*>(Operation), operationInformation);
         case operations::GenesisOperationType::DEBUG:
-            sfRenderDebugOperation(Builder, dynamic_cast<operations::GenesisDebugOperation*>(Operation), operationInformation);
-            break;
+            return sfRenderDebugOperation(Builder, dynamic_cast<operations::GenesisDebugOperation*>(Operation), operationInformation);
         case operations::GenesisOperationType::GET:
-            sfRenderGetOperation(Builder, dynamic_cast<operations::GenesisGetOperation*>(Operation), operationInformation);
-            break;
+            return sfRenderGetOperation(Builder, dynamic_cast<operations::GenesisGetOperation*>(Operation), operationInformation);
         case operations::GenesisOperationType::RIP:
-            sfRenderRipOperation(Builder, dynamic_cast<operations::GenesisRipOperation*>(Operation), operationInformation);
-            break;
+            return sfRenderRipOperation(Builder, dynamic_cast<operations::GenesisRipOperation*>(Operation), operationInformation);
         case operations::GenesisOperationType::OUTPUT_DATA_CLASS_MEMBER_VARIABLE:
-            sfRenderOutputDataClassMemberVariableOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassMemberVariableOperation*>(Operation), operationInformation);
-            break;
+            return sfRenderOutputDataClassMemberVariableOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassMemberVariableOperation*>(Operation), operationInformation);
         case operations::GenesisOperationType::OUTPUT_DATA_CLASS_VIRTUAL_FUNCTION:
-            sfRenderOutputDataClassVirtualFunctionOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassVirtualFunctionOperation*>(Operation), operationInformation);
-            break;
+            return sfRenderOutputDataClassVirtualFunctionOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassVirtualFunctionOperation*>(Operation), operationInformation);
         case operations::GenesisOperationType::OUTPUT_DATA_CLASS_NON_VIRTUAL_FUNCTION:
-            sfRenderOutputDataClassNonVirtualFunctionOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassNonVirtualFunctionOperation*>(Operation), operationInformation);
-            break;
+            return sfRenderOutputDataClassNonVirtualFunctionOperation(Builder, dynamic_cast<operations::GenesisOutputDataClassNonVirtualFunctionOperation*>(Operation), operationInformation);
         case operations::GenesisOperationType::OUTPUT_DATA_STATIC_FUNCTION:
-            sfRenderOutputDataStaticFunctionOperation(Builder, dynamic_cast<operations::GenesisOutputDataStaticFunctionOperation*>(Operation), operationInformation);
-            break;
+            return sfRenderOutputDataStaticFunctionOperation(Builder, dynamic_cast<operations::GenesisOutputDataStaticFunctionOperation*>(Operation), operationInformation);
         case operations::GenesisOperationType::OUTPUT_DATA_STATIC_VARIABLE:
-            sfRenderOutputDataStaticVariableOperation(Builder, dynamic_cast<operations::GenesisOutputDataStaticVariableOperation*>(Operation), operationInformation);
-            break;
+            return sfRenderOutputDataStaticVariableOperation(Builder, dynamic_cast<operations::GenesisOutputDataStaticVariableOperation*>(Operation), operationInformation);
         }
     }
 

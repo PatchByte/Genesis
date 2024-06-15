@@ -1,4 +1,5 @@
 #include "GenesisEditor/live/GenesisLive.hpp"
+#include "Ash/AshBuffer.h"
 #include "Ash/AshResult.h"
 #include "Ash/AshStream.h"
 #include "GenesisEditor/GenesisLogBox.hpp"
@@ -290,6 +291,12 @@ namespace genesis::live
         {
             GenesisLiveConnectionPacketFlowAction* flowAction = reinterpret_cast<GenesisLiveConnectionPacketFlowAction*>(Packet);
             m_FlowActionCallback(flowAction);
+            break;
+        }
+        case GenesisLiveConnectionPacketType::OPERATION_UPDATE:
+        {
+            GenesisLiveConnectionPacketOperationUpdate* operationUpdate = dynamic_cast<GenesisLiveConnectionPacketOperationUpdate*>(Packet);
+            m_OperationUpdateCallback(operationUpdate);
             break;
         }
         default:

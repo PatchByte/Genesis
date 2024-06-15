@@ -13,14 +13,18 @@ namespace ed = ax::NodeEditor;
 namespace genesis::editor
 {
 
-    void GenesisOperationEditorForNodes::sfRenderFindPatternOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisFindPatternOperation* Operation, const operations::GenesisOperationInformation& OperationInformation)
+    bool GenesisOperationEditorForNodes::sfRenderFindPatternOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisFindPatternOperation* Operation,
+                                                                      const operations::GenesisOperationInformation& OperationInformation)
     {
+        bool changed = false;
+
         std::string patternBuffer = Operation->GetPattern();
-        
+
         ImGui::PushItemWidth(GenesisOperationEditorForNodes::sfGetMaxItemWidth("Pattern Input Bla Bla"));
-        if(widgets::GenesisGenericWidgets::sfRenderInputTextStlString("##Pattern", &patternBuffer, ImVec2(190, 0)))
+        if (widgets::GenesisGenericWidgets::sfRenderInputTextStlString("##Pattern", &patternBuffer, ImVec2(190, 0)))
         {
-            Operation->SetPattern(patternBuffer);    
+            changed |= true;
+            Operation->SetPattern(patternBuffer);
         }
 
         ImGui::PopItemWidth();
@@ -30,6 +34,8 @@ namespace genesis::editor
         Builder.EndOutput();
 
         Builder.End();
+
+        return changed;
     }
 
 } // namespace genesis::editor

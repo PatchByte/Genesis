@@ -4,9 +4,10 @@
 namespace genesis::editor
 {
 
-    void GenesisOperationEditorForNodes::sfRenderOutputDataStaticVariableOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataStaticVariableOperation* Operation,
+    bool GenesisOperationEditorForNodes::sfRenderOutputDataStaticVariableOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataStaticVariableOperation* Operation,
                                                                                         const operations::GenesisOperationInformation& OperationInformation)
     {
+        bool changed = false;
         std::string className = Operation->GetClassName();
         std::string variableName = Operation->GetVariableName();
 
@@ -16,11 +17,13 @@ namespace genesis::editor
 
         if (widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Class Name", &className))
         {
+            changed |= true;
             Operation->SetClassName(className);
         }
 
         if (widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Variable Name", &variableName))
         {
+            changed |= true;
             Operation->SetVariableName(variableName);
         }
 
@@ -34,6 +37,8 @@ namespace genesis::editor
 
         // Because of manual post actions
         Builder.End();
+
+        return changed;
     }
 
 } // namespace genesis::editor

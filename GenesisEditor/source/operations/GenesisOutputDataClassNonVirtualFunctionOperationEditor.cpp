@@ -4,9 +4,10 @@
 namespace genesis::editor
 {
 
-    void GenesisOperationEditorForNodes::sfRenderOutputDataClassNonVirtualFunctionOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataClassNonVirtualFunctionOperation* Operation,
+    bool GenesisOperationEditorForNodes::sfRenderOutputDataClassNonVirtualFunctionOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataClassNonVirtualFunctionOperation* Operation,
                                                                                         const operations::GenesisOperationInformation& OperationInformation)
     {
+        bool changed = false;
         std::string className = Operation->GetClassName();
         std::string functionName = Operation->GetFunctionName();
 
@@ -16,11 +17,13 @@ namespace genesis::editor
 
         if (widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Class Name", &className))
         {
+            changed |= true;
             Operation->SetClassName(className);
         }
 
         if (widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Function Name", &functionName))
         {
+            changed |= true;
             Operation->SetFunctionName(functionName);
         }
 
@@ -34,6 +37,8 @@ namespace genesis::editor
 
         // Because of manual post actions
         Builder.End();
+
+        return changed;
     }
 
 } // namespace genesis::editor

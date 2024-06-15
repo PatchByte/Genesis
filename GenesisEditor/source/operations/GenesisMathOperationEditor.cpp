@@ -9,10 +9,12 @@
 namespace genesis::editor
 {
 
-    void GenesisOperationEditorForNodes::sfRenderMathOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisMathOperation* Operation,
+    bool GenesisOperationEditorForNodes::sfRenderMathOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisMathOperation* Operation,
                                                                const operations::GenesisOperationInformation& OperationInformation)
     {
         static widgets::GenesisComboBoxPopupWorkaround comboBox = widgets::GenesisComboBoxPopupWorkaround();
+
+        bool changed = false;
 
         operations::GenesisMathOperation::Type type = Operation->GetType();
         unsigned long long value = Operation->GetValue();
@@ -29,6 +31,7 @@ namespace genesis::editor
 
         if (ImGui::InputScalar("##Value", ImGuiDataType_U64, &value, 0, 0, "%d"))
         {
+            changed |= true;
             Operation->SetValue(value);
         }
         ImGui::PopItemWidth();
@@ -52,8 +55,11 @@ namespace genesis::editor
 
         if (comboBox.HasChanged())
         {
+            changed |= true;
             Operation->SetType(type);
         }
+
+        return changed;
     }
 
 } // namespace genesis::editor

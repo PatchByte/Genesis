@@ -16,6 +16,8 @@ namespace genesis::live
             return new GenesisLiveConnectionPacketBundleAction();
         case GenesisLiveConnectionPacketType::FLOW_ACTION:
             return new GenesisLiveConnectionPacketFlowAction();
+        case genesis::live::GenesisLiveConnectionPacketType::OPERATION_UPDATE:
+            return new GenesisLiveConnectionPacketOperationUpdate();
         default:
             return nullptr;
         }

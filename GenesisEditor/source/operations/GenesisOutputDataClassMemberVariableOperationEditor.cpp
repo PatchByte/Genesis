@@ -4,9 +4,11 @@
 namespace genesis::editor
 {
 
-    void GenesisOperationEditorForNodes::sfRenderOutputDataClassMemberVariableOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataClassMemberVariableOperation* Operation,
+    bool GenesisOperationEditorForNodes::sfRenderOutputDataClassMemberVariableOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisOutputDataClassMemberVariableOperation* Operation,
                                                                                         const operations::GenesisOperationInformation& OperationInformation)
     {
+        bool changed = false;
+
         std::string className = Operation->GetClassName();
         std::string memberName = Operation->GetMemberName();
         std::string typeDefinition = Operation->GetTypeDefinition();
@@ -17,16 +19,19 @@ namespace genesis::editor
 
         if (widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Class Name", &className))
         {
+            changed |= true;
             Operation->SetClassName(className);
         }
 
         if (widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Member Name", &memberName))
         {
+            changed |= true;
             Operation->SetMemberName(memberName);
         }
 
         if (widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Type Definition", &typeDefinition))
         {
+            changed |= true;
             Operation->SetTypeDefinition(typeDefinition);
         }
 
@@ -40,6 +45,8 @@ namespace genesis::editor
 
         // Because of manual post actions
         Builder.End();
+
+        return changed;
     }
 
 } // namespace genesis::editor

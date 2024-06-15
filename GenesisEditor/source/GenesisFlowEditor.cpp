@@ -120,7 +120,10 @@ namespace genesis::editor
                 ImGui::EndGroup();
                 nodeBuilder.EndHeader();
 
-                RenderNodeOperation(nodeBuilder, currentIterator.second);
+                if (RenderNodeOperation(nodeBuilder, currentIterator.second) == true)
+                {
+                    this->SendOperationUpdate(currentIterator.second);
+                }
                 // RenderNodeOperation takes care of that now
                 // nodeBuilder.End();
 
@@ -269,9 +272,9 @@ namespace genesis::editor
         }
     }
 
-    void GenesisFlowEditor::RenderNodeOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation)
+    bool GenesisFlowEditor::RenderNodeOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation)
     {
-        GenesisOperationEditorForNodes::sfRenderOperation(Builder, Operation);
+        return GenesisOperationEditorForNodes::sfRenderOperation(Builder, Operation);
     }
 
     bool GenesisFlowEditor::sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor)
@@ -574,7 +577,7 @@ namespace genesis::editor
         {
             auto res = CreateOperationInFlowFromTypeWithPosition(Action->GetAsActionNodeCreated().m_OperationType, {Action->GetAsActionNodeCreated().m_X, Action->GetAsActionNodeCreated().m_Y}, false);
 
-            if(res.second != Action->GetAsActionNodeCreated().m_ExpectedNodeIdResult)
+            if (res.second != Action->GetAsActionNodeCreated().m_ExpectedNodeIdResult)
             {
                 return ash::AshResult(false, "Unexpected node id.");
             }
@@ -593,6 +596,23 @@ namespace genesis::editor
         return ash::AshResult(true);
     }
 
+    ash::AshResult GenesisFlowEditor::HandleOperationUpdate(live::GenesisLiveConnectionPacketOperationUpdate* Action)
+    {
+        if (m_Operations.contains(Action->GetOperationId()))
+        {
+            ash::AshBuffer buffer = Action->GetBuffer();
+            ash::AshStreamStaticBuffer stream = ash::AshStreamStaticBuffer(&buffer, ash::AshStreamMode::READ);
+
+            m_Operations.at(Action->GetOperationId())->Import(&stream);
+        }
+        else
+        {
+            return ash::AshResult(false, "Received update on non-existing operation.");
+        }
+
+        return ash::AshResult(true);
+    }
+
     ash::AshResult GenesisFlowEditor::SendLiveFlowAction(live::GenesisLiveConnectionPacketFlowAction* Action)
     {
         if (m_Live != nullptr && m_LiveFlowName.empty() == false)
@@ -603,6 +623,32 @@ namespace genesis::editor
 
         // Ignore if live is not present.
         return ash::AshResult(m_Live == nullptr, m_LiveFlowName.empty() ? "Live Flow Name not assigned" : "");
+    }
+
+    ash::AshResult GenesisFlowEditor::SendOperationUpdate(operations::GenesisBaseOperation* Operation)
+    {
+        if (m_Live == nullptr || m_LiveFlowName.empty())
+        {
+            return ash::AshResult(true);
+        }
+
+        live::GenesisLiveConnectionPacketOperationUpdate packet = live::GenesisLiveConnectionPacketOperationUpdate();
+
+        packet.SetOperationId(Operation->GetOperationId());
+        packet.SetFlowName(m_LiveFlowName);
+
+        {
+            auto exportStream = ash::AshStreamExpandableExportBuffer();
+            Operation->Export(&exportStream);
+
+            if (auto exportBuffer = exportStream.MakeCopyOfBuffer())
+            {
+                packet.SetBuffer(*exportBuffer);
+                delete exportBuffer;
+            }
+        }
+
+        return m_Live->BroadcastPacketToPeers(&packet);
     }
 
 } // namespace genesis::editor

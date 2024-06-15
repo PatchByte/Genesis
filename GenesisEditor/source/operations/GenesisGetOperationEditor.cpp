@@ -5,9 +5,11 @@
 namespace genesis::editor
 {
 
-    void GenesisOperationEditorForNodes::sfRenderGetOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisGetOperation* Operation,
+    bool GenesisOperationEditorForNodes::sfRenderGetOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisGetOperation* Operation,
                                                                const operations::GenesisOperationInformation& OperationInformation)
     {
+        bool changed = false;
+
         static widgets::GenesisComboBoxPopupWorkaround comboBox = widgets::GenesisComboBoxPopupWorkaround();
 
         operations::GenesisGetOperation::ValueKindType type = Operation->GetValueKind();
@@ -40,8 +42,11 @@ namespace genesis::editor
 
         if (comboBox.HasChanged())
         {
+            changed |= true;
             Operation->SetValueKind(type);
         }
+
+        return changed;
     }
 
 }

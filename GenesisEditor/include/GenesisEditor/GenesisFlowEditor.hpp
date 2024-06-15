@@ -35,7 +35,7 @@ namespace genesis::editor
         void Shutdown();
         void Render(std::string UniqueKey);
         void RenderNodes(std::string UniqueKey);
-        void RenderNodeOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation);
+        bool RenderNodeOperation(utils::GenesisNodeBuilder& Builder, operations::GenesisBaseOperation* Operation);
 
         static bool sfGetColorForOperationInformation(const operations::GenesisOperationInformation& Information, ImColor* OutputNormalColor);
 
@@ -63,8 +63,11 @@ namespace genesis::editor
         // Live
 
         ash::AshResult HandleLiveFlowAction(live::GenesisLiveConnectionPacketFlowAction* Action);
+        ash::AshResult HandleOperationUpdate(live::GenesisLiveConnectionPacketOperationUpdate* Action);
+
         inline ash::AshResult SendLiveFlowAction(live::GenesisLiveConnectionPacketFlowAction Action) { return SendLiveFlowAction(&Action); }
         ash::AshResult SendLiveFlowAction(live::GenesisLiveConnectionPacketFlowAction* Action);
+        ash::AshResult SendOperationUpdate(operations::GenesisBaseOperation* Operation);
 
         // Getter and Setter
 
