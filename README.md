@@ -43,6 +43,7 @@ cmake --build .
 
 * Download latest genesis [release](https://github.com/yamp-project/genesis/releases/latest)
 * Unzip it into an empty folder
+* Download openssl for windows and move all files to the root genesis folder
 
 ## How to use Editor
 
