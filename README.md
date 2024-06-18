@@ -38,3 +38,20 @@ cd build
 cmake ..
 cmake --build .
 ```
+
+## Installation
+
+* Download latest genesis [release](https://github.com/yamp-project/genesis/releases/latest)
+* Unzip it into an empty folder
+
+## Using
+
+* Run GenesisEditor.exe
+* Press <kbd>File</kbd> -> <kbd>Open</kbd> and find `yamp.genesis` file that you want to edit
+* Save yamp.genesis file after your job with <kbd>File</kbd> -> <kbd>Save</kbd>
+* Compile `Offsets.hpp` file with <kbd>File</kbd> -> <kbd>Process specific file and save as</kbd> and select latest `GTA5_xxxx_dump.exe`, then select folder to save `Offsets.hpp`
+* Now as temp solution commit your changes (`yamp.genesis` and `Offsets.hpp`) to genesis-output folder.<br>
+**Tip: You can edit (`yamp.genesis` and `Offsets.hpp`) already in v-client submodule and after commit use them immediately**
+
+## How to make and edit flows
+In progress
