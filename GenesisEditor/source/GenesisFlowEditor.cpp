@@ -169,7 +169,7 @@ namespace genesis::editor
 
             {
 
-                bool actionDelete = ImGui::IsKeyPressed(ImGuiKey_Delete);
+                bool actionDelete = ImGui::IsKeyPressed(ImGuiKey_Delete) || (ImGui::IsKeyPressed(ImGuiKey_Backspace) & (!ImGui::GetIO().WantTextInput));
 
                 // if (auto numSelectedLinks = ed::GetSelectedLinks(nullptr, 0); numSelectedLinks > 0)
                 //{
