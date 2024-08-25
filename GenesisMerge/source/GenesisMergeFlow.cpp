@@ -56,8 +56,6 @@ namespace genesis::merge
                 }
                 else
                 {
-                    printf("%x %x\n", baseCRC, *TargetCRC);
-
                     status = GenesisFlowMerge::FlowStatus::MODIFIED;
                 }
 
@@ -121,9 +119,7 @@ namespace genesis::merge
 
         ash::AshCRC32Value localCRC = 0, remoteCRC = 0;
 
-        printf(" local: ");
         m_LocalStatus = sfProcessStatus(BaseFlow, LocalFlow, &m_LocalBuffer, &localCRC);
-        printf(" remote: ");
         m_RemoteStatus = sfProcessStatus(BaseFlow, RemoteFlow, &m_RemoteBuffer, &remoteCRC);
 
         if (m_LocalStatus == FlowStatus::INVALID || m_RemoteStatus == FlowStatus::INVALID)

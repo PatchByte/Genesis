@@ -40,14 +40,12 @@ namespace genesis::merge
             {
                 auto currentFlowMerge = new GenesisFlowMerge();
 
-                printf("%s: ", currentFlowName.data());
                 if (auto status = currentFlowMerge->Process(Base->GetFlow(currentFlowName), Local->GetFlow(currentFlowName), Remote->GetFlow(currentFlowName)); status.HasError())
                 {
                     m_Logger.Log("Error", "Error while processing flows of {}. {}", currentFlowName, status.GetMessage());
                     delete currentFlowMerge;
                     continue;
                 }
-                printf("\n");
 
                 m_Flows.emplace(currentFlowName, currentFlowMerge);
             }
