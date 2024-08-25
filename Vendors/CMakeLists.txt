@@ -7,7 +7,6 @@ add_subdirectory("mem")
 add_subdirectory("fmt")
 include("nlohmann-json.cmake")
 
-set(USE_SYSTEM_SRTP ON)
 set(GLFW_BUILD_TESTS OFF)
 
 if(GENESIS_BUILD_GUI)
@@ -19,8 +18,4 @@ if(GENESIS_BUILD_GUI)
     include("imgui.cmake")
     include("imgui-node-editor.cmake")
     include("imgui-file-dialog.cmake")
-    
-    set(NO_EXAMPLES ON)
-
-    add_subdirectory("libdatachannel")
 endif(GENESIS_BUILD_GUI)

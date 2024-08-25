@@ -7,8 +7,6 @@
 #include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "GenesisEditor/GenesisUtils.hpp"
 #include "GenesisEditor/GenesisWidgets.hpp"
-#include "GenesisEditor/live/GenesisLive.hpp"
-#include "GenesisEditor/live/GenesisLivePackets.hpp"
 #include "GenesisOutput/GenesisOutputBuilder.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
@@ -27,7 +25,7 @@ namespace genesis::editor
 {
 
     GenesisEditor::GenesisEditor()
-        : m_LogBox(), m_Logger("GenesisEditor", {}), m_BundleEditor(&m_LogBox), m_ForceDisableRendering(false), m_Live(nullptr), m_DefaultFont(nullptr), m_KeyboardFont(nullptr), m_Renderer(nullptr),
+        : m_LogBox(), m_Logger("GenesisEditor", {}), m_BundleEditor(&m_LogBox), m_ForceDisableRendering(false), m_DefaultFont(nullptr), m_KeyboardFont(nullptr), m_Renderer(nullptr),
           m_LastProcessedInputFile(), m_LastUsedFile(), m_LastProcessedOutputFile(), m_TriggerSaveLastUsedFile(false), m_TriggerSaveAsNewFile(false), m_TriggerLoadFile(false),
           m_TriggerProcessLastFileAndOutputLastFile(false)
     {
@@ -37,12 +35,6 @@ namespace genesis::editor
 
     GenesisEditor::~GenesisEditor()
     {
-        if (m_Live)
-        {
-            delete m_Live;
-            m_Live = nullptr;
-        }
-
         if (m_Renderer)
         {
             delete m_Renderer;
@@ -52,10 +44,6 @@ namespace genesis::editor
 
     void GenesisEditor::Run(int ArgCount, const char** ArgArray)
     {
-        // Live
-
-        m_Live = new live::GenesisLive(&m_LogBox, utils::GenesisUtils::sfGetUsername());
-
         // Renderer
 
         m_Renderer->Initialize();
@@ -125,41 +113,11 @@ namespace genesis::editor
         // Editor Initialization
 
         m_BundleEditor.Initialize(m_KeyboardFont);
-        m_BundleEditor.SetLiveInstance(m_Live);
 
         if (ArgCount > 1)
         {
             LoadGenesisFileFromAndApplyLogs(ArgArray[1]);
         }
-
-        // Live Initialization
-
-        m_Live->SetProvideMainBundleCallback([this]() -> GenesisBundle* { return &m_BundleEditor; });
-        m_Live->SetBundleActionCallback([this](live::GenesisLiveConnectionPacketBundleAction* Action) -> void { this->m_BundleEditor.HandleLiveAction(Action); });
-        m_Live->SetFlowActionCallback(
-            [this](live::GenesisLiveConnectionPacketFlowAction* Action) -> void
-            {
-                if (this->m_BundleEditor.HasFlow(Action->GetFlowTargetName()))
-                {
-                    dynamic_cast<GenesisFlowEditor*>(this->m_BundleEditor.GetFlow(Action->GetFlowTargetName()))->HandleLiveFlowAction(Action);
-                }
-                else
-                {
-                    m_Logger.Log("Error", "Received flow action but with an unknown flow name.");
-                }
-            });
-        m_Live->SetOperationUpdateCallback(
-            [this](live::GenesisLiveConnectionPacketOperationUpdate* Action) -> void
-            {
-                if (this->m_BundleEditor.HasFlow(Action->GetFlowName()))
-                {
-                    dynamic_cast<GenesisFlowEditor*>(this->m_BundleEditor.GetFlow(Action->GetFlowName()))->HandleOperationUpdate(Action);
-                }
-                else
-                {
-                    m_Logger.Log("Error", "Received flow action but with an unknown flow name.");
-                }
-            });
 
         // Stylization
 
@@ -256,55 +214,6 @@ namespace genesis::editor
                             ImGui::EndMenu();
                         }
 
-                        if (ImGui::BeginMenu("Live"))
-                        {
-                            bool shouldEnableRequiredWaitingOptions = false;
-                            bool shouldEnableRequiredAuthedOptions = false;
-
-                            if (m_Live->GetRelayConnection() != nullptr)
-                            {
-                                shouldEnableRequiredWaitingOptions = m_Live->GetRelayConnection()->IsWaiting();
-                                shouldEnableRequiredAuthedOptions = m_Live->GetRelayConnection()->IsAuthed();
-                            }
-
-                            if (ImGui::MenuItem("Connect", nullptr, false, shouldEnableRequiredAuthedOptions == false))
-                            {
-                                sTriggerLiveConnectPopup = true;
-                            }
-
-                            if (ImGui::MenuItem("Connect to \"InviteCode.txt\"", nullptr, false, shouldEnableRequiredAuthedOptions == false && std::filesystem::exists("InviteCode.txt")))
-                            {
-                                ash::AshBuffer inviteCodeBuffer = ash::AshBuffer();
-
-                                if(auto res = inviteCodeBuffer.ReadFromFile("InviteCode.txt"); res.HasError())
-                                {
-                                    m_Logger.Log("Error", "Failed to read \"InviteCode.txt\". {}", res.GetMessage());
-                                }
-
-                                if (auto res = m_Live->InitializeConnection(std::string(inviteCodeBuffer.GetBuffer<char>())); res.HasError())
-                                {
-                                    m_Logger.Log("Error", "Failed to initialize connection. {}", res.GetMessage());
-                                }
-                            }
-
-                            if (ImGui::MenuItem("Copy Invite Code", nullptr, false, shouldEnableRequiredWaitingOptions))
-                            {
-                                ImGui::SetClipboardText(m_Live->GetRelayConnection()->GetMyConnectionString().data());
-                            }
-
-                            if (ImGui::MenuItem("Invite Other Client", nullptr, false, shouldEnableRequiredAuthedOptions))
-                            {
-                                sTriggerLiveHintConnectPopup = true;
-                            }
-
-                            if (ImGui::MenuItem("Show Peers", nullptr, false, shouldEnableRequiredAuthedOptions))
-                            {
-                                sTriggerLiveShowPeers = true;
-                            }
-
-                            ImGui::EndMenu();
-                        }
-
                         ImGui::EndMenuBar();
                     }
 
@@ -343,7 +252,6 @@ namespace genesis::editor
                         if (ImGui::Button("Ok") || ImGui::IsKeyPressed(ImGuiKey_Enter))
                         {
                             m_BundleEditor.CreateFlow(sNameBuffer);
-                            m_BundleEditor.SendLiveAction(live::GenesisLiveConnectionPacketBundleAction(live::GenesisLiveConnectionPacketBundleAction::ActionType::CREATE_FLOW, sNameBuffer, ""));
 
                             ImGui::CloseCurrentPopup();
                         }
@@ -351,113 +259,6 @@ namespace genesis::editor
                         ImGui::SameLine();
 
                         if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
-                        {
-                            ImGui::CloseCurrentPopup();
-                        }
-
-                        ImGui::EndPopup();
-                    }
-
-                    if (ImGui::BeginPopup("LiveConnectPopup", ImGuiWindowFlags_AlwaysAutoResize))
-                    {
-                        static std::string inviteCodeInput = "";
-
-                        widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Invite Code", &inviteCodeInput);
-
-                        if (ImGui::Button("Connect") || ImGui::IsKeyPressed(ImGuiKey_Enter))
-                        {
-                            if (auto res = m_Live->InitializeConnection(inviteCodeInput); res.HasError())
-                            {
-                                m_Logger.Log("Error", "Failed to initialize connection. {}", res.GetMessage());
-                            }
-
-                            ImGui::CloseCurrentPopup();
-                        }
-
-                        ImGui::SameLine();
-
-                        if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
-                        {
-                            ImGui::CloseCurrentPopup();
-                        }
-
-                        ImGui::EndPopup();
-                    }
-
-                    if (ImGui::BeginPopupModal("Invite Other Client", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-                    {
-                        static std::string inviteCodeInput = "";
-
-                        ImGui::Text("Please send him the following invite code.");
-
-                        if (ImGui::Button("Copy Invite Code"))
-                        {
-                            ImGui::SetClipboardText(m_Live->GetRelayConnectionInviteCode().data());
-                        }
-
-                        ImGui::Separator();
-
-                        ImGui::Text("Once done, please paste in his invite code and click invite.");
-
-                        widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Invite Code", &inviteCodeInput);
-
-                        if (ImGui::Button("Invite"))
-                        {
-                            if (auto res = m_Live->InviteHintConnection(inviteCodeInput); res.HasError())
-                            {
-                                m_Logger.Log("Error", "Failed to invite (hint) client. {}", res.GetMessage());
-                            }
-                            else
-                            {
-                                m_Logger.Log("Info", "Invited (hinted) client.");
-                            }
-
-                            ImGui::CloseCurrentPopup();
-                        }
-
-                        ImGui::SameLine();
-
-                        if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
-                        {
-                            ImGui::CloseCurrentPopup();
-                        }
-
-                        ImGui::EndPopup();
-                    }
-
-                    if (ImGui::BeginPopupModal("Connected Peers", nullptr))
-                    {
-                        if (ImGui::BeginTable("##PeersTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_PadOuterX))
-                        {
-                            ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
-                            ImGui::TableSetColumnIndex(0);
-                            ImGui::Text("Peer Id");
-                            ImGui::TableNextColumn();
-                            ImGui::Text("Peer Name");
-
-                            // Yourself
-
-                            ImGui::TableNextRow();
-                            ImGui::TableSetColumnIndex(0);
-                            ImGui::Text("%lli", m_Live->GetAssignedPeerId());
-                            ImGui::TableNextColumn();
-                            ImGui::Text("%s (You)", m_Live->GetAssignedUsername().data());
-
-                            // Others
-
-                            for (auto currentIterator : m_Live->GetConnectedPeers())
-                            {
-                                ImGui::TableNextRow();
-                                ImGui::TableSetColumnIndex(0);
-                                ImGui::Text("%lli", currentIterator.first);
-                                ImGui::TableNextColumn();
-                                ImGui::Text("%s", currentIterator.second.data());
-                            }
-
-                            ImGui::EndTable();
-                        }
-
-                        if (ImGui::Button("Close", {-1, 0}) || ImGui::IsKeyPressed(ImGuiKey_Escape))
                         {
                             ImGui::CloseCurrentPopup();
                         }

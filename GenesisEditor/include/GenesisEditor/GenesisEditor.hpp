@@ -6,7 +6,6 @@
 #include "GenesisEditor/GenesisBundleEditor.hpp"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
 #include "GenesisEditor/GenesisLogBox.hpp"
-#include "GenesisEditor/live/GenesisLive.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
 #include "imgui.h"
 #include <filesystem>
@@ -47,9 +46,6 @@ namespace genesis::editor
         std::filesystem::path m_LastProcessedOutputFile;
 
         std::filesystem::path m_LastUsedFile;
-
-        // Live
-        live::GenesisLive* m_Live;
 
         // Shortcuts
 

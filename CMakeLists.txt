@@ -14,8 +14,6 @@ set(TEST_APPS FALSE)
 add_subdirectory("Vendors")
 add_subdirectory("GenesisShared")
 add_subdirectory("GenesisOutput")
-add_subdirectory("GenesisLiveShared")
-add_subdirectory("GenesisLiveRelay")
 add_subdirectory("GenesisMerge")
 
 if(GENESIS_BUILD_GUI)
