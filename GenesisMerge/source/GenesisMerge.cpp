@@ -3,8 +3,8 @@
 #include "Ash/AshStream.h"
 #include "AshLogger/AshLoggerPassage.h"
 #include "AshLogger/AshLoggerTag.h"
-
-#include "GenesisMerge/GenesisGit.hpp"
+#include "GenesisMerge/GenesisMergeBundle.hpp"
+#include "GenesisMerge/GenesisMergeGit.hpp"
 #include "GenesisShared/GenesisBundle.hpp"
 #include "fmt/chrono.h"
 #include "fmt/format.h"
@@ -37,9 +37,9 @@ namespace genesis::merge
         m_RemotePath = ArgArray[3];
         m_MergedPath = ArgArray[4];
 
-        m_BaseBundle = new GenesisBundle();
-        m_LocalBundle = new GenesisBundle();
-        m_RemoteBundle = new GenesisBundle();
+        m_BaseBundle = new GenesisBundle(GenesisBundleMerge::sfFactory);
+        m_LocalBundle = new GenesisBundle(GenesisBundleMerge::sfFactory);
+        m_RemoteBundle = new GenesisBundle(GenesisBundleMerge::sfFactory);
 
         for (auto currentIterator : std::map<std::filesystem::path, GenesisBundle*>{{m_BasePath, m_BaseBundle}, {m_LocalPath, m_LocalBundle}, {m_RemotePath, m_RemoteBundle}})
         {
@@ -47,7 +47,7 @@ namespace genesis::merge
 
             if (currentBuffer.ReadFromFile(currentIterator.first).HasError())
             {
-                m_Logger.Log("Error", "Failed to read file. {}", currentIterator.first);
+                m_Logger.Log("Error", "Failed to read file. {}", currentIterator.first.string());
                 return GenesisGitExitCodes::ABORTED;
             }
 
@@ -55,7 +55,7 @@ namespace genesis::merge
 
             if (currentIterator.second->Import(&stream) == false)
             {
-                m_Logger.Log("Error", "Failed to import file. {}", currentIterator.first);
+                m_Logger.Log("Error", "Failed to import file. {}", currentIterator.first.string());
                 return GenesisGitExitCodes::ABORTED;
             }
         }
