@@ -22,12 +22,24 @@ namespace genesis::merge
             CREATED = 4
         };
 
+        static std::string sfGetFlowStatusAsString(FlowStatus Status);
+
         GenesisFlowMerge();
         GenesisFlowMerge(GenesisFlowMerge&) = delete;
         ~GenesisFlowMerge();
 
         void Reset();
         ash::AshResult Process(GenesisFlow* BaseFlow, GenesisFlow* LocalFlow, GenesisFlow* RemoteFlow);
+
+        inline FlowStatus GetLocalStatus()
+        {
+            return m_LocalStatus;
+        }
+
+        inline FlowStatus GetRemoteStatus()
+        {
+            return m_RemoteStatus;
+        }
 
         inline bool IsNeededToBeResolvedManually()
         {

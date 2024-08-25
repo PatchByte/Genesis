@@ -9,3 +9,5 @@ build_mingw
 .cache
 .vscode
 bin
+
+imgui.ini

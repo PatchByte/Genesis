@@ -22,6 +22,8 @@ namespace genesis::merge
 
         ash::AshCustomResult<ash::AshBuffer*> Serialize();
 
+        void Render();
+
         static GenesisFlow* sfFactory(void* Reserved);
 
     private:

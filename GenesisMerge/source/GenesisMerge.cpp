@@ -8,14 +8,18 @@
 #include "GenesisShared/GenesisBundle.hpp"
 #include "fmt/chrono.h"
 #include "fmt/format.h"
+#include "imgui.h"
 #include <filesystem>
 #include <map>
+#include <string_view>
 
 namespace genesis::merge
 {
+    static constexpr std::string_view smBaseFontPath = "resources/Cantarell-Regular.ttf";
+
     GenesisMerge::GenesisMerge() : m_Logger("GenesisMerge", {}), m_Renderer(nullptr), m_MergedPath(), m_BasePath(), m_LocalPath(), m_RemotePath(), m_FinalExitCode(GenesisGitExitCodes::ABORTED)
     {
-        m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Merge");
+        m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(500, 600, "Genesis Merge");
         m_Logger.AddLoggerPassage(
             new ash::AshLoggerFunctionPassage([](ash::AshLoggerDefaultPassage* This, ash::AshLoggerTag Tag, std::string Format, fmt::format_args Args, std::string FormattedString)
                                               { std::cout << This->GetParent()->GetPrefixFunction()(Tag, Format, Args) << " " << FormattedString << std::endl; }));
@@ -60,15 +64,32 @@ namespace genesis::merge
             }
         }
 
+        m_BundleMerge = new GenesisBundleMerge(m_Logger, m_BaseBundle, m_LocalBundle, m_RemoteBundle);
+
         m_Logger.Log("Info", "Loaded files, all set.");
 
         // Gui initialization
 
         m_Renderer->Initialize();
 
+        // Post Gui initialization
+
+        if (std::filesystem::exists(smBaseFontPath))
+        {
+            m_DefaultFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(smBaseFontPath.data(), 22.);
+            ImGui::GetIO().FontDefault = m_DefaultFont;
+        }
+        else
+        {
+            m_Logger.Log("Warning", "Fonts are not present, please add them.");
+        }
+
         while (m_Renderer->ShallRender())
         {
             m_Renderer->BeginFrame();
+
+            this->Render();
+
             m_Renderer->EndFrame();
         }
 
@@ -78,6 +99,18 @@ namespace genesis::merge
         m_Renderer = nullptr;
 
         return m_FinalExitCode;
+    }
+
+    void GenesisMerge::Render()
+    {
+        if (ImGui::Begin("GenesisMergeFrame", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse /*| ImGuiWindowFlags_MenuBar*/))
+        {
+            ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
+            ImGui::SetWindowPos(ImVec2(0, 0));
+
+            m_BundleMerge->Render();
+        }
+        ImGui::End();
     }
 
 } // namespace genesis::merge

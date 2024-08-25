@@ -46,7 +46,20 @@ namespace genesis::merge
                 *TargetBuffer = targetStream.MakeCopyOfBuffer();
                 *TargetCRC = ash::AshCRC32Utils::Calculate(0, *TargetBuffer);
 
-                GenesisFlowMerge::FlowStatus status = ash::AshCRC32Utils::Calculate(0, baseBuffer) == (*TargetCRC) ? GenesisFlowMerge::FlowStatus::UNMODIFIED : GenesisFlowMerge::FlowStatus::MODIFIED;
+                ash::AshCRC32Value baseCRC = ash::AshCRC32Utils::Calculate(0, baseBuffer);
+
+                GenesisFlowMerge::FlowStatus status;
+
+                if(baseCRC == *TargetCRC)
+                {
+                    status = GenesisFlowMerge::FlowStatus::UNMODIFIED;
+                }
+                else
+                {
+                    printf("%x %x\n", baseCRC, *TargetCRC);
+
+                    status = GenesisFlowMerge::FlowStatus::MODIFIED;
+                }
 
                 delete baseBuffer;
 
@@ -55,7 +68,28 @@ namespace genesis::merge
         }
     }
 
-    GenesisFlowMerge::GenesisFlowMerge() : m_LocalBuffer(nullptr), m_RemoteBuffer(nullptr), m_LocalStatus(FlowStatus::INVALID), m_RemoteStatus(FlowStatus::INVALID), m_IsNeededToBeResolvedManually(false)
+    // Flow Status Helper
+
+    std::string GenesisFlowMerge::sfGetFlowStatusAsString(FlowStatus Status)
+    {
+        switch (Status)
+        {
+        case FlowStatus::UNMODIFIED:
+            return "Unmodified";
+        case FlowStatus::MODIFIED:
+            return "Modified";
+        case FlowStatus::DELETED:
+            return "Deleted";
+        case FlowStatus::CREATED:
+            return "Created";
+        default:
+        case FlowStatus::INVALID:
+            return "Invalid";
+        }
+    }
+
+    GenesisFlowMerge::GenesisFlowMerge()
+        : m_LocalBuffer(nullptr), m_RemoteBuffer(nullptr), m_LocalStatus(FlowStatus::INVALID), m_RemoteStatus(FlowStatus::INVALID), m_IsNeededToBeResolvedManually(false)
     {
     }
 
@@ -87,7 +121,9 @@ namespace genesis::merge
 
         ash::AshCRC32Value localCRC = 0, remoteCRC = 0;
 
+        printf(" local: ");
         m_LocalStatus = sfProcessStatus(BaseFlow, LocalFlow, &m_LocalBuffer, &localCRC);
+        printf(" remote: ");
         m_RemoteStatus = sfProcessStatus(BaseFlow, RemoteFlow, &m_RemoteBuffer, &remoteCRC);
 
         if (m_LocalStatus == FlowStatus::INVALID || m_RemoteStatus == FlowStatus::INVALID)
