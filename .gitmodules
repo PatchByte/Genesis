@@ -23,9 +23,6 @@
 [submodule "Vendors/ImGuiFileDialog"]
 	path = Vendors/ImGuiFileDialog
 	url = https://github.com/aiekick/ImGuiFileDialog.git
-[submodule "Vendors/libdatachannel"]
-	path = Vendors/libdatachannel
-	url = https://github.com/paullouisageneau/libdatachannel.git
 [submodule "Vendors/json"]
 	path = Vendors/json
 	url = https://github.com/nlohmann/json.git
