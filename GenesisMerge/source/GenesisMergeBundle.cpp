@@ -77,7 +77,7 @@ namespace genesis::merge
 
     void GenesisBundleMerge::Render()
     {
-        if (ImGui::BeginTable("##MergeResolveTable", 4, ImGuiTableFlags_BordersV | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable, {-1, -1}))
+        if (ImGui::BeginTable("##MergeResolveTable", 4, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable, {-1, -1}))
         {
             // Headers
 
@@ -102,6 +102,16 @@ namespace genesis::merge
                 ImGui::TextUnformatted(GenesisFlowMerge::sfGetFlowStatusAsString(currentIterator.second->GetLocalStatus()).data());
                 ImGui::TableNextColumn();
                 ImGui::TextUnformatted(GenesisFlowMerge::sfGetFlowStatusAsString(currentIterator.second->GetRemoteStatus()).data());
+                ImGui::TableNextColumn();
+
+                if(currentIterator.second->IsNeededToBeResolvedManually())
+                {
+                    ImGui::Text("Unresolved");
+                }
+                else
+                {
+                    ImGui::Text("Resolved");
+                }
             }
 
             ImGui::EndTable();
