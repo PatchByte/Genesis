@@ -20,6 +20,7 @@ namespace genesis::merge
         GenesisBundleMerge(ash::AshLogger& Logger, GenesisBundle* Base, GenesisBundle* Local, GenesisBundle* Remote);
         ~GenesisBundleMerge();
 
+        ash::AshResult IsMergeable();
         ash::AshCustomResult<ash::AshBuffer*> Serialize();
 
         void Render();
@@ -29,7 +30,6 @@ namespace genesis::merge
     private:
         ash::AshLogger& m_Logger;
         sdFlows m_Flows;
-        bool m_NeedsToResolveFlows;
     };
 
 } // namespace genesis::merge

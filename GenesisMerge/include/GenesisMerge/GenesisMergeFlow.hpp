@@ -22,6 +22,13 @@ namespace genesis::merge
             CREATED = 4
         };
 
+        enum class ResolvementStatus : int
+        {
+            UNRESOLVED = 0,
+            TAKE_REMOTE = 2,
+            TAKE_LOCAL = 3
+        };
+
         static std::string sfGetFlowStatusAsString(FlowStatus Status);
 
         GenesisFlowMerge();
@@ -46,12 +53,25 @@ namespace genesis::merge
             return m_IsNeededToBeResolvedManually;
         }
 
+        inline ResolvementStatus GetManualResolvementStatus()
+        {
+            return m_ManualResolvementStatus;
+        }
+
+        inline void SetManualResolvementStatus(ResolvementStatus ManualResolvementStatus)
+        {
+            m_ManualResolvementStatus = ManualResolvementStatus;
+        }
+
+        bool IsResolved();
+
     private:
         ash::AshBuffer* m_LocalBuffer;
         ash::AshBuffer* m_RemoteBuffer;
         FlowStatus m_LocalStatus;
         FlowStatus m_RemoteStatus;
         bool m_IsNeededToBeResolvedManually;
+        ResolvementStatus m_ManualResolvementStatus;
     };
 
 } // namespace genesis::merge

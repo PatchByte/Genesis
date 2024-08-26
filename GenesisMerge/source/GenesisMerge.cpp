@@ -72,6 +72,11 @@ namespace genesis::merge
 
         m_Renderer->Initialize();
 
+        m_Renderer->SetDropFileHandler([](...) {});
+        m_Renderer->SetKeyHandler([](...) {});
+
+        this->ApplyStyle();
+
         // Post Gui initialization
 
         if (std::filesystem::exists(smBaseFontPath))

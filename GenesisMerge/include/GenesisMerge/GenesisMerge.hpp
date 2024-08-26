@@ -18,6 +18,7 @@ namespace genesis::merge
         GenesisMerge();
 
         GenesisGitExitCodes Run(int ArgCount, const char** ArgArray);
+        void ApplyStyle();
         void Render();
     private:
         ash::AshLogger m_Logger;

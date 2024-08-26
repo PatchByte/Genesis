@@ -50,7 +50,7 @@ namespace genesis::merge
 
                 GenesisFlowMerge::FlowStatus status;
 
-                if(baseCRC == *TargetCRC)
+                if (baseCRC == *TargetCRC)
                 {
                     status = GenesisFlowMerge::FlowStatus::UNMODIFIED;
                 }
@@ -87,7 +87,8 @@ namespace genesis::merge
     }
 
     GenesisFlowMerge::GenesisFlowMerge()
-        : m_LocalBuffer(nullptr), m_RemoteBuffer(nullptr), m_LocalStatus(FlowStatus::INVALID), m_RemoteStatus(FlowStatus::INVALID), m_IsNeededToBeResolvedManually(false)
+        : m_LocalBuffer(nullptr), m_RemoteBuffer(nullptr), m_LocalStatus(FlowStatus::INVALID), m_RemoteStatus(FlowStatus::INVALID), m_IsNeededToBeResolvedManually(false),
+          m_ManualResolvementStatus(GenesisFlowMerge::ResolvementStatus::UNRESOLVED)
     {
     }
 
@@ -137,7 +138,17 @@ namespace genesis::merge
             m_IsNeededToBeResolvedManually |= (m_LocalStatus != FlowStatus::UNMODIFIED);
         }
 
-        m_IsNeededToBeResolvedManually |= (localCRC != remoteCRC);
+        // m_IsNeededToBeResolvedManually |= (localCRC != remoteCRC);
+
+        return true;
+    }
+
+    bool GenesisFlowMerge::IsResolved()
+    {
+        if(IsNeededToBeResolvedManually())
+        {
+            return m_ManualResolvementStatus != ResolvementStatus::UNRESOLVED;
+        }
 
         return true;
     }
