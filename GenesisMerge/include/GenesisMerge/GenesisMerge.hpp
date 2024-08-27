@@ -52,6 +52,7 @@ namespace genesis::merge
         GenesisBundleMerge* m_BundleMerge;
 
         GenesisGitExitCodes m_FinalExitCode;
+        bool m_CanExit;
     };
 
 } // namespace genesis::merge

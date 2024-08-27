@@ -9,6 +9,7 @@
 #include "fmt/chrono.h"
 #include "fmt/format.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include <filesystem>
 #include <map>
 #include <string_view>
@@ -17,7 +18,8 @@ namespace genesis::merge
 {
     static constexpr std::string_view smBaseFontPath = "resources/Cantarell-Regular.ttf";
 
-    GenesisMerge::GenesisMerge() : m_Logger("GenesisMerge", {}), m_Renderer(nullptr), m_MergedPath(), m_BasePath(), m_LocalPath(), m_RemotePath(), m_FinalExitCode(GenesisGitExitCodes::ABORTED)
+    GenesisMerge::GenesisMerge()
+        : m_Logger("GenesisMerge", {}), m_Renderer(nullptr), m_MergedPath(), m_BasePath(), m_LocalPath(), m_RemotePath(), m_FinalExitCode(GenesisGitExitCodes::ABORTED), m_CanExit(false)
     {
         m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(500, 600, "Genesis Merge");
         m_Logger.AddLoggerPassage(
@@ -41,9 +43,9 @@ namespace genesis::merge
         m_RemotePath = ArgArray[3];
         m_MergedPath = ArgArray[4];
 
-        m_BaseBundle = new GenesisBundle(GenesisBundleMerge::sfFactory);
-        m_LocalBundle = new GenesisBundle(GenesisBundleMerge::sfFactory);
-        m_RemoteBundle = new GenesisBundle(GenesisBundleMerge::sfFactory);
+        m_BaseBundle = new GenesisBundle();
+        m_LocalBundle = new GenesisBundle();
+        m_RemoteBundle = new GenesisBundle();
 
         for (auto currentIterator : std::map<std::filesystem::path, GenesisBundle*>{{m_BasePath, m_BaseBundle}, {m_LocalPath, m_LocalBundle}, {m_RemotePath, m_RemoteBundle}})
         {
@@ -64,7 +66,7 @@ namespace genesis::merge
             }
         }
 
-        m_BundleMerge = new GenesisBundleMerge(m_Logger, m_BaseBundle, m_LocalBundle, m_RemoteBundle);
+        m_BundleMerge = new GenesisBundleMerge(m_Logger, m_BaseBundle, m_LocalBundle, m_RemoteBundle, m_MergedPath);
 
         m_Logger.Log("Info", "Loaded files, all set.");
 
@@ -96,6 +98,11 @@ namespace genesis::merge
             this->Render();
 
             m_Renderer->EndFrame();
+
+            if (m_CanExit)
+            {
+                break;
+            }
         }
 
         m_Renderer->Shutdown();
@@ -113,7 +120,56 @@ namespace genesis::merge
             ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
             ImGui::SetWindowPos(ImVec2(0, 0));
 
-            m_BundleMerge->Render();
+            if (ImGui::BeginChild("##BundleMerge", {-1, ImGui::GetContentRegionAvail().y - (ImGui::CalcTextSize("Merge", NULL, true).y + ImGui::GetStyle().FramePadding.y * 4.f)}, ImGuiChildFlags_Border))
+            {
+                m_BundleMerge->Render();
+                ImGui::EndChild();
+            }
+
+            auto isMergeable = m_BundleMerge->IsMergeable();
+
+            if (isMergeable.HasError())
+            {
+                ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+                ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+            }
+
+            if (ImGui::Button("Merge", {-1, -1}) && isMergeable.WasSuccessful())
+            {
+                if (auto res = m_BundleMerge->Serialize(); res.WasSuccessful())
+                {
+                    ash::AshBuffer* buf = res.GetResult();
+
+                    if (buf->WriteToFile(m_MergedPath).WasSuccessful())
+                    {
+                        m_Logger.Log("Info", "Merged.");
+
+                        m_FinalExitCode = GenesisGitExitCodes::SUCCESS;
+                        m_CanExit = true;
+                    }
+                    else
+                    {
+                        m_Logger.Log("Error", "Failed to save merged file.");
+                    }
+                }
+                else
+                {
+                    m_Logger.Log("Error", "Serialization error while merging. {}", res.GetMessage());
+                }
+            }
+
+            if (isMergeable.HasError())
+            {
+                ImGui::PopItemFlag();
+                ImGui::PopStyleVar();
+
+                if (ImGui::BeginItemTooltip())
+                {
+                    ImGui::TextUnformatted(isMergeable.GetMessage().data());
+
+                    ImGui::EndTooltip();
+                }
+            }
         }
         ImGui::End();
     }

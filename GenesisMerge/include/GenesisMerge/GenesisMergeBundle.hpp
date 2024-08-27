@@ -7,6 +7,7 @@
 #include "GenesisMerge/GenesisMergeFlow.hpp"
 #include "GenesisShared/GenesisBundle.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
+#include <filesystem>
 #include <map>
 
 namespace genesis::merge
@@ -17,7 +18,7 @@ namespace genesis::merge
     public:
         using sdFlows = std::map<std::string, GenesisFlowMerge*>;
 
-        GenesisBundleMerge(ash::AshLogger& Logger, GenesisBundle* Base, GenesisBundle* Local, GenesisBundle* Remote);
+        GenesisBundleMerge(ash::AshLogger& Logger, GenesisBundle* Base, GenesisBundle* Local, GenesisBundle* Remote, std::filesystem::path Merged);
         ~GenesisBundleMerge();
 
         ash::AshResult IsMergeable();
@@ -30,6 +31,7 @@ namespace genesis::merge
     private:
         ash::AshLogger& m_Logger;
         sdFlows m_Flows;
+        std::filesystem::path m_Merged;
     };
 
 } // namespace genesis::merge

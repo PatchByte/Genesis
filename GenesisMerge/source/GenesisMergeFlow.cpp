@@ -12,24 +12,34 @@ namespace genesis::merge
      * @param[out] TargetCRC The calculated TargetFlow crc
      * @param[out] TargetBuffer The allocated export buffer of TargetFlow, needs to be manually deallocated.
      */
-    static GenesisFlowMerge::FlowStatus sfProcessStatus(GenesisFlow* BaseFlow, GenesisFlow* TargetFlow, ash::AshBuffer** TargetBuffer, ash::AshCRC32Value* TargetCRC)
+    static GenesisFlowMerge::FlowHistorialStatus sfProcessStatus(GenesisFlow* BaseFlow, GenesisFlow* TargetFlow, ash::AshBuffer** TargetBuffer, ash::AshCRC32Value* TargetCRC)
     {
         if (BaseFlow == nullptr)
         {
             if (TargetFlow == nullptr)
             {
-                return GenesisFlowMerge::FlowStatus::UNMODIFIED;
+                return GenesisFlowMerge::FlowHistorialStatus::UNMODIFIED;
             }
             else
             {
-                return GenesisFlowMerge::FlowStatus::CREATED;
+                ash::AshStreamExpandableExportBuffer targetStream = ash::AshStreamExpandableExportBuffer();
+
+                if (TargetFlow->Export(&targetStream) == false)
+                {
+                    return GenesisFlowMerge::FlowHistorialStatus::INVALID;
+                }
+
+                *TargetBuffer = targetStream.MakeCopyOfBuffer();
+                *TargetCRC = ash::AshCRC32Utils::Calculate(0, *TargetBuffer);
+
+                return GenesisFlowMerge::FlowHistorialStatus::CREATED;
             }
         }
         else
         {
             if (TargetFlow == nullptr)
             {
-                return GenesisFlowMerge::FlowStatus::DELETED;
+                return GenesisFlowMerge::FlowHistorialStatus::DELETED;
             }
             else
             {
@@ -38,7 +48,7 @@ namespace genesis::merge
 
                 if (BaseFlow->Export(&baseStream) == false || TargetFlow->Export(&targetStream) == false)
                 {
-                    return GenesisFlowMerge::FlowStatus::INVALID;
+                    return GenesisFlowMerge::FlowHistorialStatus::INVALID;
                 }
 
                 ash::AshBuffer* baseBuffer = baseStream.MakeCopyOfBuffer();
@@ -48,15 +58,15 @@ namespace genesis::merge
 
                 ash::AshCRC32Value baseCRC = ash::AshCRC32Utils::Calculate(0, baseBuffer);
 
-                GenesisFlowMerge::FlowStatus status;
+                GenesisFlowMerge::FlowHistorialStatus status;
 
                 if (baseCRC == *TargetCRC)
                 {
-                    status = GenesisFlowMerge::FlowStatus::UNMODIFIED;
+                    status = GenesisFlowMerge::FlowHistorialStatus::UNMODIFIED;
                 }
                 else
                 {
-                    status = GenesisFlowMerge::FlowStatus::MODIFIED;
+                    status = GenesisFlowMerge::FlowHistorialStatus::MODIFIED;
                 }
 
                 delete baseBuffer;
@@ -68,27 +78,41 @@ namespace genesis::merge
 
     // Flow Status Helper
 
-    std::string GenesisFlowMerge::sfGetFlowStatusAsString(FlowStatus Status)
+    std::string GenesisFlowMerge::sfGetFlowStatusAsString(FlowHistorialStatus Status)
     {
         switch (Status)
         {
-        case FlowStatus::UNMODIFIED:
+        case FlowHistorialStatus::UNMODIFIED:
             return "Unmodified";
-        case FlowStatus::MODIFIED:
+        case FlowHistorialStatus::MODIFIED:
             return "Modified";
-        case FlowStatus::DELETED:
+        case FlowHistorialStatus::DELETED:
             return "Deleted";
-        case FlowStatus::CREATED:
+        case FlowHistorialStatus::CREATED:
             return "Created";
         default:
-        case FlowStatus::INVALID:
+        case FlowHistorialStatus::INVALID:
             return "Invalid";
         }
     }
 
+    std::string GenesisFlowMerge::sfGetResolvementStatusAsLabel(FlowManualResolvementStatus Status)
+    {
+        switch (Status)
+        {
+        case GenesisFlowMerge::FlowManualResolvementStatus::TAKE_REMOTE:
+            return "Taking Remote";
+        case GenesisFlowMerge::FlowManualResolvementStatus::TAKE_LOCAL:
+            return "Taking Local";
+        default:
+        case GenesisFlowMerge::FlowManualResolvementStatus::UNRESOLVED:
+            return "Unresolved";
+        }
+    }
+
     GenesisFlowMerge::GenesisFlowMerge()
-        : m_LocalBuffer(nullptr), m_RemoteBuffer(nullptr), m_LocalStatus(FlowStatus::INVALID), m_RemoteStatus(FlowStatus::INVALID), m_IsNeededToBeResolvedManually(false),
-          m_ManualResolvementStatus(GenesisFlowMerge::ResolvementStatus::UNRESOLVED)
+        : m_LocalBuffer(nullptr), m_RemoteBuffer(nullptr), m_LocalStatus(FlowHistorialStatus::INVALID), m_RemoteStatus(FlowHistorialStatus::INVALID), m_IsNeededToBeResolvedManually(false),
+          m_ManualResolvementStatus(GenesisFlowMerge::FlowManualResolvementStatus::UNRESOLVED)
     {
     }
 
@@ -123,19 +147,35 @@ namespace genesis::merge
         m_LocalStatus = sfProcessStatus(BaseFlow, LocalFlow, &m_LocalBuffer, &localCRC);
         m_RemoteStatus = sfProcessStatus(BaseFlow, RemoteFlow, &m_RemoteBuffer, &remoteCRC);
 
-        if (m_LocalStatus == FlowStatus::INVALID || m_RemoteStatus == FlowStatus::INVALID)
+        if (m_LocalStatus == FlowHistorialStatus::INVALID || m_RemoteStatus == FlowHistorialStatus::INVALID)
         {
             return ash::AshResult(false, "Failed to compare.");
         }
 
-        if (m_LocalStatus != FlowStatus::UNMODIFIED)
+        if (m_LocalStatus != FlowHistorialStatus::UNMODIFIED)
         {
-            m_IsNeededToBeResolvedManually |= (m_RemoteStatus != FlowStatus::UNMODIFIED);
+            m_IsNeededToBeResolvedManually |= (m_RemoteStatus != FlowHistorialStatus::UNMODIFIED);
         }
 
-        if (m_RemoteStatus != FlowStatus::UNMODIFIED)
+        if (m_RemoteStatus != FlowHistorialStatus::UNMODIFIED)
         {
-            m_IsNeededToBeResolvedManually |= (m_LocalStatus != FlowStatus::UNMODIFIED);
+            m_IsNeededToBeResolvedManually |= (m_LocalStatus != FlowHistorialStatus::UNMODIFIED);
+        }
+
+        if (m_IsNeededToBeResolvedManually == false)
+        {
+            if (m_LocalStatus == FlowHistorialStatus::UNMODIFIED && m_RemoteStatus == FlowHistorialStatus::UNMODIFIED)
+            {
+                m_ManualResolvementStatus = FlowManualResolvementStatus::TAKE_LOCAL;
+            }
+            else if (m_LocalStatus == FlowHistorialStatus::UNMODIFIED)
+            {
+                m_ManualResolvementStatus = FlowManualResolvementStatus::TAKE_REMOTE;
+            }
+            else if (m_RemoteStatus == FlowHistorialStatus::UNMODIFIED)
+            {
+                m_ManualResolvementStatus = FlowManualResolvementStatus::TAKE_LOCAL;
+            }
         }
 
         // m_IsNeededToBeResolvedManually |= (localCRC != remoteCRC);
@@ -145,9 +185,9 @@ namespace genesis::merge
 
     bool GenesisFlowMerge::IsResolved()
     {
-        if(IsNeededToBeResolvedManually())
+        if (IsNeededToBeResolvedManually())
         {
-            return m_ManualResolvementStatus != ResolvementStatus::UNRESOLVED;
+            return m_ManualResolvementStatus != FlowManualResolvementStatus::UNRESOLVED;
         }
 
         return true;

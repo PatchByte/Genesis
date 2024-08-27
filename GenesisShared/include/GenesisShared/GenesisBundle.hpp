@@ -18,10 +18,13 @@ namespace genesis
     public:
         using sdFlowFactory = std::function<GenesisFlow*(void* Reserved)>;
 
-        GenesisBundle(sdFlowFactory FlowFactory);
+        static GenesisFlow* sfDefaultFlowFactory(void*);
+
+        GenesisBundle(sdFlowFactory FlowFactory = sfDefaultFlowFactory);
         ~GenesisBundle();
 
         ash::AshResult CreateFlow(std::string FlowName);
+        ash::AshResult AddFlow(std::string FlowName, GenesisFlow* Flow); //! @warning Consumes `Flow`
         ash::AshResult RemoveFlow(std::string FlowName, bool FreeFlow = true);
 
         inline bool HasFlow(std::string FlowName)

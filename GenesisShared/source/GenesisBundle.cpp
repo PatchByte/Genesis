@@ -9,6 +9,11 @@
 namespace genesis
 {
 
+    GenesisFlow* GenesisBundle::sfDefaultFlowFactory(void*)
+    {
+        return new GenesisFlow();
+    }
+
     GenesisBundle::GenesisBundle(sdFlowFactory FlowFactory) : m_FlowFactory(FlowFactory), m_Flows(), m_ReservedFactoryValue()
     {
     }
@@ -20,13 +25,17 @@ namespace genesis
 
     ash::AshResult GenesisBundle::CreateFlow(std::string FlowName)
     {
+        return AddFlow(FlowName, m_FlowFactory(m_ReservedFactoryValue));
+    }
+
+    ash::AshResult GenesisBundle::AddFlow(std::string FlowName, GenesisFlow* Flow)
+    {
         if (m_Flows.contains(FlowName))
         {
             return ash::AshResult(false, "Already containing a flow with this name");
         }
 
-        GenesisFlow* flow = m_FlowFactory(m_ReservedFactoryValue);
-        m_Flows.emplace(FlowName, flow);
+        m_Flows.emplace(FlowName, Flow);
 
         return ash::AshResult(true);
     }

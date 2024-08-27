@@ -13,7 +13,7 @@ namespace genesis::merge
     class GenesisFlowMerge
     {
     public:
-        enum class FlowStatus : int
+        enum class FlowHistorialStatus : int
         {
             INVALID = 0,
             UNMODIFIED = 1,
@@ -22,14 +22,15 @@ namespace genesis::merge
             CREATED = 4
         };
 
-        enum class ResolvementStatus : int
+        enum class FlowManualResolvementStatus : int
         {
             UNRESOLVED = 0,
             TAKE_REMOTE = 2,
             TAKE_LOCAL = 3
         };
 
-        static std::string sfGetFlowStatusAsString(FlowStatus Status);
+        static std::string sfGetFlowStatusAsString(FlowHistorialStatus Status);
+        static std::string sfGetResolvementStatusAsLabel(FlowManualResolvementStatus Status);
 
         GenesisFlowMerge();
         GenesisFlowMerge(GenesisFlowMerge&) = delete;
@@ -38,12 +39,12 @@ namespace genesis::merge
         void Reset();
         ash::AshResult Process(GenesisFlow* BaseFlow, GenesisFlow* LocalFlow, GenesisFlow* RemoteFlow);
 
-        inline FlowStatus GetLocalStatus()
+        inline FlowHistorialStatus GetLocalStatus()
         {
             return m_LocalStatus;
         }
 
-        inline FlowStatus GetRemoteStatus()
+        inline FlowHistorialStatus GetRemoteStatus()
         {
             return m_RemoteStatus;
         }
@@ -53,25 +54,53 @@ namespace genesis::merge
             return m_IsNeededToBeResolvedManually;
         }
 
-        inline ResolvementStatus GetManualResolvementStatus()
+        inline FlowManualResolvementStatus GetManualResolvementStatus()
         {
             return m_ManualResolvementStatus;
         }
 
-        inline void SetManualResolvementStatus(ResolvementStatus ManualResolvementStatus)
+        inline void SetManualResolvementStatus(FlowManualResolvementStatus ManualResolvementStatus)
         {
             m_ManualResolvementStatus = ManualResolvementStatus;
         }
 
         bool IsResolved();
 
+        inline FlowHistorialStatus GetResolvedFlowStatus()
+        {
+            if (m_ManualResolvementStatus == FlowManualResolvementStatus::TAKE_LOCAL)
+            {
+                return GetLocalStatus();
+            }
+            else if (m_ManualResolvementStatus == FlowManualResolvementStatus::TAKE_REMOTE)
+            {
+                return GetRemoteStatus();
+            }
+
+            return FlowHistorialStatus::INVALID;
+        }
+
+        inline ash::AshBuffer* GetResolvedBuffer()
+        {
+            if (m_ManualResolvementStatus == FlowManualResolvementStatus::TAKE_LOCAL)
+            {
+                return m_LocalBuffer;
+            }
+            else if (m_ManualResolvementStatus == FlowManualResolvementStatus::TAKE_REMOTE)
+            {
+                return m_RemoteBuffer;
+            }
+
+            return nullptr;
+        }
+
     private:
         ash::AshBuffer* m_LocalBuffer;
         ash::AshBuffer* m_RemoteBuffer;
-        FlowStatus m_LocalStatus;
-        FlowStatus m_RemoteStatus;
+        FlowHistorialStatus m_LocalStatus;
+        FlowHistorialStatus m_RemoteStatus;
         bool m_IsNeededToBeResolvedManually;
-        ResolvementStatus m_ManualResolvementStatus;
+        FlowManualResolvementStatus m_ManualResolvementStatus;
     };
 
 } // namespace genesis::merge

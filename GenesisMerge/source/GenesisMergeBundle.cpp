@@ -1,6 +1,7 @@
 #include "GenesisMerge/GenesisMergeBundle.hpp"
 #include "Ash/AshBuffer.h"
 #include "Ash/AshResult.h"
+#include "Ash/AshStream.h"
 #include "GenesisMerge/GenesisMergeFlow.hpp"
 #include "GenesisShared/GenesisBundle.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
@@ -8,6 +9,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include <algorithm>
+#include <cstdlib>
 #include <vector>
 
 namespace genesis::merge
@@ -17,7 +19,8 @@ namespace genesis::merge
      * Sorry this code is kinda shit.
      */
 
-    GenesisBundleMerge::GenesisBundleMerge(ash::AshLogger& Logger, GenesisBundle* Base, GenesisBundle* Local, GenesisBundle* Remote) : m_Logger(Logger), m_Flows()
+    GenesisBundleMerge::GenesisBundleMerge(ash::AshLogger& Logger, GenesisBundle* Base, GenesisBundle* Local, GenesisBundle* Remote, std::filesystem::path Merged)
+        : m_Logger(Logger), m_Flows(), m_Merged(Merged)
     {
         std::vector<std::string> flowNames = {};
 
@@ -80,7 +83,47 @@ namespace genesis::merge
 
     ash::AshCustomResult<ash::AshBuffer*> GenesisBundleMerge::Serialize()
     {
-        return ash::AshCustomResult<ash::AshBuffer*>(false);
+        GenesisBundle* bundleMerged = new GenesisBundle();
+
+        for (auto currentIterator : m_Flows)
+        {
+            auto resolvedStatus = currentIterator.second->GetResolvedFlowStatus();
+
+            if (resolvedStatus == GenesisFlowMerge::FlowHistorialStatus::DELETED)
+            {
+                continue;
+            }
+
+            if (bundleMerged->CreateFlow(currentIterator.first).HasError())
+            {
+                m_Logger.Log("Error", "Failed to create flow \"{}\"", currentIterator.first);
+                std::exit(-1);
+            }
+
+            ash::AshStreamStaticBuffer flowMergedStream = ash::AshStreamStaticBuffer(currentIterator.second->GetResolvedBuffer(), ash::AshStreamMode::READ);
+
+            GenesisFlow* flowMerged = bundleMerged->GetFlow(currentIterator.first);
+
+            if (flowMerged->Import(&flowMergedStream) == false || resolvedStatus == GenesisFlowMerge::FlowHistorialStatus::INVALID)
+            {
+                delete flowMerged;
+
+                m_Logger.Log("Error", "Failed to import flow \"{}\"", currentIterator.first);
+                std::exit(-1);
+            }
+        }
+
+        ash::AshStreamExpandableExportBuffer bundleMergedStream = ash::AshStreamExpandableExportBuffer();
+
+        if (bundleMerged->Export(&bundleMergedStream) == false)
+        {
+            m_Logger.Log("Error", "Failed to export merged bundle.");
+            std::exit(-1);
+        }
+
+        delete bundleMerged;
+
+        return ash::AshCustomResult<ash::AshBuffer*>(true).AttachResult(bundleMergedStream.MakeCopyOfBuffer());
     }
 
     GenesisFlow* GenesisBundleMerge::sfFactory(void* Reserved)
@@ -90,8 +133,7 @@ namespace genesis::merge
 
     void GenesisBundleMerge::Render()
     {
-        if (ImGui::BeginTable("##MergeResolveTable", 4, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable,
-                              {-1, ImGui::GetContentRegionAvail().y - (ImGui::CalcTextSize("Merge", NULL, true).y + ImGui::GetStyle().FramePadding.y * 4.f)}))
+        if (ImGui::BeginTable("##MergeResolveTable", 4, ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_Resizable))
         {
             // Headers
 
@@ -121,12 +163,12 @@ namespace genesis::merge
                     {
                         if (ImGui::MenuItem("Local"))
                         {
-                            currentIterator.second->SetManualResolvementStatus(GenesisFlowMerge::ResolvementStatus::TAKE_LOCAL);
+                            currentIterator.second->SetManualResolvementStatus(GenesisFlowMerge::FlowManualResolvementStatus::TAKE_LOCAL);
                         }
 
                         if (ImGui::MenuItem("Remote"))
                         {
-                            currentIterator.second->SetManualResolvementStatus(GenesisFlowMerge::ResolvementStatus::TAKE_REMOTE);
+                            currentIterator.second->SetManualResolvementStatus(GenesisFlowMerge::FlowManualResolvementStatus::TAKE_REMOTE);
                         }
 
                         ImGui::EndPopup();
@@ -142,56 +184,12 @@ namespace genesis::merge
                 ImGui::TableNextColumn();
                 ImGui::TextUnformatted(GenesisFlowMerge::sfGetFlowStatusAsString(currentIterator.second->GetRemoteStatus()).data());
                 ImGui::TableNextColumn();
-
-                if (currentIterator.second->IsNeededToBeResolvedManually())
-                {
-                    switch (currentIterator.second->GetManualResolvementStatus())
-                    {
-                    case GenesisFlowMerge::ResolvementStatus::UNRESOLVED:
-                        ImGui::Text("Unresolved");
-                        break;
-                    case GenesisFlowMerge::ResolvementStatus::TAKE_REMOTE:
-                        ImGui::Text("Taking Remote");
-                        break;
-                    case GenesisFlowMerge::ResolvementStatus::TAKE_LOCAL:
-                        ImGui::Text("Taking Local");
-                        break;
-                    }
-                }
-                else
-                {
-                    ImGui::Text("Resolved");
-                }
+                ImGui::Text("%s", GenesisFlowMerge::sfGetResolvementStatusAsLabel(currentIterator.second->GetManualResolvementStatus()).data());
 
                 ImGui::PopID();
             }
 
             ImGui::EndTable();
-        }
-
-        {
-            auto isMergeable = this->IsMergeable();
-
-            if (isMergeable.HasError())
-            {
-                ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-                ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-            }
-
-            ImGui::Button("Merge", {-1, -1});
-
-            if (isMergeable.HasError())
-            {
-                ImGui::PopItemFlag();
-                ImGui::PopStyleVar();
-
-                if (ImGui::BeginItemTooltip())
-                {
-                    ImGui::TextUnformatted(isMergeable.GetMessage().data());
-
-                    ImGui::EndTooltip();
-                }
-            }
         }
     }
 
