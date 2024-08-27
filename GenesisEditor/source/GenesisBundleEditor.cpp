@@ -56,10 +56,8 @@ namespace genesis::editor
         return false;
     }
 
-    void GenesisBundleEditor::Initialize(ImFont* KeyboardFont)
+    void GenesisBundleEditor::Initialize()
     {
-        m_KeyboardFont = KeyboardFont;
-
         // Initialization
 
         for (auto currentIterator : m_Flows)

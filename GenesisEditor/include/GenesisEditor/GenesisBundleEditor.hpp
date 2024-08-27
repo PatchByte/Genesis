@@ -20,7 +20,7 @@ namespace genesis::editor
         ash::AshResult CreateFlow(std::string FlowName);
         bool Import(ash::AshStream* Stream);
 
-        void Initialize(ImFont* KeyboardFont);
+        void Initialize();
         void Shutdown();
         void Render();
 
@@ -50,8 +50,6 @@ namespace genesis::editor
 
         std::string m_SelectedFlow;
         std::string m_SearchBoxName;
-
-        ImFont* m_KeyboardFont;
     };
 
 } // namespace genesis::editor

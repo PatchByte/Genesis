@@ -6,6 +6,7 @@
 #include "GenesisMerge/GenesisMergeBundle.hpp"
 #include "GenesisMerge/GenesisMergeGit.hpp"
 #include "GenesisShared/GenesisBundle.hpp"
+#include "GenesisShared/GenesisUtils.hpp"
 #include "fmt/chrono.h"
 #include "fmt/format.h"
 #include "imgui.h"
@@ -81,10 +82,10 @@ namespace genesis::merge
 
         // Post Gui initialization
 
-        if (std::filesystem::exists(smBaseFontPath))
+        if (std::filesystem::path defaultFontPath = GenesisUtils::GetOwnExectuablePath().parent_path() / smBaseFontPath; std::filesystem::exists(defaultFontPath))
         {
-            m_DefaultFont = ImGui::GetIO().Fonts->AddFontFromFileTTF(smBaseFontPath.data(), 22.);
-            ImGui::GetIO().FontDefault = m_DefaultFont;
+            std::string defaultFontString = defaultFontPath.string();
+            ImGui::GetIO().FontDefault = ImGui::GetIO().Fonts->AddFontFromFileTTF(defaultFontString.data(), 22.);
         }
         else
         {

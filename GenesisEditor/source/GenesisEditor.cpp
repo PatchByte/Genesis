@@ -5,13 +5,13 @@
 #include "GLFW/glfw3.h"
 #include "GenesisEditor/GenesisBundleEditor.hpp"
 #include "GenesisEditor/GenesisFlowEditor.hpp"
-#include "GenesisEditor/GenesisUtils.hpp"
 #include "GenesisEditor/GenesisWidgets.hpp"
 #include "GenesisOutput/GenesisOutputBuilder.hpp"
 #include "GenesisRenderer/GenesisRenderer.hpp"
 #include "GenesisShared/GenesisFlow.hpp"
 #include "GenesisShared/GenesisLoadedFile.hpp"
 #include "GenesisShared/GenesisOutput.hpp"
+#include "GenesisShared/GenesisUtils.hpp"
 #include "ImGuiFileDialog.h"
 #include "fmt/format.h"
 #include "imgui.h"
@@ -24,10 +24,11 @@
 namespace genesis::editor
 {
 
+    static constexpr std::string_view smBaseFontPath = "resources/Cantarell-Regular.ttf";
+
     GenesisEditor::GenesisEditor()
-        : m_LogBox(), m_Logger("GenesisEditor", {}), m_BundleEditor(&m_LogBox), m_ForceDisableRendering(false), m_DefaultFont(nullptr), m_KeyboardFont(nullptr), m_Renderer(nullptr),
-          m_LastProcessedInputFile(), m_LastUsedFile(), m_LastProcessedOutputFile(), m_TriggerSaveLastUsedFile(false), m_TriggerSaveAsNewFile(false), m_TriggerLoadFile(false),
-          m_TriggerProcessLastFileAndOutputLastFile(false)
+        : m_LogBox(), m_Logger("GenesisEditor", {}), m_BundleEditor(&m_LogBox), m_ForceDisableRendering(false), m_Renderer(nullptr), m_LastProcessedInputFile(), m_LastUsedFile(),
+          m_LastProcessedOutputFile(), m_TriggerSaveLastUsedFile(false), m_TriggerSaveAsNewFile(false), m_TriggerLoadFile(false), m_TriggerProcessLastFileAndOutputLastFile(false)
     {
         m_Renderer = renderer::GenesisRendererProvider::CreateRenderer(1600, 900, "Genesis Editor");
         m_Logger.AddLoggerPassage(m_LogBox.CreatePassage());
@@ -105,14 +106,19 @@ namespace genesis::editor
 
         // Fonts
 
-        m_KeyboardFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("resources/212Keyboard-lmRZ.otf", 16.f);
-        m_DefaultFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("resources/Cantarell-Regular.ttf", 22.);
-
-        ImGui::GetIO().FontDefault = m_DefaultFont;
+        if (std::filesystem::path defaultFontPath = GenesisUtils::GetOwnExectuablePath().parent_path() / smBaseFontPath; std::filesystem::exists(defaultFontPath))
+        {
+            std::string defaultFontString = defaultFontPath.string();
+            ImGui::GetIO().FontDefault = ImGui::GetIO().Fonts->AddFontFromFileTTF(defaultFontString.data(), 22.);
+        }
+        else
+        {
+            m_Logger.Log("Warning", "Fonts are not present, please add them.");
+        }
 
         // Editor Initialization
 
-        m_BundleEditor.Initialize(m_KeyboardFont);
+        m_BundleEditor.Initialize();
 
         if (ArgCount > 1)
         {

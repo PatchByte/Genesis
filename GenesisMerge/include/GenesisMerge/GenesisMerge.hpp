@@ -24,10 +24,6 @@ namespace genesis::merge
         ash::AshLogger m_Logger;
         renderer::GenesisRendererBase* m_Renderer;
 
-        // Gui
-
-        ImFont* m_DefaultFont;
-
         /*
          * Git Merging works like this:
          * <Base> The most recent first shared commit

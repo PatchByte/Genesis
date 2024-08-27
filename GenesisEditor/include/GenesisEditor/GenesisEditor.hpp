@@ -38,9 +38,6 @@ namespace genesis::editor
         renderer::GenesisRendererBase* m_Renderer;
         GenesisBundleEditor m_BundleEditor;
 
-        ImFont* m_DefaultFont;
-        ImFont* m_KeyboardFont;
-
         // QOL
         std::filesystem::path m_LastProcessedInputFile;
         std::filesystem::path m_LastProcessedOutputFile;
