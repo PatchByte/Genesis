@@ -40,8 +40,3 @@ cd build
 cmake ..
 cmake --build .
 ```
-
-## Installation
-
-* Download latest genesis [release](https://github.com/yamp-project/genesis/releases/latest)
-* Unzip it into an empty folder
