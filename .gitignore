@@ -1,7 +1,6 @@
 .vs
 .vscode
 .idea
-.xmake
 
 build
 build_mingw
@@ -11,3 +10,4 @@ build_mingw
 bin
 
 imgui.ini
+NodeEditor.json
