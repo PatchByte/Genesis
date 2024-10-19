@@ -1,5 +1,7 @@
 #include "GenesisOutput/GenesisOutputBuilder.hpp"
 #include "GenesisShared/GenesisOutput.hpp"
+#include "fmt/format.h"
+#include <cstdlib>
 #include <ctime>
 #include <ostream>
 #include <sstream>
@@ -46,8 +48,8 @@ namespace genesis::output
         outputStream << "public:" << std::endl;
         for (auto currentStaticFunction : Class->GetStaticFunctions())
         {
-            outputStream << "static constexpr unsigned long long " << currentStaticFunction.second.GetName() << " = " << std::hex << "0x" << currentStaticFunction.second.GetOffset() << ";"
-                         << std::dec << std::endl;
+            outputStream << "static constexpr unsigned long long " << currentStaticFunction.second.GetName() << " = " << std::hex << "0x" << currentStaticFunction.second.GetOffset() << ";" << std::dec
+                         << std::endl;
         }
         outputStream << "};" << std::endl;
         outputStream << std::endl;
@@ -84,25 +86,25 @@ namespace genesis::output
 
     std::string GenesisOutputBuilder::Build(GenesisOutputData* OutputData)
     {
-        // You want indentation?
-        // Use clang-formatter blyat.
-
         std::stringstream outputStream = std::stringstream();
 
-        outputStream << "#pragma once" << std::endl;
+        // Very bad way.
+        srand(time(nullptr));
+        std::string headerGuardName = fmt::format("_GENESIS_OUTPUT_{}", rand());
+
+        outputStream << "#ifndef " << headerGuardName << std::endl;
+        outputStream << "#define " << headerGuardName << std::endl;
         outputStream << std::endl;
-        outputStream << "// This is an automatic generated file, do not change." << std::endl;
-        outputStream << "// This file is not intended to look beautiful, because it is an automatic generated file." << std::endl;
         outputStream << "// Generated at: " << time(nullptr) << std::endl;
         outputStream << std::endl;
-        outputStream << "namespace offsets" << std::endl;
+        outputStream << "namespace genesis::output" << std::endl;
         outputStream << "{" << std::endl;
 
         for (std::string currentClassName : OutputData->GetAllAvailableClassNames())
         {
             GenesisOutputClass* currentClass = OutputData->GetOrCreateClass(currentClassName);
 
-            outputStream << "class " << "Gen_" << currentClassName << std::endl;
+            outputStream << "class " << currentClassName << std::endl;
             outputStream << "{" << std::endl;
             outputStream << "public:" << std::endl;
 
@@ -128,7 +130,8 @@ namespace genesis::output
         }
 
         outputStream << "}" << std::endl;
-        
+        outputStream << "#endif // !" << headerGuardName << std::endl;
+
         return outputStream.str();
     }
 

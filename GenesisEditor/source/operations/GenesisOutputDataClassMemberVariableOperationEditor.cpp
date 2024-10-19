@@ -11,7 +11,6 @@ namespace genesis::editor
 
         std::string className = Operation->GetClassName();
         std::string memberName = Operation->GetMemberName();
-        std::string typeDefinition = Operation->GetTypeDefinition();
 
         Builder.Middle();
 
@@ -29,11 +28,12 @@ namespace genesis::editor
             Operation->SetMemberName(memberName);
         }
 
-        if (widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Type Definition", &typeDefinition))
-        {
-            changed |= true;
-            Operation->SetTypeDefinition(typeDefinition);
-        }
+        //! @deprecated
+        // if (widgets::GenesisGenericWidgets::sfRenderInputTextStlString("Type Definition", &typeDefinition))
+        // {
+        //     changed |= true;
+        //     Operation->SetTypeDefinition(typeDefinition);
+        // }
 
         ImGui::PopItemWidth();
 
