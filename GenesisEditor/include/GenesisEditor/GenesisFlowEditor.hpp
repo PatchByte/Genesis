@@ -46,29 +46,15 @@ namespace genesis::editor
         bool Export(ash::AshStream* Stream) override;
 
         std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> CreateOperationInFlowFromType(operations::GenesisOperationType OperationType);
-        std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> CreateOperationInFlowFromType(operations::GenesisOperationType OperationType, bool BroadcastLiveAction);
-        std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> CreateOperationInFlowFromTypeWithPosition(operations::GenesisOperationType OperationType, ImVec2 Position, bool BroadcastLiveAction);
+        std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> CreateOperationInFlowFromTypeWithPosition(operations::GenesisOperationType OperationType, ImVec2 Position);
         bool RemoveOperationFromFlow(operations::GenesisOperationId OperationId);
-        bool RemoveOperationFromFlow(operations::GenesisOperationId OperationId, bool BroadcastLiveAction);
 
         // Utilities
 
         void DoAction(ActionType Action, void* Reserved);
-        void CreateLink(uintptr_t FromLinkId, uintptr_t ToLinkId, bool BroadcastLiveAction = true);
-        void RemoveLink(uintptr_t LinkId, bool BroadcastLiveAction = true);
-        void SetNodePosition(uintptr_t NodeId, ImVec2 Position, bool BroadcastLiveAction = true);
-
-        // Getter and Setter
-
-        inline std::string GetLiveFlowName()
-        {
-            return m_LiveFlowName;
-        }
-
-        inline void SetLiveFlowName(std::string LiveFlowName)
-        {
-            m_LiveFlowName = LiveFlowName;
-        }
+        void CreateLink(uintptr_t FromLinkId, uintptr_t ToLinkId);
+        void RemoveLink(uintptr_t LinkId);
+        void SetNodePosition(uintptr_t NodeId, ImVec2 Position);
 
     private:
         ash::AshLogger m_Logger;
@@ -81,8 +67,6 @@ namespace genesis::editor
         bool m_TriggerCheck;
         bool m_TriggerActionFocusFirstNode;
         bool m_TriggerRestoreStateOfNodes;
-
-        std::string m_LiveFlowName;
     };
 
 } // namespace genesis::editor

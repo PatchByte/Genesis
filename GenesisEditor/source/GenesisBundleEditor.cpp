@@ -28,32 +28,12 @@ namespace genesis::editor
 
     ash::AshResult GenesisBundleEditor::CreateFlow(std::string FlowName)
     {
-        if (auto res = GenesisBundle::CreateFlow(FlowName); res.WasSuccessful())
-        {
-            dynamic_cast<GenesisFlowEditor*>(m_Flows.at(FlowName))->SetLiveFlowName(FlowName);
-
-            return res;
-        }
-        else
-        {
-            return res;
-        }
+        return GenesisBundle::CreateFlow(FlowName);
     }
 
     bool GenesisBundleEditor::Import(ash::AshStream* Stream)
     {
-        if (GenesisBundle::Import(Stream))
-        {
-            for (auto currentFlow : m_Flows)
-            {
-                // Hack
-                dynamic_cast<GenesisFlowEditor*>(currentFlow.second)->SetLiveFlowName(currentFlow.first);
-            }
-
-            return true;
-        }
-
-        return false;
+        return GenesisBundle::Import(Stream);
     }
 
     void GenesisBundleEditor::Initialize()
@@ -170,8 +150,6 @@ namespace genesis::editor
 
                             m_Flows.erase(currentIterator.first);
                             m_Flows.emplace(sNameBuffer, renameTarget);
-
-                            renameTarget->SetLiveFlowName(sNameBuffer);
 
                             ImGui::CloseCurrentPopup();
 

@@ -21,8 +21,7 @@ namespace genesis::editor
 {
 
     GenesisFlowEditor::GenesisFlowEditor(utils::GenesisLogBox* LogBox)
-        : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(LogBox), m_NodeEditorContext(nullptr), m_TriggerCheck(false), m_TriggerActionFocusFirstNode(false), m_TriggerRestoreStateOfNodes(false),
-          m_LiveFlowName()
+        : GenesisFlow(), m_Logger("GuiLogger", {}), m_LogBox(LogBox), m_NodeEditorContext(nullptr), m_TriggerCheck(false), m_TriggerActionFocusFirstNode(false), m_TriggerRestoreStateOfNodes(false)
     {
         CreateOperationInFlowFromType(operations::GenesisOperationType::FIND_PATTERN);
         // AddOperationToFlow(new operations::GenesisMathOperation(operations::GenesisMathOperation::Type::ADDITION, 6));
@@ -228,7 +227,7 @@ namespace genesis::editor
                 {
                     if (ImGui::MenuItem(currentIterator.first.data()))
                     {
-                        CreateOperationInFlowFromTypeWithPosition(currentIterator.second, ed::ScreenToCanvas(ImGui::GetMousePos()), true);
+                        CreateOperationInFlowFromTypeWithPosition(currentIterator.second, ed::ScreenToCanvas(ImGui::GetMousePos()));
                     }
                 }
 
@@ -388,19 +387,12 @@ namespace genesis::editor
 
     std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> GenesisFlowEditor::CreateOperationInFlowFromType(operations::GenesisOperationType OperationType)
     {
-        return CreateOperationInFlowFromType(OperationType, true);
-    }
-
-    std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> GenesisFlowEditor::CreateOperationInFlowFromType(operations::GenesisOperationType OperationType,
-                                                                                                                                  bool BroadcastLiveAction)
-    {
         auto res = GenesisFlow::CreateOperationInFlowFromType(OperationType);
 
         return std::move(res);
     }
 
-    std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> GenesisFlowEditor::CreateOperationInFlowFromTypeWithPosition(operations::GenesisOperationType OperationType,
-                                                                                                                                              ImVec2 Position, bool BroadcastLiveAction)
+    std::pair<operations::GenesisBaseOperation*, operations::GenesisOperationId> GenesisFlowEditor::CreateOperationInFlowFromTypeWithPosition(operations::GenesisOperationType OperationType, ImVec2 Position)
     {
         auto res = GenesisFlow::CreateOperationInFlowFromType(OperationType);
 
@@ -414,17 +406,7 @@ namespace genesis::editor
 
     bool GenesisFlowEditor::RemoveOperationFromFlow(operations::GenesisOperationId OperationId)
     {
-        return this->RemoveOperationFromFlow(OperationId, true);
-    }
-
-    bool GenesisFlowEditor::RemoveOperationFromFlow(operations::GenesisOperationId OperationId, bool BroadcastLiveAction)
-    {
-        if (GenesisFlow::RemoveOperationFromFlow(OperationId))
-        {
-            return true;
-        }
-
-        return false;
+        return GenesisFlow::RemoveOperationFromFlow(OperationId);
     }
 
     void GenesisFlowEditor::DoAction(ActionType Action, void* Reserved)
@@ -437,7 +419,7 @@ namespace genesis::editor
         }
     }
 
-    void GenesisFlowEditor::CreateLink(uintptr_t FromLinkId, uintptr_t ToLinkId, bool BroadcastLiveAction)
+    void GenesisFlowEditor::CreateLink(uintptr_t FromLinkId, uintptr_t ToLinkId)
     {
         utils::GenesisPinValue startPinParsed = utils::GenesisPinValue::Unpack(FromLinkId);
         utils::GenesisPinValue endPinParsed = utils::GenesisPinValue::Unpack(ToLinkId);
@@ -460,7 +442,7 @@ namespace genesis::editor
         }
     }
 
-    void GenesisFlowEditor::RemoveLink(uintptr_t LinkId, bool BroadcastLiveAction)
+    void GenesisFlowEditor::RemoveLink(uintptr_t LinkId)
     {
         if (m_Links.contains(LinkId))
         {
@@ -472,7 +454,7 @@ namespace genesis::editor
         }
     }
 
-    void GenesisFlowEditor::SetNodePosition(uintptr_t NodeId, ImVec2 Position, bool BroadcastLiveAction)
+    void GenesisFlowEditor::SetNodePosition(uintptr_t NodeId, ImVec2 Position)
     {
         if (m_Operations.contains(NodeId))
         {

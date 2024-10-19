@@ -142,9 +142,6 @@ namespace genesis::editor
                     ImGui::SetWindowPos(ImVec2(0, 0));
 
                     static bool sTriggerFlowNewNodePopup = false;
-                    static bool sTriggerLiveConnectPopup = false;
-                    static bool sTriggerLiveHintConnectPopup = false;
-                    static bool sTriggerLiveShowPeers = false;
 
                     if (ImGui::BeginMenuBar())
                     {
@@ -229,24 +226,6 @@ namespace genesis::editor
                     {
                         ImGui::OpenPopup("FlowNewNodePopup");
                         sTriggerFlowNewNodePopup = false;
-                    }
-
-                    if (sTriggerLiveConnectPopup)
-                    {
-                        ImGui::OpenPopup("LiveConnectPopup");
-                        sTriggerLiveConnectPopup = false;
-                    }
-
-                    if (sTriggerLiveHintConnectPopup)
-                    {
-                        ImGui::OpenPopup("Invite Other Client");
-                        sTriggerLiveHintConnectPopup = false;
-                    }
-
-                    if (sTriggerLiveShowPeers)
-                    {
-                        ImGui::OpenPopup("Connected Peers");
-                        sTriggerLiveShowPeers = false;
                     }
 
                     if (ImGui::BeginPopup("FlowNewNodePopup", ImGuiWindowFlags_AlwaysAutoResize))
